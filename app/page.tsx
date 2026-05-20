@@ -117,6 +117,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
                     <button type="submit" className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ساخت حضور هفته کاری آینده</button>
                   </form>
                   <Link href="/settings/weekly-plan" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">تنظیم برنامه هفتگی</Link>
+                  <Link href="/settings/users" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">مدیریت کاربران</Link>
                 </div>
               </div>
               <div className="overflow-hidden rounded-xl border border-zinc-800">
