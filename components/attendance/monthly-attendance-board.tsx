@@ -9,9 +9,11 @@ export async function MonthlyAttendanceBoard({ userId }: MonthlyAttendanceBoardP
   const days = await getUserCurrentMonthAttendanceData(userId);
 
   return (
-    <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <h2 className="mb-2 text-xl font-semibold">برنامه حضور ماه جاری من</h2>
-      <p className="mb-4 text-sm text-zinc-400">تمام روزهای ماه جلالی نمایش داده می‌شوند و پنجشنبه و جمعه به‌عنوان روز تعطیل مشخص هستند.</p>
+    <section className="dashboard-glass-card">
+      <div className="mb-4 space-y-1">
+        <h2 className="text-xl font-semibold">برنامه حضور ماه جاری من</h2>
+        <p className="text-sm text-zinc-300">روزهای کاری ماه جاری نمایش داده می‌شوند؛ پنجشنبه و جمعه از این نما حذف شده‌اند.</p>
+      </div>
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
         {days.map((day) => (
           <MonthDayCard key={day.dateKey} day={day} />

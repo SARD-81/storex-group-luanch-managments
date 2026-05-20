@@ -23,39 +23,41 @@ function getStatusLabel(status: AttendanceStatus) {
 
 export function MonthDayCard({ day }: MonthDayCardProps) {
   return (
-    <article className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-      <div className="mb-4">
-        <p className="text-sm text-zinc-400">{day.dayNameFa}</p>
-        <h3 className="text-base font-semibold text-zinc-100">{day.persianDateLabel}</h3>
-        {day.isToday ? <p className="mt-1 text-xs text-emerald-400">امروز</p> : null}
+    <article className="dashboard-soft-card">
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs text-zinc-300">{day.dayNameFa}</p>
+          <h3 className="text-sm font-semibold text-zinc-50">{day.persianDateLabel}</h3>
+        </div>
+        {day.isToday ? <span className="rounded-full border border-emerald-300/40 bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-300">امروز</span> : null}
       </div>
 
       {!day.isWorkDay ? (
-  <div className="space-y-2 text-sm text-zinc-500">
-    <p>تعطیل</p>
-    <p className="text-xs">شرکت در این روز تعطیل است.</p>
-  </div>
-) : day.canEdit ? (
+        <div className="space-y-2 text-sm text-zinc-300">
+          <p>تعطیل</p>
+          <p className="text-xs">شرکت در این روز تعطیل است.</p>
+        </div>
+      ) : day.canEdit ? (
         <form action={updateMyAttendanceAction} className="space-y-3">
           <input type="hidden" name="date" value={day.dateKey} />
-          <label className="flex items-center justify-between text-sm text-zinc-200">
+          <label className="dashboard-muted-panel flex items-center justify-between text-sm">
             <span>صبحانه</span>
-            <input type="checkbox" name="meal:BREAKFAST" defaultChecked={day.breakfastStatus === AttendanceStatus.PRESENT} />
+            <input className="dashboard-checkbox" type="checkbox" name="meal:BREAKFAST" defaultChecked={day.breakfastStatus === AttendanceStatus.PRESENT} />
           </label>
-          <label className="flex items-center justify-between text-sm text-zinc-200">
+          <label className="dashboard-muted-panel flex items-center justify-between text-sm">
             <span>ناهار</span>
-            <input type="checkbox" name="meal:LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
+            <input className="dashboard-checkbox" type="checkbox" name="meal:LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
           </label>
-          <button type="submit" className="w-full rounded-xl bg-zinc-50 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ذخیره</button>
-          <p className="text-xs text-zinc-500">مهلت: {formatPersianDateTime(day.deadline)}</p>
+          <button type="submit" className="dashboard-primary-button w-full">ذخیره</button>
+          <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
         </form>
       ) : (
-        <div className="space-y-2 text-sm text-zinc-300">
+        <div className="space-y-2 text-sm text-zinc-200">
           <p>صبحانه: {getStatusLabel(day.breakfastStatus)}</p>
           <p>ناهار: {getStatusLabel(day.lunchStatus)}</p>
           <p className="text-amber-300">مهلت گذشته</p>
-          <p className="text-xs text-zinc-500">مهلت: {formatPersianDateTime(day.deadline)}</p>
-          {!day.isSelectable ? <p className="text-xs text-zinc-500">این تاریخ خارج از بازه انتخاب است.</p> : null}
+          <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
+          {!day.isSelectable ? <p className="text-xs text-zinc-400">این تاریخ خارج از بازه انتخاب است.</p> : null}
         </div>
       )}
     </article>

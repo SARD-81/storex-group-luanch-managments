@@ -1,4 +1,4 @@
-import { formatPersianDateTime, getServerNow } from "@/lib/date/tehran-time";
+import { formatPersianDateTime, formatPersianTime, getServerNow } from "@/lib/date/tehran-time";
 
 export async function GET() {
   const headers = { "Cache-Control": "no-store" };
@@ -10,6 +10,7 @@ export async function GET() {
       {
         nowIso: fallbackNow.toISOString(),
         formatted: formatPersianDateTime(fallbackNow),
+        time: formatPersianTime(fallbackNow),
         source: "server",
       },
       { headers },
@@ -43,6 +44,7 @@ export async function GET() {
       {
         nowIso: externalDate.toISOString(),
         formatted: formatPersianDateTime(externalDate),
+        time: formatPersianTime(externalDate),
         source: "external",
       },
       { headers },
@@ -54,6 +56,7 @@ export async function GET() {
       {
         nowIso: serverNow.toISOString(),
         formatted: formatPersianDateTime(serverNow),
+        time: formatPersianTime(serverNow),
         source: "server",
       },
       { headers },

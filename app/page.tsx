@@ -16,11 +16,7 @@ import {
 } from "@/lib/dashboard/get-dashboard-data";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const roleLabels = {
-  [UserRole.ADMIN]: "مدیر",
-  [UserRole.USER]: "کاربر",
-};
-
+const roleLabels = { [UserRole.ADMIN]: "مدیر", [UserRole.USER]: "کاربر" };
 type SearchParams = Promise<{ date?: string; error?: string; saved?: string }>;
 
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
@@ -28,40 +24,31 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   const currentUser = await requireUser();
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const { selectedDate } = resolveSelectedDate(params.date);
-
-  const dashboardData = isAdmin
-    ? await getAdminDashboardData(selectedDate)
-    : await getUserDashboardData(currentUser.id, selectedDate);
-
+  const dashboardData = isAdmin ? await getAdminDashboardData(selectedDate) : await getUserDashboardData(currentUser.id, selectedDate);
   const { users, attendances, selectedDateKey, canEditSelectedDate, deadline } = dashboardData;
 
-  const mealPresentNames = MEAL_TYPES.reduce(
-    (acc, mealType) => {
-      acc[mealType] = attendances
-        .filter((a) => a.mealType === mealType && a.status === AttendanceStatus.PRESENT)
-        .map((a) => a.user.name);
-      return acc;
-    },
-    {
-      [MealType.BREAKFAST]: [] as string[],
-      [MealType.LUNCH]: [] as string[],
-    },
-  );
+  const mealPresentNames = MEAL_TYPES.reduce((acc, mealType) => {
+    acc[mealType] = attendances.filter((a) => a.mealType === mealType && a.status === AttendanceStatus.PRESENT).map((a) => a.user.name);
+    return acc;
+  }, { [MealType.BREAKFAST]: [] as string[], [MealType.LUNCH]: [] as string[] });
 
-  const myPresentMeals = new Set(
-    attendances.filter((a) => a.status === AttendanceStatus.PRESENT).map((a) => a.mealType),
-  );
+  const myPresentMeals = new Set(attendances.filter((a) => a.status === AttendanceStatus.PRESENT).map((a) => a.mealType));
 
   return (
-    <main dir="rtl" className="min-h-screen bg-zinc-950 p-8 text-right text-zinc-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8">
+      <div className="dashboard-aurora dashboard-aurora-one" />
+      <div className="dashboard-aurora dashboard-aurora-two" />
+      <div className="dashboard-aurora dashboard-aurora-three" />
+
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8">
+        <header className="dashboard-glass-card flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="mb-2 text-sm text-zinc-400">مدیریت حضور وعده‌های غذایی تیم</p>
+              <p className="mb-2 text-sm text-zinc-300">مدیریت حضور وعده‌های غذایی تیم</p>
               <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
+              <p className="mt-2 text-xs text-zinc-300">وضعیت ثبت حضور روزانه شما در یک نمای سازمانی.</p>
             </div>
-            <div className="text-sm text-zinc-300">
+            <div className="dashboard-muted-panel text-sm">
               <p>کاربر جاری: <span className="font-semibold">{currentUser.name}</span></p>
               <p>نقش: {roleLabels[currentUser.role]}</p>
             </div>
@@ -73,17 +60,12 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               <TehranClock />
               <ThemeToggle />
             </div>
-
-            <form action={logoutAction}>
-              <button type="submit" className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-100 transition hover:bg-zinc-800">
-                خروج از حساب
-              </button>
-            </form>
+            <form action={logoutAction}><button type="submit" className="dashboard-action-button">خروج از حساب</button></form>
           </div>
 
-          {params.error === "deadline" ? <p className="text-sm text-red-400">مهلت ثبت یا تغییر حضور برای این تاریخ گذشته است.</p> : null}
-          {params.error === "invalid-date" ? <p className="text-sm text-red-400">تاریخ انتخاب‌شده معتبر نیست.</p> : null}
-          {params.saved === "1" ? <p className="text-sm text-emerald-400">وضعیت حضور شما ذخیره شد.</p> : null}
+          {params.error === "deadline" ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">مهلت ثبت یا تغییر حضور برای این تاریخ گذشته است.</p> : null}
+          {params.error === "invalid-date" ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">تاریخ انتخاب‌شده معتبر نیست.</p> : null}
+          {params.saved === "1" ? <p className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200">وضعیت حضور شما ذخیره شد.</p> : null}
         </header>
 
         {isAdmin ? (
@@ -92,79 +74,47 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               {MEAL_TYPES.map((mealType) => {
                 const names = mealPresentNames[mealType];
                 return (
-                  <article key={mealType} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-                    <h2 className="text-lg font-semibold">{MEAL_LABELS[mealType]}</h2>
-                    <p className="mt-2 text-sm text-zinc-400">تاریخ انتخاب‌شده: {selectedDateKey}</p>
-                    <p className="mt-3 text-2xl font-bold">{names.length} نفر</p>
-                    {names.length > 0 ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {names.map((name) => (
-                          <span key={`${mealType}-${name}`} className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-200">{name}</span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-xs text-zinc-500">هنوز کسی ثبت نشده است.</p>
-                    )}
+                  <article key={mealType} className="dashboard-glass-card">
+                    <h2 className="text-lg font-semibold">{MEAL_LABELS[mealType]}</h2><p className="mt-2 text-sm text-zinc-300">تاریخ انتخاب‌شده: {selectedDateKey}</p><p className="mt-3 text-2xl font-bold">{names.length} نفر</p>
+                    {names.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{names.map((name) => <span key={`${mealType}-${name}`} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-zinc-100">{name}</span>)}</div> : <p className="mt-3 text-xs text-zinc-300">هنوز کسی ثبت نشده است.</p>}
                   </article>
                 );
               })}
             </section>
 
-            <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <section className="dashboard-glass-card">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">اعضای تیم</h2>
                 <div className="flex flex-wrap gap-3">
-                  <form action={generateNextWeekAttendanceAction}>
-                    <button type="submit" className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ساخت حضور هفته کاری آینده</button>
-                  </form>
-                  <Link href="/settings/weekly-plan" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">تنظیم برنامه هفتگی</Link>
-                  <Link href="/settings/users" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">مدیریت کاربران</Link>
-                  <Link href="/reports" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">گزارش‌ها</Link>
+                  <form action={generateNextWeekAttendanceAction}><button type="submit" className="dashboard-primary-button">ساخت حضور هفته کاری آینده</button></form>
+                  <Link href="/settings/weekly-plan" className="dashboard-action-button">تنظیم برنامه هفتگی</Link>
+                  <Link href="/settings/users" className="dashboard-action-button">مدیریت کاربران</Link>
+                  <Link href="/reports" className="dashboard-action-button">گزارش‌ها</Link>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-xl border border-zinc-800">
-                <table className="w-full text-right text-sm">
-                  <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">برنامه‌های هفتگی فعال</th></tr></thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id} className="border-b border-zinc-800"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{user.weeklyPreferences.length}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="overflow-hidden rounded-xl border border-white/10">
+                <table className="w-full text-right text-sm"><thead className="border-b border-white/10 bg-white/5 text-zinc-300"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">برنامه‌های هفتگی فعال</th></tr></thead><tbody>{users.map((user) => <tr key={user.id} className="border-b border-white/10"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{user.weeklyPreferences.length}</td></tr>)}</tbody></table>
               </div>
             </section>
           </>
         ) : (
           <>
-            <MonthlyAttendanceBoard userId={currentUser.id} />
-            <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <section className="dashboard-glass-card">
               <h2 className="mb-4 text-xl font-semibold">حضور من در تاریخ انتخاب‌شده</h2>
               <form action={updateMyAttendanceAction} className="space-y-4">
                 <input type="hidden" name="date" value={selectedDateKey} />
-
                 {MEAL_TYPES.map((mealType) => (
-                  <label key={mealType} className="flex items-center gap-3 text-sm">
-                    <input
-                      type="checkbox"
-                      name={`meal:${mealType}`}
-                      defaultChecked={myPresentMeals.has(mealType)}
-                      disabled={!canEditSelectedDate}
-                    />
+                  <label key={mealType} className="dashboard-muted-panel flex items-center justify-between text-sm">
                     <span>{MEAL_LABELS[mealType]}</span>
+                    <input className="dashboard-checkbox" type="checkbox" name={`meal:${mealType}`} defaultChecked={myPresentMeals.has(mealType)} disabled={!canEditSelectedDate} />
                   </label>
                 ))}
-
-                {!canEditSelectedDate ? (
-                  <p className="text-sm text-amber-300">مهلت تغییر این تاریخ گذشته است.</p>
-                ) : null}
-
-                {canEditSelectedDate ? (
-                  <button type="submit" className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ذخیره وضعیت حضور</button>
-                ) : null}
-
-                <p className="text-xs text-zinc-500">مهلت این تاریخ: {formatPersianDateTime(deadline)}</p>
+                {!canEditSelectedDate ? <p className="text-sm text-amber-300">مهلت تغییر این تاریخ گذشته است.</p> : null}
+                {canEditSelectedDate ? <button type="submit" className="dashboard-primary-button">ذخیره وضعیت حضور</button> : null}
+                <p className="text-xs text-zinc-300">مهلت این تاریخ: {formatPersianDateTime(deadline)}</p>
               </form>
             </section>
+            <MonthlyAttendanceBoard userId={currentUser.id} />
           </>
         )}
       </div>

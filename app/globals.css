@@ -295,3 +295,39 @@ body {
     transition: none !important;
   }
 }
+@keyframes dashboard-aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(14px, -18px, 0) scale(1.04); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.dashboard-aurora-shell {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 18%, rgb(56 189 248 / 0.14), transparent 35%),
+    radial-gradient(circle at 86% 12%, rgb(129 140 248 / 0.16), transparent 34%),
+    radial-gradient(circle at 48% 84%, rgb(20 184 166 / 0.12), transparent 36%),
+    linear-gradient(160deg, rgb(9 14 28) 0%, rgb(17 24 39) 56%, rgb(10 18 30) 100%);
+}
+.dashboard-aurora { position: absolute; border-radius: 9999px; filter: blur(54px); opacity: .7; mix-blend-mode: screen; animation: dashboard-aurora-drift 14s ease-in-out infinite; pointer-events:none; }
+.dashboard-aurora-one { top: 6%; right: 4%; width: 18rem; height: 18rem; background: rgb(34 211 238 / 0.26); }
+.dashboard-aurora-two { bottom: 8%; left: 4%; width: 22rem; height: 22rem; background: rgb(129 140 248 / 0.24); animation-delay: -5s; }
+.dashboard-aurora-three { top: 42%; left: 42%; width: 16rem; height: 16rem; background: rgb(45 212 191 / 0.18); animation-delay: -9s; }
+
+.dashboard-glass-card { @apply rounded-3xl border border-white/15 bg-white/10 p-6 text-zinc-50 shadow-xl shadow-black/25 backdrop-blur-xl dark:bg-white/[0.04]; }
+.dashboard-soft-card { @apply rounded-2xl border border-white/10 bg-white/8 p-4 shadow-md shadow-black/20 backdrop-blur; }
+.dashboard-muted-panel { @apply rounded-xl border border-white/10 bg-white/8 px-3 py-2 text-zinc-200/90 dark:bg-white/[0.03]; }
+.dashboard-action-button { @apply rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/20; }
+.dashboard-primary-button { @apply rounded-2xl bg-zinc-50 px-5 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60; }
+.dashboard-checkbox { @apply size-4 rounded border-white/30 bg-transparent text-zinc-100 accent-zinc-100; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-aurora,
+  .login-aurora,
+  .animate-subtle-pulse,
+  .animate-soft-fade-up,
+  .login-aurora-shell::before {
+    animation: none !important;
+  }
+}

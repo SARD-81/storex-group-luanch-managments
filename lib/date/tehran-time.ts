@@ -13,6 +13,16 @@ export function formatPersianDateTime(date: Date) {
   }).format(date);
 }
 
+
+export function formatPersianTime(date: Date) {
+  return new Intl.DateTimeFormat("fa-IR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: TEHRAN_TIME_ZONE,
+  }).format(date);
+}
+
 export function getTehranDateKey(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-US-u-ca-gregory", {
     timeZone: TEHRAN_TIME_ZONE,
