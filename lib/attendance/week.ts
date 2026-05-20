@@ -1,12 +1,12 @@
-export const WEEK_DAYS = [
-  { dayOfWeek: 0, label: "Saturday", faLabel: "شنبه" },
-  { dayOfWeek: 1, label: "Sunday", faLabel: "یکشنبه" },
-  { dayOfWeek: 2, label: "Monday", faLabel: "دوشنبه" },
-  { dayOfWeek: 3, label: "Tuesday", faLabel: "سه‌شنبه" },
-  { dayOfWeek: 4, label: "Wednesday", faLabel: "چهارشنبه" },
-  { dayOfWeek: 5, label: "Thursday", faLabel: "پنجشنبه" },
-  { dayOfWeek: 6, label: "Friday", faLabel: "جمعه" },
+export const WORK_DAYS = [
+  { dayOfWeek: 0, label: "شنبه" },
+  { dayOfWeek: 1, label: "یکشنبه" },
+  { dayOfWeek: 2, label: "دوشنبه" },
+  { dayOfWeek: 3, label: "سه‌شنبه" },
+  { dayOfWeek: 4, label: "چهارشنبه" },
 ] as const;
+
+export const WORK_DAY_COUNT = WORK_DAYS.length;
 
 export function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -23,12 +23,10 @@ function createUtcDateOnly(year: number, month: number, day: number) {
 }
 
 function getAppDayOfWeek(date: Date) {
-  // JavaScript: Sunday = 0, Monday = 1, ..., Saturday = 6
-  // App: Saturday = 0, Sunday = 1, ..., Friday = 6
   return (date.getDay() + 1) % 7;
 }
 
-export function getNextWeekStartDate(baseDate = new Date()) {
+export function getNextWorkWeekStartDate(baseDate = new Date()) {
   const appDay = getAppDayOfWeek(baseDate);
   const daysUntilNextSaturday = appDay === 0 ? 7 : 7 - appDay;
 
@@ -41,9 +39,9 @@ export function getNextWeekStartDate(baseDate = new Date()) {
   return addDays(today, daysUntilNextSaturday);
 }
 
-export function getNextWeekRange(baseDate = new Date()) {
-  const weekStart = getNextWeekStartDate(baseDate);
-  const weekEndExclusive = addDays(weekStart, 7);
+export function getNextWorkWeekRange(baseDate = new Date()) {
+  const weekStart = getNextWorkWeekStartDate(baseDate);
+  const weekEndExclusive = addDays(weekStart, WORK_DAY_COUNT);
 
   return {
     weekStart,
@@ -51,8 +49,8 @@ export function getNextWeekRange(baseDate = new Date()) {
   };
 }
 
-export function getWeekDays(weekStart: Date) {
-  return WEEK_DAYS.map((day) => {
+export function getWorkWeekDays(weekStart: Date) {
+  return WORK_DAYS.map((day) => {
     const date = addDays(weekStart, day.dayOfWeek);
 
     return {
@@ -61,4 +59,8 @@ export function getWeekDays(weekStart: Date) {
       dateKey: toDateKey(date),
     };
   });
+}
+
+export function isWorkDay(dayOfWeek: number) {
+  return dayOfWeek >= 0 && dayOfWeek < WORK_DAY_COUNT;
 }

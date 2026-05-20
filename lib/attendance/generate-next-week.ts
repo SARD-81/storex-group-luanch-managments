@@ -1,13 +1,21 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import { addDays, getNextWeekRange } from "@/lib/attendance/week";
+import {
+  addDays,
+  getNextWorkWeekRange,
+  isWorkDay,
+} from "@/lib/attendance/week";
 
 export async function generateNextWeekAttendance() {
-  const { weekStart, weekEndExclusive } = getNextWeekRange();
+  const { weekStart, weekEndExclusive } = getNextWorkWeekRange();
 
   const preferences = await prisma.weeklyMealPreference.findMany({
     where: {
       isEnabled: true,
+      dayOfWeek: {
+        gte: 0,
+        lte: 4,
+      },
       user: {
         isActive: true,
       },
@@ -19,14 +27,16 @@ export async function generateNextWeekAttendance() {
     },
   });
 
-  const attendanceRows = preferences.map((preference) => ({
-    userId: preference.userId,
-    date: addDays(weekStart, preference.dayOfWeek),
-    mealType: preference.mealType,
-    status: AttendanceStatus.PRESENT,
-    generatedFromWeeklyPlan: true,
-    manuallyEdited: false,
-  }));
+  const attendanceRows = preferences
+    .filter((preference) => isWorkDay(preference.dayOfWeek))
+    .map((preference) => ({
+      userId: preference.userId,
+      date: addDays(weekStart, preference.dayOfWeek),
+      mealType: preference.mealType,
+      status: AttendanceStatus.PRESENT,
+      generatedFromWeeklyPlan: true,
+      manuallyEdited: false,
+    }));
 
   if (attendanceRows.length === 0) {
     return {

@@ -1,6 +1,10 @@
 import { MealType } from "@/app/generated/prisma/client";
 import { generateNextWeekAttendanceAction } from "@/actions/attendance";
-import { getNextWeekRange, getWeekDays, toDateKey } from "@/lib/attendance/week";
+import {
+  getNextWorkWeekRange,
+  getWorkWeekDays,
+  toDateKey,
+} from "@/lib/attendance/week";
 import { prisma } from "@/lib/prisma";
 
 const mealLabels = {
@@ -20,8 +24,8 @@ function createEmptyBucket(): AttendanceBucket {
 }
 
 export default async function Home() {
-  const { weekStart, weekEndExclusive } = getNextWeekRange();
-  const weekDays = getWeekDays(weekStart);
+  const { weekStart, weekEndExclusive } = getNextWorkWeekRange();
+  const weekDays = getWorkWeekDays(weekStart);
 
   const [users, attendances] = await Promise.all([
     prisma.user.findMany({
@@ -32,6 +36,10 @@ export default async function Home() {
         weeklyPreferences: {
           where: {
             isEnabled: true,
+            dayOfWeek: {
+              gte: 0,
+              lte: 4,
+            },
           },
         },
       },
@@ -85,14 +93,21 @@ export default async function Home() {
   const totalGeneratedAttendances = attendances.length;
 
   return (
-    <main className="min-h-screen bg-zinc-950 p-8 text-zinc-50">
+    <main
+      dir="rtl"
+      className="min-h-screen bg-zinc-950 p-8 text-right text-zinc-50"
+    >
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="mb-2 text-sm text-zinc-400">Team meal management</p>
-            <h1 className="text-3xl font-bold">Lunch Dashboard</h1>
+            <p className="mb-2 text-sm text-zinc-400">
+              مدیریت حضور وعده‌های غذایی تیم
+            </p>
+
+            <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
+
             <p className="mt-2 text-sm text-zinc-400">
-              هفته آینده: {toDateKey(weekStart)} تا{" "}
+              هفته کاری آینده: {toDateKey(weekStart)} تا{" "}
               {toDateKey(new Date(weekEndExclusive.getTime() - 1))}
             </p>
           </div>
@@ -102,39 +117,41 @@ export default async function Home() {
               type="submit"
               className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
             >
-              Generate next week attendance
+              ساخت حضور هفته کاری آینده
             </button>
           </form>
         </header>
 
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Active users</p>
+            <p className="text-sm text-zinc-400">اعضای فعال</p>
             <p className="mt-3 text-3xl font-bold">{users.length}</p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Weekly preferences</p>
+            <p className="text-sm text-zinc-400">برنامه‌های هفتگی فعال</p>
             <p className="mt-3 text-3xl font-bold">{totalWeeklyPreferences}</p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="text-sm text-zinc-400">Generated attendances</p>
+            <p className="text-sm text-zinc-400">حضورهای ساخته‌شده</p>
             <p className="mt-3 text-3xl font-bold">{totalGeneratedAttendances}</p>
           </div>
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Next week attendance</h2>
+          <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <h2 className="text-xl font-semibold">حضور هفته کاری آینده</h2>
+
             <p className="text-sm text-zinc-400">
-              براساس برنامه هفتگی کاربران
+              فقط روزهای شنبه تا چهارشنبه نمایش داده می‌شوند.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {weekDays.map((day) => {
-              const bucket = attendanceByDate.get(day.dateKey) ?? createEmptyBucket();
+              const bucket =
+                attendanceByDate.get(day.dateKey) ?? createEmptyBucket();
 
               return (
                 <article
@@ -142,7 +159,7 @@ export default async function Home() {
                   className="rounded-xl border border-zinc-800 bg-zinc-950 p-4"
                 >
                   <div className="mb-4">
-                    <h3 className="font-semibold">{day.faLabel}</h3>
+                    <h3 className="font-semibold">{day.label}</h3>
                     <p className="text-sm text-zinc-500">{day.dateKey}</p>
                   </div>
 
@@ -156,6 +173,7 @@ export default async function Home() {
                             <p className="text-sm font-medium">
                               {mealLabels[mealType]}
                             </p>
+
                             <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
                               {names.length} نفر
                             </span>
@@ -188,15 +206,15 @@ export default async function Home() {
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h2 className="mb-5 text-xl font-semibold">Team members</h2>
+          <h2 className="mb-5 text-xl font-semibold">اعضای تیم</h2>
 
           <div className="overflow-hidden rounded-xl border border-zinc-800">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-right text-sm">
               <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
                 <tr>
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Enabled weekly preferences</th>
+                  <th className="p-4">نام</th>
+                  <th className="p-4">ایمیل</th>
+                  <th className="p-4">برنامه‌های هفتگی فعال</th>
                 </tr>
               </thead>
 
