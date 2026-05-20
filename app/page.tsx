@@ -8,7 +8,10 @@ import {
   getWorkWeekDays,
   toDateKey,
 } from "@/lib/attendance/week";
-import { prisma } from "@/lib/prisma";
+import {
+  getAdminDashboardData,
+  getUserDashboardData,
+} from "@/lib/dashboard/get-dashboard-data";
 
 const mealLabels = {
   [MealType.BREAKFAST]: "صبحانه",
@@ -38,48 +41,11 @@ export default async function Home() {
   const { weekStart, weekEndExclusive } = getNextWorkWeekRange();
   const weekDays = getWorkWeekDays(weekStart);
 
-const [users, attendances] = await Promise.all([
-  prisma.user.findMany({
-    where: {
-      isActive: true,
-      ...(isAdmin ? {} : { id: currentUser.id }),
-    },
-    include: {
-      weeklyPreferences: {
-        where: {
-          isEnabled: true,
-          dayOfWeek: {
-            gte: 0,
-            lte: 4,
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  }),
-  prisma.mealAttendance.findMany({
-    where: {
-      date: {
-        gte: weekStart,
-        lt: weekEndExclusive,
-      },
-      ...(isAdmin ? {} : { userId: currentUser.id }),
-    },
-    include: {
-      user: true,
-    },
-    orderBy: [
-      {
-        date: "asc",
-      },
-      {
-        mealType: "asc",
-      },
-    ],
-  }),
-]);
+const dashboardData = isAdmin
+  ? await getAdminDashboardData()
+  : await getUserDashboardData(currentUser.id);
+
+const { users, attendances } = dashboardData;
 
   const attendanceByDate = new Map<string, AttendanceBucket>();
 
@@ -261,7 +227,31 @@ const [users, attendances] = await Promise.all([
 
         {isAdmin ? (
   <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-    ...
+    <h2 className="mb-5 text-xl font-semibold">اعضای تیم</h2>
+
+    <div className="overflow-hidden rounded-xl border border-zinc-800">
+      <table className="w-full text-right text-sm">
+        <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+          <tr>
+            <th className="p-4">نام</th>
+            <th className="p-4">نام کاربری</th>
+            <th className="p-4">نقش</th>
+            <th className="p-4">برنامه‌های هفتگی فعال</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="border-b border-zinc-800">
+              <td className="p-4">{user.name}</td>
+              <td className="p-4">{user.username}</td>
+              <td className="p-4">{roleLabels[user.role]}</td>
+              <td className="p-4">{user.weeklyPreferences.length}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   </section>
 ) : (
   <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
@@ -273,6 +263,15 @@ const [users, attendances] = await Promise.all([
     </div>
   </section>
 )}
+  <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+    <h2 className="mb-3 text-xl font-semibold">اطلاعات حساب من</h2>
+    <div className="grid gap-3 text-sm text-zinc-300 md:grid-cols-3">
+      <p>نام: {currentUser.name}</p>
+      <p>نام کاربری: {currentUser.username}</p>
+      <p>نقش: {roleLabels[currentUser.role]}</p>
+    </div>
+  </section>
+)
       </div>
     </main>
   );

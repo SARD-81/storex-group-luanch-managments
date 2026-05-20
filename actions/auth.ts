@@ -7,17 +7,17 @@ import { prisma } from "@/lib/prisma";
 
 export async function loginAction(formData: FormData) {
   const username = formData.get("username")?.toString().trim().toLowerCase();
-const password = formData.get("password")?.toString();
+  const password = formData.get("password")?.toString();
 
-if (!username || !password) {
-  redirect("/login?error=missing");
-}
+  if (!username || !password) {
+    redirect("/login?error=missing");
+  }
 
-const user = await prisma.user.findUnique({
-  where: {
-    username,
-  },
-});
+  const user = await prisma.user.findUnique({
+    where: {
+      username,
+    },
+  });
 
   if (!user || !user.passwordHash || !user.isActive) {
     redirect("/login?error=invalid");
@@ -30,10 +30,12 @@ const user = await prisma.user.findUnique({
   }
 
   await createSession(user.id);
+
   redirect("/");
 }
 
 export async function logoutAction() {
   await deleteCurrentSession();
+
   redirect("/login");
 }
