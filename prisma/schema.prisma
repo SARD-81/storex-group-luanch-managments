@@ -11,3 +11,66 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+model User {
+  id       String  @id @default(cuid())
+  name     String
+  email    String? @unique
+  isActive Boolean @default(true)
+
+  weeklyPreferences WeeklyMealPreference[]
+  attendances        MealAttendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WeeklyMealPreference {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 0 = Saturday, 1 = Sunday, ..., 6 = Friday
+  dayOfWeek Int
+
+  mealType  MealType
+  isEnabled Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, dayOfWeek, mealType])
+  @@index([dayOfWeek, mealType])
+}
+
+model MealAttendance {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date     DateTime @db.Date
+  mealType MealType
+  status   AttendanceStatus @default(PRESENT)
+
+  generatedFromWeeklyPlan Boolean @default(false)
+  manuallyEdited          Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, mealType])
+  @@index([date, mealType])
+  @@index([userId, date])
+}
