@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { UserRole, MealType } from "@/app/generated/prisma/client";
+import { MealType, UserRole } from "@/app/generated/prisma/client";
+import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { logoutAction } from "@/actions/auth";
 import { generateNextWeekAttendanceAction } from "@/actions/attendance";
 import { requireUser } from "@/lib/auth/session";
@@ -12,17 +13,10 @@ import {
   getUserDashboardData,
 } from "@/lib/dashboard/get-dashboard-data";
 
-const mealLabels = {
-  [MealType.BREAKFAST]: "صبحانه",
-  [MealType.LUNCH]: "ناهار",
-};
-
 const roleLabels = {
   [UserRole.ADMIN]: "مدیر",
   [UserRole.USER]: "کاربر",
 };
-
-const mealTypes = [MealType.BREAKFAST, MealType.LUNCH] as const;
 
 type AttendanceBucket = Record<MealType, string[]>;
 
@@ -181,14 +175,14 @@ const weekDays = getWorkWeekDays(weekStart);
                   </div>
 
                   <div className="space-y-4">
-                    {mealTypes.map((mealType) => {
+                    {MEAL_TYPES.map((mealType) => {
                       const names = bucket[mealType];
 
                       return (
                         <div key={mealType}>
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-sm font-medium">
-                              {mealLabels[mealType]}
+                              {MEAL_LABELS[mealType]}
                             </p>
 
                             <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
@@ -197,21 +191,25 @@ const weekDays = getWorkWeekDays(weekStart);
                           </div>
 
                           {names.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {names.map((name) => (
-                                <span
-                                  key={name}
-                                  className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-200"
-                                >
-                                  {name}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-zinc-500">
-                              هنوز کسی ثبت نشده است.
-                            </p>
-                          )}
+  isAdmin ? (
+    <div className="flex flex-wrap gap-2">
+      {names.map((name) => (
+        <span
+          key={name}
+          className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-200"
+        >
+          {name}
+        </span>
+      ))}
+    </div>
+  ) : (
+    <p className="text-sm text-emerald-400">حضور شما ثبت شده است.</p>
+  )
+) : (
+  <p className="text-xs text-zinc-500">
+    {isAdmin ? "هنوز کسی ثبت نشده است." : "برای این وعده حضور ندارید."}
+  </p>
+)}
                         </div>
                       );
                     })}
