@@ -4,6 +4,7 @@ import { generateNextWeekAttendanceAction } from "@/actions/attendance";
 import { logoutAction } from "@/actions/auth";
 import { updateMyAttendanceAction } from "@/actions/my-attendance";
 import { AttendanceDatePicker } from "@/components/attendance/attendance-date-picker";
+import { MonthlyAttendanceBoard } from "@/components/attendance/monthly-attendance-board";
 import { TehranClock } from "@/components/attendance/tehran-clock";
 import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
@@ -133,34 +134,37 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
             </section>
           </>
         ) : (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-            <h2 className="mb-4 text-xl font-semibold">حضور من در تاریخ انتخاب‌شده</h2>
-            <form action={updateMyAttendanceAction} className="space-y-4">
-              <input type="hidden" name="date" value={selectedDateKey} />
+          <>
+            <MonthlyAttendanceBoard userId={currentUser.id} />
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+              <h2 className="mb-4 text-xl font-semibold">حضور من در تاریخ انتخاب‌شده</h2>
+              <form action={updateMyAttendanceAction} className="space-y-4">
+                <input type="hidden" name="date" value={selectedDateKey} />
 
-              {MEAL_TYPES.map((mealType) => (
-                <label key={mealType} className="flex items-center gap-3 text-sm">
-                  <input
-                    type="checkbox"
-                    name={`meal:${mealType}`}
-                    defaultChecked={myPresentMeals.has(mealType)}
-                    disabled={!canEditSelectedDate}
-                  />
-                  <span>{MEAL_LABELS[mealType]}</span>
-                </label>
-              ))}
+                {MEAL_TYPES.map((mealType) => (
+                  <label key={mealType} className="flex items-center gap-3 text-sm">
+                    <input
+                      type="checkbox"
+                      name={`meal:${mealType}`}
+                      defaultChecked={myPresentMeals.has(mealType)}
+                      disabled={!canEditSelectedDate}
+                    />
+                    <span>{MEAL_LABELS[mealType]}</span>
+                  </label>
+                ))}
 
-              {!canEditSelectedDate ? (
-                <p className="text-sm text-amber-300">مهلت تغییر این تاریخ گذشته است.</p>
-              ) : null}
+                {!canEditSelectedDate ? (
+                  <p className="text-sm text-amber-300">مهلت تغییر این تاریخ گذشته است.</p>
+                ) : null}
 
-              {canEditSelectedDate ? (
-                <button type="submit" className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ذخیره وضعیت حضور</button>
-              ) : null}
+                {canEditSelectedDate ? (
+                  <button type="submit" className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200">ذخیره وضعیت حضور</button>
+                ) : null}
 
-              <p className="text-xs text-zinc-500">مهلت این تاریخ: {formatPersianDateTime(deadline)}</p>
-            </form>
-          </section>
+                <p className="text-xs text-zinc-500">مهلت این تاریخ: {formatPersianDateTime(deadline)}</p>
+              </form>
+            </section>
+          </>
         )}
       </div>
     </main>
