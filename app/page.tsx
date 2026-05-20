@@ -119,6 +119,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
                   </form>
                   <Link href="/settings/weekly-plan" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">تنظیم برنامه هفتگی</Link>
                   <Link href="/settings/users" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">مدیریت کاربران</Link>
+                  <Link href="/reports" className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800">گزارش‌ها</Link>
                 </div>
               </div>
               <div className="overflow-hidden rounded-xl border border-zinc-800">

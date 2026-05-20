@@ -10,7 +10,8 @@ export async function MonthlyAttendanceBoard({ userId }: MonthlyAttendanceBoardP
 
   return (
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <h2 className="mb-4 text-xl font-semibold">برنامه حضور ماه جاری من</h2>
+      <h2 className="mb-2 text-xl font-semibold">برنامه حضور ماه جاری من</h2>
+      <p className="mb-4 text-sm text-zinc-400">تمام روزهای ماه جلالی نمایش داده می‌شوند و پنجشنبه و جمعه به‌عنوان روز تعطیل مشخص هستند.</p>
       <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
         {days.map((day) => (
           <MonthDayCard key={day.dateKey} day={day} />
