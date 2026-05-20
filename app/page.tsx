@@ -185,9 +185,11 @@ const weekDays = getWorkWeekDays(weekStart);
                               {MEAL_LABELS[mealType]}
                             </p>
 
-                            <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
-                              {names.length} نفر
-                            </span>
+                            {isAdmin ? (
+  <span className="rounded-full bg-zinc-800 px-2 py-1 text-xs text-zinc-300">
+    {names.length} نفر
+  </span>
+) : null}
                           </div>
 
                           {names.length > 0 ? (
