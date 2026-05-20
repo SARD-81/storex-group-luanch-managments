@@ -1,17 +1,37 @@
 import { isWorkDay } from "@/lib/attendance/week";
-import { getDateKey, getTodayDateKey } from "@/lib/date/date-key";
+import { getDateKey, parseDateKey } from "@/lib/date/date-key";
+import {
+  createTehranDateTimeInstant,
+  getTehranDateKey,
+} from "@/lib/date/tehran-time";
+
+function addDaysToDateKey(dateKey: string, days: number) {
+  const date = parseDateKey(dateKey);
+
+  if (!date) {
+    return dateKey;
+  }
+
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return getDateKey(date);
+}
 
 export function getMaxSelectableDate(now = new Date()) {
-  const result = new Date(now);
-  result.setMonth(result.getMonth() + 1);
+  const todayKey = getTehranDateKey(now);
+  const today = parseDateKey(todayKey) ?? now;
+  const result = new Date(today);
+
+  result.setUTCMonth(result.getUTCMonth() + 1);
+
   return result;
 }
 
 export function getAttendanceDeadline(targetDate: Date) {
-  const deadline = new Date(targetDate);
-  deadline.setUTCDate(deadline.getUTCDate() - 1);
-  deadline.setUTCHours(8, 0, 0, 0);
-  return deadline;
+  const targetDateKey = getDateKey(targetDate);
+  const previousDateKey = addDaysToDateKey(targetDateKey, -1);
+
+  return createTehranDateTimeInstant(previousDateKey, 8, 0);
 }
 
 export function canEditAttendance(targetDate: Date, now = new Date()) {
@@ -23,7 +43,7 @@ export function getAppDayOfWeekFromDate(date: Date) {
 }
 
 export function isDateWithinSelectableRange(targetDate: Date, now = new Date()) {
-  const todayKey = getTodayDateKey(now);
+  const todayKey = getTehranDateKey(now);
   const maxDateKey = getDateKey(getMaxSelectableDate(now));
   const targetKey = getDateKey(targetDate);
 

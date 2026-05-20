@@ -1,59 +1,74 @@
 "use client";
 
-import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { parseDateKey, getDateKey } from "@/lib/date/date-key";
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persianFa from "react-date-object/locales/persian_fa";
+import DateObject from "react-date-object";
+import { getDateKey } from "@/lib/date/date-key";
 import { isSelectableAttendanceDate } from "@/lib/attendance/rules";
+import { Button } from "@/components/ui/button";
 
 type AttendanceDatePickerProps = {
   selectedDateKey: string;
 };
 
-function formatPersianDate(date: Date) {
-  return new Intl.DateTimeFormat("fa-IR", {
-    dateStyle: "full",
-    timeZone: "UTC",
-  }).format(date);
+function dateKeyToDateObject(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+
+  return new DateObject({
+    date: new Date(Date.UTC(year, month - 1, day)),
+    calendar: persian,
+    locale: persianFa,
+  });
 }
 
-export function AttendanceDatePicker({ selectedDateKey }: AttendanceDatePickerProps) {
+function dateObjectToGregorianDate(value: DateObject) {
+  const date = value.toDate();
+
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+}
+
+export function AttendanceDatePicker({
+  selectedDateKey,
+}: AttendanceDatePickerProps) {
   const router = useRouter();
-  const selectedDate = parseDateKey(selectedDateKey);
-
-  const selectedText = useMemo(() => {
-    if (!selectedDate) {
-      return "انتخاب تاریخ";
-    }
-
-    return formatPersianDate(selectedDate);
-  }, [selectedDate]);
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="justify-start text-right">
-          {selectedText}
+    <DatePicker
+      calendar={persian}
+      locale={persianFa}
+      value={dateKeyToDateObject(selectedDateKey)}
+      calendarPosition="bottom-right"
+      render={(value, openCalendar) => (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={openCalendar}
+          className="min-w-56 justify-start text-right"
+        >
+          {value || "انتخاب تاریخ"}
         </Button>
-      </PopoverTrigger>
+      )}
+      mapDays={({ date }) => {
+        const gregorianDate = dateObjectToGregorianDate(date);
+        const disabled = !isSelectableAttendanceDate(gregorianDate);
 
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selectedDate ?? undefined}
-          onSelect={(date) => {
-            if (!date) {
-              return;
-            }
+        return {
+          disabled,
+          className: disabled ? "opacity-40" : "",
+        };
+      }}
+      onChange={(value) => {
+        if (!value || Array.isArray(value)) {
+          return;
+        }
 
-            const dateKey = getDateKey(date);
-            router.push(`/?date=${dateKey}`);
-          }}
-          disabled={(date) => !isSelectableAttendanceDate(date, new Date())}
-        />
-      </PopoverContent>
-    </Popover>
+        const gregorianDate = dateObjectToGregorianDate(value);
+        router.push(`/?date=${getDateKey(gregorianDate)}`);
+      }}
+    />
   );
 }
