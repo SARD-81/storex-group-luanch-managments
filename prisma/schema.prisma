@@ -22,17 +22,37 @@ enum AttendanceStatus {
   ABSENT
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
-  id       String  @id @default(cuid())
-  name     String
-  email    String? @unique
-  isActive Boolean @default(true)
+  id           String   @id @default(cuid())
+  name         String
+  email        String?  @unique
+  passwordHash String?
+  role         UserRole @default(USER)
+  isActive     Boolean  @default(true)
 
   weeklyPreferences WeeklyMealPreference[]
   attendances        MealAttendance[]
+  sessions           Session[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model WeeklyMealPreference {
@@ -60,7 +80,7 @@ model MealAttendance {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  date     DateTime @db.Date
+  date     DateTime         @db.Date
   mealType MealType
   status   AttendanceStatus @default(PRESENT)
 
