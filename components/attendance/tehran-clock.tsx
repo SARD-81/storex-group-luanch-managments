@@ -6,10 +6,11 @@ type TimeResponse = {
   nowIso: string;
   formatted: string;
   source: string;
+  time?: string;
 };
 
 export function TehranClock() {
-  const [formatted, setFormatted] = useState<string>("در حال دریافت زمان تهران...");
+  const [formatted, setFormatted] = useState<string>("--:--");
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function TehranClock() {
           return;
         }
 
-        setFormatted(data.formatted);
+        setFormatted(data.time ?? data.formatted);
         setHasError(false);
       } catch {
         if (!mounted) {
@@ -50,8 +51,8 @@ export function TehranClock() {
   }, []);
 
   return (
-    <p className="text-sm text-zinc-400">
-      {hasError ? "نمایش ساعت تهران موقتاً در دسترس نیست." : formatted}
+    <p className="rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-zinc-200 backdrop-blur dark:bg-white/[0.04]">
+      {hasError ? "ساعت تهران --:--" : `ساعت تهران ${formatted}`}
     </p>
   );
 }

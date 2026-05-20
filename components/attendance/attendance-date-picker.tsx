@@ -47,7 +47,7 @@ export function AttendanceDatePicker({
           type="button"
           variant="outline"
           onClick={openCalendar}
-          className="min-w-56 justify-start text-right"
+          className="h-10 min-w-36 justify-center rounded-2xl border-white/10 bg-white/10 px-4 text-center text-sm font-semibold backdrop-blur transition hover:bg-white/15 dark:bg-white/[0.04]"
         >
           {value || "انتخاب تاریخ"}
         </Button>

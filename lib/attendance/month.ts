@@ -71,12 +71,16 @@ export function getCurrentJalaliMonthDays(now = new Date()) {
     const selectable = workDay && isSelectableAttendanceDate(currentDate, now);
     const deadline = getAttendanceDeadline(currentDate);
 
+    if (!workDay) {
+      continue;
+    }
+
     days.push({
       date: currentDate,
       dateKey,
       dayNameFa: dayNameFormatter.format(currentDate),
       persianDateLabel: dateLabelFormatter.format(currentDate),
-      isWorkDay: workDay,
+      isWorkDay: true,
       canEdit: selectable && canEditAttendance(currentDate, now),
       isSelectable: selectable,
       deadline,
