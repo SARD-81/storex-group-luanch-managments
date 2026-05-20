@@ -1,5 +1,8 @@
-import { MealType } from "@/app/generated/prisma/client";
+import Link from "next/link";
+import { UserRole, MealType } from "@/app/generated/prisma/client";
+import { logoutAction } from "@/actions/auth";
 import { generateNextWeekAttendanceAction } from "@/actions/attendance";
+import { requireUser } from "@/lib/auth/session";
 import {
   getNextWorkWeekRange,
   getWorkWeekDays,
@@ -10,6 +13,11 @@ import { prisma } from "@/lib/prisma";
 const mealLabels = {
   [MealType.BREAKFAST]: "صبحانه",
   [MealType.LUNCH]: "ناهار",
+};
+
+const roleLabels = {
+  [UserRole.ADMIN]: "مدیر",
+  [UserRole.USER]: "کاربر",
 };
 
 const mealTypes = [MealType.BREAKFAST, MealType.LUNCH] as const;
@@ -24,6 +32,9 @@ function createEmptyBucket(): AttendanceBucket {
 }
 
 export default async function Home() {
+  const currentUser = await requireUser();
+  const isAdmin = currentUser.role === UserRole.ADMIN;
+
   const { weekStart, weekEndExclusive } = getNextWorkWeekRange();
   const weekDays = getWorkWeekDays(weekStart);
 
@@ -98,28 +109,61 @@ export default async function Home() {
       className="min-h-screen bg-zinc-950 p-8 text-right text-zinc-50"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="mb-2 text-sm text-zinc-400">
-              مدیریت حضور وعده‌های غذایی تیم
-            </p>
+        <header className="flex flex-col gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="mb-2 text-sm text-zinc-400">
+                مدیریت حضور وعده‌های غذایی تیم
+              </p>
 
-            <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
+              <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
 
-            <p className="mt-2 text-sm text-zinc-400">
-              هفته کاری آینده: {toDateKey(weekStart)} تا{" "}
-              {toDateKey(new Date(weekEndExclusive.getTime() - 1))}
-            </p>
+              <p className="mt-2 text-sm text-zinc-400">
+                هفته کاری آینده: {toDateKey(weekStart)} تا{" "}
+                {toDateKey(new Date(weekEndExclusive.getTime() - 1))}
+              </p>
+            </div>
+
+            <div className="text-sm text-zinc-300">
+              <p>
+                کاربر جاری: <span className="font-semibold">{currentUser.name}</span>
+              </p>
+              <p>نقش: {roleLabels[currentUser.role]}</p>
+            </div>
           </div>
 
-          <form action={generateNextWeekAttendanceAction}>
-            <button
-              type="submit"
-              className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
-            >
-              ساخت حضور هفته کاری آینده
-            </button>
-          </form>
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              {isAdmin ? (
+                <form action={generateNextWeekAttendanceAction}>
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
+                  >
+                    ساخت حضور هفته کاری آینده
+                  </button>
+                </form>
+              ) : null}
+
+              {isAdmin ? (
+                <Link
+                  href="/settings/weekly-plan"
+                  className="rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-zinc-800"
+                >
+                  تنظیم برنامه هفتگی
+                </Link>
+              ) : null}
+            </div>
+
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-100 transition hover:bg-zinc-800"
+              >
+                خروج از حساب
+              </button>
+            </form>
+          </div>
         </header>
 
         <section className="grid gap-4 md:grid-cols-3">
