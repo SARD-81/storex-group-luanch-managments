@@ -261,15 +261,6 @@ const weekDays = getWorkWeekDays(weekStart);
     </div>
   </section>
 )}
-  <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-    <h2 className="mb-3 text-xl font-semibold">اطلاعات حساب من</h2>
-    <div className="grid gap-3 text-sm text-zinc-300 md:grid-cols-3">
-      <p>نام: {currentUser.name}</p>
-      <p>نام کاربری: {currentUser.username}</p>
-      <p>نقش: {roleLabels[currentUser.role]}</p>
-    </div>
-  </section>
-)
       </div>
     </main>
   );

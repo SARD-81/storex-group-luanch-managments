@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
-    "prisma:validate": "prisma validate",
-    "prisma:generate": "prisma generate",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio",
-    "db:migrate": "prisma migrate dev"
-  },
+  "dev": "next dev --webpack",
+  "dev:turbo": "next dev",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "prisma:validate": "prisma validate",
+  "prisma:generate": "prisma generate",
+  "db:seed": "prisma db seed",
+  "db:studio": "prisma studio",
+  "db:migrate": "prisma migrate dev"
+},
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
