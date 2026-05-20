@@ -1,8 +1,20 @@
-import { canEditAttendance, getAttendanceDeadline, isSelectableAttendanceDate } from "@/lib/attendance/rules";
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import {
+  canEditAttendance,
+  getAppDayOfWeekFromDate,
+  getAttendanceDeadline,
+  isSelectableAttendanceDate,
+} from "@/lib/attendance/rules";
+import { isWorkDay } from "@/lib/attendance/week";
 import { getDateKey } from "@/lib/date/date-key";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
 
-const dayNameFormatter = new Intl.DateTimeFormat("fa-IR", { weekday: "long", timeZone: "UTC" });
+const dayNameFormatter = new Intl.DateTimeFormat("fa-IR", {
+  weekday: "long",
+  timeZone: "UTC",
+});
+
 const dateLabelFormatter = new Intl.DateTimeFormat("fa-IR", {
   day: "numeric",
   month: "long",
@@ -10,29 +22,53 @@ const dateLabelFormatter = new Intl.DateTimeFormat("fa-IR", {
   timeZone: "UTC",
 });
 
-export function getCurrentMonthRange(now = new Date()) {
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+function dateObjectToUtcDateOnly(value: DateObject) {
+  const date = value.toDate();
+
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+}
+
+export function getCurrentJalaliMonthRange(now = new Date()) {
+  const nowInPersian = new DateObject({
+    date: now,
+    calendar: persian,
+  });
+
+  const monthStartInPersian = new DateObject({
+    calendar: persian,
+    year: nowInPersian.year,
+    month: nowInPersian.month.number,
+    day: 1,
+  });
+
+  const nextMonthStartInPersian = new DateObject(monthStartInPersian).add(
+    1,
+    "month",
+  );
 
   return {
-    monthStart,
-    nextMonthStart,
+    monthStart: dateObjectToUtcDateOnly(monthStartInPersian),
+    nextMonthStart: dateObjectToUtcDateOnly(nextMonthStartInPersian),
   };
 }
 
-export function getCurrentMonthWorkDays(now = new Date()) {
-  const { monthStart, nextMonthStart } = getCurrentMonthRange(now);
+export function getCurrentJalaliMonthDays(now = new Date()) {
+  const { monthStart, nextMonthStart } = getCurrentJalaliMonthRange(now);
   const todayKey = getTehranDateKey(now);
   const days = [];
 
-  for (let date = new Date(monthStart); date < nextMonthStart; date.setUTCDate(date.getUTCDate() + 1)) {
-    const dayOfWeek = (date.getUTCDay() + 1) % 7;
-    if (dayOfWeek < 0 || dayOfWeek > 4) {
-      continue;
-    }
-
-    const currentDate = new Date(date);
+  for (
+    let cursor = new Date(monthStart);
+    cursor < nextMonthStart;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
+    const currentDate = new Date(cursor);
     const dateKey = getDateKey(currentDate);
+    const appDay = getAppDayOfWeekFromDate(currentDate);
+    const workDay = isWorkDay(appDay);
+    const selectable = workDay && isSelectableAttendanceDate(currentDate, now);
     const deadline = getAttendanceDeadline(currentDate);
 
     days.push({
@@ -40,8 +76,9 @@ export function getCurrentMonthWorkDays(now = new Date()) {
       dateKey,
       dayNameFa: dayNameFormatter.format(currentDate),
       persianDateLabel: dateLabelFormatter.format(currentDate),
-      canEdit: canEditAttendance(currentDate, now),
-      isSelectable: isSelectableAttendanceDate(currentDate, now),
+      isWorkDay: workDay,
+      canEdit: selectable && canEditAttendance(currentDate, now),
+      isSelectable: selectable,
       deadline,
       isToday: todayKey === dateKey,
     });

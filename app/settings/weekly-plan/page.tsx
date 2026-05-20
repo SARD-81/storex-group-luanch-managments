@@ -28,7 +28,10 @@ export default async function WeeklyPlanPage() {
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-          <h1 className="text-2xl font-bold">تنظیم برنامه هفتگی</h1>
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <h1 className="text-2xl font-bold">تنظیم برنامه هفتگی</h1>
+    <ThemeToggle />
+  </div>
 
           <p className="mt-2 text-sm text-zinc-400">
             فقط روزهای کاری شنبه تا چهارشنبه قابل تنظیم هستند.

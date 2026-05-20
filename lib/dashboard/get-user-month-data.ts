@@ -1,9 +1,9 @@
 import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
-import { getCurrentMonthWorkDays } from "@/lib/attendance/month";
+import { getCurrentJalaliMonthDays } from "@/lib/attendance/month";
 import { prisma } from "@/lib/prisma";
 
 export async function getUserCurrentMonthAttendanceData(userId: string) {
-  const { monthStart, nextMonthStart, days } = getCurrentMonthWorkDays();
+const { monthStart, nextMonthStart, days } = getCurrentJalaliMonthDays();
 
   const attendances = await prisma.mealAttendance.findMany({
     where: {

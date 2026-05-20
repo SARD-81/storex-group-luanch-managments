@@ -13,6 +13,7 @@ type MonthDayCardProps = {
     isToday: boolean;
     breakfastStatus: AttendanceStatus;
     lunchStatus: AttendanceStatus;
+    isWorkDay: boolean;
   };
 };
 
@@ -29,7 +30,12 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
         {day.isToday ? <p className="mt-1 text-xs text-emerald-400">امروز</p> : null}
       </div>
 
-      {day.canEdit ? (
+      {!day.isWorkDay ? (
+  <div className="space-y-2 text-sm text-zinc-500">
+    <p>تعطیل</p>
+    <p className="text-xs">شرکت در این روز تعطیل است.</p>
+  </div>
+) : day.canEdit ? (
         <form action={updateMyAttendanceAction} className="space-y-3">
           <input type="hidden" name="date" value={day.dateKey} />
           <label className="flex items-center justify-between text-sm text-zinc-200">
