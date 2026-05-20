@@ -4,7 +4,6 @@ import { logoutAction } from "@/actions/auth";
 import { generateNextWeekAttendanceAction } from "@/actions/attendance";
 import { requireUser } from "@/lib/auth/session";
 import {
-  getNextWorkWeekRange,
   getWorkWeekDays,
   toDateKey,
 } from "@/lib/attendance/week";
@@ -38,14 +37,12 @@ export default async function Home() {
   const currentUser = await requireUser();
   const isAdmin = currentUser.role === UserRole.ADMIN;
 
-  const { weekStart, weekEndExclusive } = getNextWorkWeekRange();
-  const weekDays = getWorkWeekDays(weekStart);
-
-const dashboardData = isAdmin
+  const dashboardData = isAdmin
   ? await getAdminDashboardData()
   : await getUserDashboardData(currentUser.id);
 
-const { users, attendances } = dashboardData;
+const { users, attendances, weekStart, weekEndExclusive } = dashboardData;
+const weekDays = getWorkWeekDays(weekStart);
 
   const attendanceByDate = new Map<string, AttendanceBucket>();
 
@@ -256,6 +253,7 @@ const { users, attendances } = dashboardData;
 ) : (
   <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
     <h2 className="mb-3 text-xl font-semibold">اطلاعات حساب من</h2>
+
     <div className="grid gap-3 text-sm text-zinc-300 md:grid-cols-3">
       <p>نام: {currentUser.name}</p>
       <p>نام کاربری: {currentUser.username}</p>
