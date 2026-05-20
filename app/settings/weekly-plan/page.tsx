@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { WORK_DAYS } from "@/lib/attendance/week";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { updateWeeklyPreferencesAction } from "@/actions/weekly-preferences";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function WeeklyPlanPage() {
   await requireAdmin();

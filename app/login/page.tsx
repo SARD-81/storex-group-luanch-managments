@@ -1,4 +1,5 @@
 import { loginAction } from "@/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -21,7 +22,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       className="flex min-h-screen items-center justify-center bg-zinc-950 p-8 text-zinc-50"
     >
       <section className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-        <h1 className="mb-6 text-center text-2xl font-bold">ورود به سامانه</h1>
+        <div className="mb-6 flex items-center justify-between">
+  <h1 className="text-2xl font-bold">ورود به سامانه</h1>
+  <ThemeToggle />
+</div>
 
         {error ? (
           <p className="mb-4 rounded-xl bg-rose-900/40 p-3 text-sm text-rose-200">
