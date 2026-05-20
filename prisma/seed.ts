@@ -1,10 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import {
-  MealType,
-  PrismaClient,
-  UserRole,
-} from "../app/generated/prisma/client";
+import { PrismaClient, UserRole } from "../app/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -13,141 +9,84 @@ const adapter = new PrismaPg({
 
 const prisma = new PrismaClient({ adapter });
 
+const INITIAL_USERS = [
+  {
+    username: "zand",
+    name: "علی زند",
+  },
+  {
+    username: "moinei",
+    name: "حمید معینی",
+  },
+  {
+    username: "barzegar",
+    name: "مهدی برزگر",
+  },
+  {
+    username: "mohammadi nasab",
+    name: "بهروز محمدی نسب",
+  },
+  {
+    username: "jeddi",
+    name: "محمد حسین جدی",
+  },
+  {
+    username: "rasouli",
+    name: "امیر علی رسولی",
+  },
+  {
+    username: "zare",
+    name: "امیر حسین زارع",
+  },
+  {
+    username: "davarzani",
+    name: "سید امیررضا داورزنی",
+  },
+  {
+    username: "nobaqi",
+    name: "محمد نوباغی",
+  },
+  {
+    username: "malek poor",
+    name: "ملک پور",
+  },
+  {
+    username: "khoda karami",
+    name: "خدا کرمی",
+  },
+];
+
 async function main() {
-  const [adminPasswordHash, userPasswordHash] = await Promise.all([
-    bcrypt.hash("Admin_123456", 10),
-    bcrypt.hash("User_123456", 10),
+  const passwordHash = await bcrypt.hash("abc123456", 10);
+
+  await prisma.$transaction([
+    prisma.mealAttendance.deleteMany(),
+    prisma.weeklyMealPreference.deleteMany(),
+    prisma.session.deleteMany(),
+    prisma.user.deleteMany(),
+
+    prisma.user.create({
+      data: {
+        username: "admin",
+        name: "مدیر سیستم",
+        email: "admin@example.com",
+        role: UserRole.ADMIN,
+        passwordHash,
+        isActive: true,
+      },
+    }),
+
+    prisma.user.createMany({
+      data: INITIAL_USERS.map((user) => ({
+        username: user.username,
+        name: user.name,
+        email: null,
+        role: UserRole.USER,
+        passwordHash,
+        isActive: true,
+      })),
+    }),
   ]);
-
-  const admin = await prisma.user.upsert({
-  where: { username: "admin" },
-  update: {
-    name: "مدیر سیستم",
-    email: "admin@example.com",
-    role: UserRole.ADMIN,
-    passwordHash: adminPasswordHash,
-    isActive: true,
-  },
-  create: {
-    username: "admin",
-    name: "مدیر سیستم",
-    email: "admin@example.com",
-    role: UserRole.ADMIN,
-    passwordHash: adminPasswordHash,
-    isActive: true,
-  },
-});
-
-  const amir = await prisma.user.upsert({
-  where: { username: "amir" },
-  update: {
-    name: "Amir",
-    email: "amir@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-  create: {
-    username: "amir",
-    name: "Amir",
-    email: "amir@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-});
-
-  const sara = await prisma.user.upsert({
-  where: { username: "sara" },
-  update: {
-    name: "Sara",
-    email: "sara@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-  create: {
-    username: "sara",
-    name: "Sara",
-    email: "sara@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-});
-
-  const reza = await prisma.user.upsert({
-  where: { username: "reza" },
-  update: {
-    name: "Reza",
-    email: "reza@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-  create: {
-    username: "reza",
-    name: "Reza",
-    email: "reza@example.com",
-    role: UserRole.USER,
-    passwordHash: userPasswordHash,
-    isActive: true,
-  },
-});
-
-  await prisma.weeklyMealPreference.createMany({
-    data: [
-      {
-        userId: amir.id,
-        dayOfWeek: 0,
-        mealType: MealType.BREAKFAST,
-        isEnabled: true,
-      },
-      {
-        userId: amir.id,
-        dayOfWeek: 0,
-        mealType: MealType.LUNCH,
-        isEnabled: true,
-      },
-      {
-        userId: amir.id,
-        dayOfWeek: 1,
-        mealType: MealType.LUNCH,
-        isEnabled: true,
-      },
-      {
-        userId: sara.id,
-        dayOfWeek: 0,
-        mealType: MealType.LUNCH,
-        isEnabled: true,
-      },
-      {
-        userId: sara.id,
-        dayOfWeek: 2,
-        mealType: MealType.BREAKFAST,
-        isEnabled: true,
-      },
-      {
-        userId: reza.id,
-        dayOfWeek: 1,
-        mealType: MealType.BREAKFAST,
-        isEnabled: true,
-      },
-      {
-        userId: reza.id,
-        dayOfWeek: 1,
-        mealType: MealType.LUNCH,
-        isEnabled: true,
-      },
-      {
-        userId: admin.id,
-        dayOfWeek: 0,
-        mealType: MealType.BREAKFAST,
-        isEnabled: true,
-      },
-    ],
-    skipDuplicates: true,
-  });
 
   console.log("Database seeded successfully.");
 }

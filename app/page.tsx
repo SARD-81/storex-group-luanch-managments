@@ -13,6 +13,7 @@ import {
   getUserDashboardData,
   resolveSelectedDate,
 } from "@/lib/dashboard/get-dashboard-data";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const roleLabels = {
   [UserRole.ADMIN]: "مدیر",
@@ -69,6 +70,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
             <div className="flex flex-wrap items-center gap-3">
               <AttendanceDatePicker selectedDateKey={selectedDateKey} />
               <TehranClock />
+              <ThemeToggle />
             </div>
 
             <form action={logoutAction}>
