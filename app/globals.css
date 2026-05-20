@@ -202,8 +202,8 @@ body {
     radial-gradient(circle at 18% 18%, rgb(56 189 248 / 0.20), transparent 32%),
     radial-gradient(circle at 82% 18%, rgb(129 140 248 / 0.18), transparent 34%),
     radial-gradient(circle at 50% 88%, rgb(45 212 191 / 0.14), transparent 36%),
-    linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
-}
+    linear-gradient(135deg, var(--background) 0%, var(--background) 100%);
+  }
 
 .login-aurora-shell::before {
   content: "";
@@ -257,7 +257,7 @@ body {
 }
 
 .login-input-shell {
-  @apply group flex items-center rounded-2xl border border-white/20 bg-white/15 px-4 backdrop-blur transition duration-200 hover:border-white/30 focus-within:border-white/50 focus-within:bg-white/20 focus-within:ring-4 focus-within:ring-white/10 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:focus-within:border-white/30;
+  @apply flex items-center rounded-2xl border border-white/20 bg-white/15 px-4 backdrop-blur transition duration-200 hover:border-white/30 focus-within:border-white/50 focus-within:bg-white/20 focus-within:ring-4 focus-within:ring-white/10 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:focus-within:border-white/30;
 }
 
 .login-primary-button {
