@@ -6,14 +6,18 @@ import { createSession, deleteCurrentSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export async function loginAction(formData: FormData) {
-  const email = formData.get("email")?.toString().trim().toLowerCase();
-  const password = formData.get("password")?.toString();
+  const username = formData.get("username")?.toString().trim().toLowerCase();
+const password = formData.get("password")?.toString();
 
-  if (!email || !password) {
-    redirect("/login?error=missing");
-  }
+if (!username || !password) {
+  redirect("/login?error=missing");
+}
 
-  const user = await prisma.user.findUnique({ where: { email } });
+const user = await prisma.user.findUnique({
+  where: {
+    username,
+  },
+});
 
   if (!user || !user.passwordHash || !user.isActive) {
     redirect("/login?error=invalid");

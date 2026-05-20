@@ -7,7 +7,7 @@ type LoginPageProps = {
 };
 
 const errorMessages: Record<string, string> = {
-  missing: "ایمیل و رمز عبور را وارد کنید.",
+  missing: "نام کاربری و رمز عبور را وارد کنید.",
   invalid: "اطلاعات ورود نامعتبر است یا حساب شما فعال نیست.",
 };
 
@@ -31,16 +31,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         <form action={loginAction} className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm text-zinc-300">
-              ایمیل
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-right text-zinc-100 outline-none ring-zinc-500 transition focus:ring-2"
-            />
-          </div>
+  <label htmlFor="username" className="mb-2 block text-sm text-zinc-300">
+    نام کاربری
+  </label>
+  <input
+    id="username"
+    name="username"
+    type="text"
+    required
+    autoComplete="username"
+    className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-right text-zinc-100 outline-none ring-zinc-500 transition focus:ring-2"
+  />
+</div>
 
           <div>
             <label
@@ -50,11 +52,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               رمز عبور
             </label>
             <input
-              id="password"
-              name="password"
-              type="password"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-right text-zinc-100 outline-none ring-zinc-500 transition focus:ring-2"
-            />
+  id="password"
+  name="password"
+  type="password"
+  required
+  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-right text-zinc-100 outline-none ring-zinc-500 transition focus:ring-2"
+/>
           </div>
 
           <button
