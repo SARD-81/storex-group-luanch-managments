@@ -46,7 +46,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
             <div>
               <p className="mb-2 text-sm text-zinc-300">مدیریت حضور وعده‌های غذایی تیم</p>
               <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
-              <p className="mt-2 text-xs text-zinc-300">وضعیت ثبت حضور روزانه شما در یک نمای سازمانی.</p>
+              {/* <p className="mt-2 text-xs text-zinc-300">وضعیت ثبت حضور روزانه شما در یک نمای سازمانی.</p> */}
             </div>
             <div className="dashboard-muted-panel text-sm">
               <p>کاربر جاری: <span className="font-semibold">{currentUser.name}</span></p>

@@ -15,7 +15,7 @@ export async function MonthlyAttendanceBoard({
   return (
     <section className="dashboard-glass-card p-6">
       <form action={updateMyMonthlyAttendanceAction} className="space-y-5">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">نمای ماهانه</p>
 
@@ -23,21 +23,22 @@ export async function MonthlyAttendanceBoard({
               برنامه حضور ماه جاری من
             </h2>
 
-            <p className="text-sm leading-6 text-muted-foreground">
+            {/* <p className="text-sm leading-6 text-muted-foreground">
               روزهای کاری ماه جاری نمایش داده می‌شوند؛ پنجشنبه و جمعه از این نما حذف شده‌اند.
-            </p>
+            </p> */}
           </div>
 
+            
           <div className="dashboard-muted-panel sticky top-4 z-20 flex flex-col gap-3 p-3 backdrop-blur-xl xl:items-end">
             <MonthlyAttendanceActions />
 
-            <button
+          </div>
+          <button
               type="submit"
-              className="dashboard-primary-button w-full xl:w-auto"
+              className="dashboard-primary-button xl:w-auto"
             >
               ذخیره کل ماه
             </button>
-          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
