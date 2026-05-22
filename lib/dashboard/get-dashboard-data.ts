@@ -1,3 +1,5 @@
+import { AttendanceStatus } from "@/app/generated/prisma/client";
+import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
 import { getAttendanceDeadline, canEditAttendance, isSelectableAttendanceDate } from "@/lib/attendance/rules";
 import { addDays } from "@/lib/attendance/week";
 import { parseDateKey, getDateKey } from "@/lib/date/date-key";
@@ -40,7 +42,8 @@ export function resolveSelectedDate(dateParam?: string) {
 
 export async function getAdminDashboardData(selectedDate: Date) {
   const now = new Date();
-  const [users, attendances] = await Promise.all([
+  const { weekStart, weekEndExclusive } = getAdminPlanWeekRange(now);
+  const [users, attendances, weeklyPlanAttendances] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true },
       include: {
@@ -58,6 +61,18 @@ export async function getAdminDashboardData(selectedDate: Date) {
       include: { user: true },
       orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
     }),
+    prisma.mealAttendance.findMany({
+      where: {
+        date: { gte: weekStart, lt: weekEndExclusive },
+        status: AttendanceStatus.PRESENT,
+      },
+      select: {
+        userId: true,
+        date: true,
+        mealType: true,
+        status: true,
+      },
+    }),
   ]);
 
   return {
@@ -68,6 +83,9 @@ export async function getAdminDashboardData(selectedDate: Date) {
     now,
     deadline: getAttendanceDeadline(selectedDate),
     canEditSelectedDate: canEditAttendance(selectedDate, now),
+    weeklyPlanAttendances,
+    adminPlanWeekStart: weekStart,
+    adminPlanWeekEndExclusive: weekEndExclusive,
   };
 }
 
@@ -106,5 +124,8 @@ export async function getUserDashboardData(userId: string, selectedDate: Date) {
     now,
     deadline: getAttendanceDeadline(selectedDate),
     canEditSelectedDate: canEditAttendance(selectedDate, now),
+    weeklyPlanAttendances: [],
+    adminPlanWeekStart: selectedDate,
+    adminPlanWeekEndExclusive: selectedDate,
   };
 }
