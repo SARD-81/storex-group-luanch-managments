@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persianFa from "react-date-object/locales/persian_fa";
@@ -35,6 +36,7 @@ export function AttendanceDatePicker({
   selectedDateKey,
 }: AttendanceDatePickerProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   return (
     <DatePicker
@@ -49,9 +51,10 @@ export function AttendanceDatePicker({
           type="button"
           variant="outline"
           onClick={openCalendar}
+          disabled={isPending}
           className="h-10 min-w-36 justify-center rounded-2xl border-white/10 bg-white/10 px-4 text-center text-sm font-semibold backdrop-blur transition hover:bg-white/15 dark:bg-white/[0.04]"
         >
-          {value || "انتخاب تاریخ"}
+          {isPending ? "در حال تغییر..." : value || "انتخاب تاریخ"}
         </Button>
       )}
       mapDays={({ date }) => {
@@ -69,7 +72,9 @@ export function AttendanceDatePicker({
         }
 
         const gregorianDate = dateObjectToGregorianDate(value);
-        router.push(`/?date=${getDateKey(gregorianDate)}`);
+        startTransition(() => {
+          router.push(`/?date=${getDateKey(gregorianDate)}`);
+        });
       }}
     />
   );

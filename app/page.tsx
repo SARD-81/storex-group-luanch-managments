@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
-import { formatUserWeeklyMealPlan, getAdminPlanWindowLabel } from "@/lib/attendance/admin-weekly-summary";
+import { formatUserAdminWeeklyPlan, getAdminPlanWindowLabel } from "@/lib/attendance/admin-weekly-summary";
 import {
   getAdminDashboardData,
   getUserDashboardData,
@@ -26,9 +26,16 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const { selectedDate: requestedDate } = resolveSelectedDate(params.date);
   const dashboardData = isAdmin ? await getAdminDashboardData(requestedDate) : await getUserDashboardData(currentUser.id, requestedDate);
-  const { users, attendances, selectedDate, selectedDateKey, canEditSelectedDate, deadline } = dashboardData;
+  const { users, attendances, selectedDate, selectedDateKey, canEditSelectedDate, deadline, weeklyPlanAttendances, adminPlanWeekStart } = dashboardData;
   const selectedDateLabel = formatPersianWeekdayDate(selectedDate);
   const adminPlanWindowLabel = getAdminPlanWindowLabel();
+
+  const weeklyPlanAttendancesByUserId = weeklyPlanAttendances.reduce((acc, attendance) => {
+    const existing = acc.get(attendance.userId) ?? [];
+    existing.push(attendance);
+    acc.set(attendance.userId, existing);
+    return acc;
+  }, new Map<string, typeof weeklyPlanAttendances>());
 
   const mealPresentNames = MEAL_TYPES.reduce((acc, mealType) => {
     acc[mealType] = attendances.filter((a) => a.mealType === mealType && a.status === AttendanceStatus.PRESENT).map((a) => a.user.name);
@@ -95,7 +102,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
                 </div>
               </div>
               <div className="overflow-x-auto rounded-xl border border-white/10">
-                <table className="w-full text-right text-sm"><thead className="border-b border-white/10 bg-white/5 text-zinc-300"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">{adminPlanWindowLabel}</th></tr></thead><tbody>{users.map((user) => <tr key={user.id} className="border-b border-white/10"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{formatUserWeeklyMealPlan(user.weeklyPreferences)}</td></tr>)}</tbody></table>
+                <table className="w-full text-right text-sm"><thead className="border-b border-white/10 bg-white/5 text-zinc-300"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">{adminPlanWindowLabel}</th></tr></thead><tbody>{users.map((user) => <tr key={user.id} className="border-b border-white/10"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{formatUserAdminWeeklyPlan({ weeklyAttendances: weeklyPlanAttendancesByUserId.get(user.id) ?? [], weeklyPreferences: user.weeklyPreferences, weekStart: adminPlanWeekStart })}</td></tr>)}</tbody></table>
               </div>
             </section>
           </>
