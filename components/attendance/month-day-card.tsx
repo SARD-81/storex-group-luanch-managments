@@ -48,13 +48,14 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
             <input className="dashboard-checkbox" type="checkbox" name={`meal:${day.dateKey}:LUNCH`} data-monthly-meal="LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
           </label>
           <button
-  type="submit"
-  name="targetDate"
-  value={day.dateKey}
-  className="dashboard-primary-button w-full"
->
-  ذخیره همین روز
-</button>          <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
+            type="submit"
+            name="targetDate"
+            value={day.dateKey}
+            className="dashboard-primary-button w-full"
+          >
+            ذخیره همین روز
+          </button>
+          <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
         </div>
       ) : (
         <div className="space-y-2 text-sm text-zinc-200">
