@@ -16,6 +16,7 @@ import {
   resolveSelectedDate,
 } from "@/lib/dashboard/get-dashboard-data";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 
 const roleLabels = { [UserRole.ADMIN]: "مدیر", [UserRole.USER]: "کاربر" };
 type SearchParams = Promise<{ date?: string; error?: string; saved?: string }>;
@@ -70,12 +71,8 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               <TehranClock />
               <ThemeToggle />
             </div>
-            <form action={logoutAction}><button type="submit" className="dashboard-action-button">خروج از حساب</button></form>
+            <form action={logoutAction}><PendingSubmitButton className="dashboard-action-button" pendingText="در حال خروج...">خروج از حساب</PendingSubmitButton></form>
           </div>
-
-          {params.error === "deadline" ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">مهلت ثبت یا تغییر حضور برای این تاریخ گذشته است.</p> : null}
-          {params.error === "invalid-date" ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">تاریخ انتخاب‌شده معتبر نیست.</p> : null}
-          {params.saved === "1" ? <p className="rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200">وضعیت حضور شما ذخیره شد.</p> : null}
         </header>
 
         {isAdmin ? (
@@ -119,7 +116,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
                   </label>
                 ))}
                 {!canEditSelectedDate ? <p className="text-sm text-amber-300">مهلت تغییر این تاریخ گذشته است.</p> : null}
-                {canEditSelectedDate ? <button type="submit" className="dashboard-primary-button">ذخیره وضعیت حضور</button> : null}
+                {canEditSelectedDate ? <PendingSubmitButton className="dashboard-primary-button" pendingText="در حال ذخیره...">ذخیره وضعیت حضور</PendingSubmitButton> : null}
                 <p className="text-xs text-zinc-300">مهلت این تاریخ: {formatPersianDateTime(deadline)}</p>
               </form>
             </section>

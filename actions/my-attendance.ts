@@ -76,7 +76,7 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
   const dateEntries = formData.getAll("date");
   const parsedDateEntries = dateEntries
     .map((value) => dateSchema.safeParse(value))
-    .filter((result): result is z.SafeParseSuccess<string> => result.success)
+    .filter((result): result is { success: true; data: string } => result.success)
     .map((result) => result.data);
 
   if (targetDateValue !== null) {

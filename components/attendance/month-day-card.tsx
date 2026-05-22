@@ -1,4 +1,5 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
 
 type MonthDayCardProps = {
@@ -47,14 +48,14 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
             <span>ناهار</span>
             <input className="dashboard-checkbox" type="checkbox" name={`meal:${day.dateKey}:LUNCH`} data-monthly-meal="LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
           </label>
-          <button
-            type="submit"
+          <PendingSubmitButton
             name="targetDate"
             value={day.dateKey}
+            pendingText="در حال ذخیره..."
             className="dashboard-primary-button w-full"
           >
             ذخیره همین روز
-          </button>
+          </PendingSubmitButton>
           <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
         </div>
       ) : (

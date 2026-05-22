@@ -8,14 +8,8 @@ type LoginPageProps = {
   }>;
 };
 
-const errorMessages: Record<string, string> = {
-  missing: "نام کاربری و رمز عبور را وارد کنید.",
-  invalid: "اطلاعات ورود نامعتبر است یا حساب شما فعال نیست.",
-};
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const params = await searchParams;
-  const error = params.error ? errorMessages[params.error] : null;
+  await searchParams;
 
   return (
     <main
@@ -54,12 +48,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
               <ThemeToggle />
             </div>
-
-            {error ? (
-              <p className="mb-5 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 shadow-sm dark:text-rose-200">
-                {error}
-              </p>
-            ) : null}
 
             <form action={loginAction} className="space-y-4">
               <div className="space-y-2">
