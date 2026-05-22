@@ -1,7 +1,9 @@
 import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
 import { MEAL_LABELS } from "@/lib/attendance/meals";
 import { getAppDayOfWeekFromDate } from "@/lib/attendance/rules";
-import { addDays, getWorkWeekStartDate, WORK_DAYS } from "@/lib/attendance/week";
+import { addDays, WORK_DAYS } from "@/lib/attendance/week";
+import { getDateKey, parseDateKey } from "@/lib/date/date-key";
+import { getTehranDateKey } from "@/lib/date/tehran-time";
 
 type WeeklyPreference = {
   dayOfWeek: number;
@@ -15,8 +17,16 @@ type WeeklyAttendance = {
   status: AttendanceStatus;
 };
 
+function getTodayDateOnly(now = new Date()) {
+  const tehranDateKey = getTehranDateKey(now);
+  const parsedDate = parseDateKey(tehranDateKey);
+
+  return parsedDate ?? now;
+}
+
 export function shouldShowNextWeekPlan(now = new Date()) {
-  const day = getAppDayOfWeekFromDate(now);
+  const today = getTodayDateOnly(now);
+  const day = getAppDayOfWeekFromDate(today);
 
   return day === 5 || day === 6;
 }
@@ -26,9 +36,11 @@ export function getAdminPlanWindowLabel(now = new Date()) {
 }
 
 export function getAdminPlanWeekRange(now = new Date()) {
-  const currentWeekStart = getWorkWeekStartDate(now);
-  const weekStart = shouldShowNextWeekPlan(now) ? addDays(currentWeekStart, 7) : currentWeekStart;
-  const weekEndExclusive = addDays(weekStart, 5);
+  const today = getTodayDateOnly(now);
+  const appDay = getAppDayOfWeekFromDate(today);
+  const daysUntilWeekStart = appDay <= 4 ? -appDay : 7 - appDay;
+  const weekStart = addDays(today, daysUntilWeekStart);
+  const weekEndExclusive = addDays(weekStart, WORK_DAYS.length);
 
   return { weekStart, weekEndExclusive };
 }
@@ -48,7 +60,7 @@ export function formatUserAdminWeeklyPlan({
     return WORK_DAYS.map(({ dayOfWeek, label }) => {
       const dayDate = addDays(weekStart, dayOfWeek);
       const meals = presentAttendances
-        .filter((attendance) => attendance.date.getTime() === dayDate.getTime())
+        .filter((attendance) => getDateKey(attendance.date) === getDateKey(dayDate))
         .map((attendance) => MEAL_LABELS[attendance.mealType]);
 
       return `${label}: ${meals.length > 0 ? meals.join("، ") : "—"}`;
