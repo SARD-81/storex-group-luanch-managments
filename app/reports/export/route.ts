@@ -23,12 +23,11 @@ export async function GET(request: Request) {
 
   const { userRows } = await getAttendanceReport(fromDate, toDate);
 
-  const header = ["dateKey", "persianDateLabel", "userName", "username", "breakfastStatus", "lunchStatus"];
+  const header = ["تاریخ جلالی", "نام", "نام کاربری", "صبحانه", "ناهار"];
   const lines = [
     header.join(","),
     ...userRows.map((row) =>
       [
-        row.dateKey,
         row.persianDateLabel,
         row.userName,
         row.username,

@@ -1,16 +1,10 @@
 import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
 import { getDateKey } from "@/lib/date/date-key";
+import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { prisma } from "@/lib/prisma";
 
-const persianDateFormatter = new Intl.DateTimeFormat("fa-IR", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 function getAppDayOfWeek(date: Date) {
-  return (date.getDay() + 1) % 7;
+  return (date.getUTCDay() + 1) % 7;
 }
 
 function isWorkDay(date: Date) {
@@ -84,7 +78,7 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
 
     return {
       dateKey,
-      persianDateLabel: persianDateFormatter.format(date),
+      persianDateLabel: formatPersianWeekdayDate(date),
       breakfastCount,
       lunchCount,
     };
@@ -92,7 +86,7 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
 
   const userRows = workDays.flatMap((date) => {
     const dateKey = getDateKey(date);
-    const persianDateLabel = persianDateFormatter.format(date);
+    const persianDateLabel = formatPersianWeekdayDate(date);
 
     return users.map((user) => ({
       dateKey,
