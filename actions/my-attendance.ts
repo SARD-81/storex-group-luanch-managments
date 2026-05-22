@@ -67,3 +67,128 @@ export async function updateMyAttendanceAction(formData: FormData) {
   revalidatePath("/");
   redirect(`/?date=${getDateKey(date)}&saved=1`);
 }
+
+
+export async function updateMyMonthlyAttendanceAction(formData: FormData) {
+  const currentUser = await requireUser();
+  const targetDateValue = formData.get("targetDate");
+
+  const dateEntries = formData.getAll("date");
+  const parsedDateEntries = dateEntries
+    .map((value) => dateSchema.safeParse(value))
+    .filter((result): result is z.SafeParseSuccess<string> => result.success)
+    .map((result) => result.data);
+
+  if (targetDateValue !== null) {
+    const parsedTargetDate = dateSchema.safeParse(targetDateValue);
+
+    if (!parsedTargetDate.success) {
+      redirect("/?error=invalid-date");
+    }
+
+    const targetDateKey = parsedTargetDate.data;
+    const date = parseDateKey(targetDateKey);
+
+    if (!date) {
+      redirect("/?error=invalid-date");
+    }
+
+    if (!isSelectableAttendanceDate(date)) {
+      redirect(`/?date=${targetDateKey}&error=invalid-date`);
+    }
+
+    if (!canEditAttendance(date)) {
+      redirect(`/?date=${targetDateKey}&error=deadline`);
+    }
+
+    await prisma.$transaction(
+      MEAL_TYPES.map((mealType) => {
+        const checked = formData.get(`meal:${targetDateKey}:${mealType}`) === "on";
+
+        return prisma.mealAttendance.upsert({
+          where: {
+            userId_date_mealType: {
+              userId: currentUser.id,
+              date,
+              mealType,
+            },
+          },
+          create: {
+            userId: currentUser.id,
+            date,
+            mealType,
+            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
+          },
+          update: {
+            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
+          },
+        });
+      }),
+    );
+
+    revalidatePath("/");
+    redirect(`/?date=${targetDateKey}&saved=1`);
+  }
+
+  if (parsedDateEntries.length === 0) {
+    redirect("/?error=invalid-date");
+  }
+
+  const uniqueDateKeys = [...new Set(parsedDateEntries)];
+
+  const validatedDates = uniqueDateKeys.map((dateKey) => {
+    const date = parseDateKey(dateKey);
+
+    if (!date) {
+      redirect("/?error=invalid-date");
+    }
+
+    if (!isSelectableAttendanceDate(date)) {
+      redirect(`/?date=${dateKey}&error=invalid-date`);
+    }
+
+    if (!canEditAttendance(date)) {
+      redirect(`/?date=${dateKey}&error=deadline`);
+    }
+
+    return { dateKey, date };
+  });
+
+  await prisma.$transaction(
+    validatedDates.flatMap(({ dateKey, date }) =>
+      MEAL_TYPES.map((mealType) => {
+        const checked = formData.get(`meal:${dateKey}:${mealType}`) === "on";
+
+        return prisma.mealAttendance.upsert({
+          where: {
+            userId_date_mealType: {
+              userId: currentUser.id,
+              date,
+              mealType,
+            },
+          },
+          create: {
+            userId: currentUser.id,
+            date,
+            mealType,
+            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
+          },
+          update: {
+            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
+          },
+        });
+      }),
+    ),
+  );
+
+  revalidatePath("/");
+  redirect(`/?date=${validatedDates[0].dateKey}&saved=1`);
+}

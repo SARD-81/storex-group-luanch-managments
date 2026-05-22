@@ -99,7 +99,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           </>
         ) : (
           <>
-            <section className="dashboard-glass-card">
+            <section className="dashboard-glass-card relative z-10">
               <h2 className="mb-4 text-xl font-semibold">حضور من در تاریخ انتخاب‌شده</h2>
               <form action={updateMyAttendanceAction} className="space-y-4">
                 <input type="hidden" name="date" value={selectedDateKey} />

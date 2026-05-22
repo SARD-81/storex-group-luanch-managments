@@ -331,3 +331,13 @@ body {
     animation: none !important;
   }
 }
+
+.rmdp-wrapper,
+.rmdp-container .rmdp-wrapper {
+  z-index: 10000 !important;
+}
+
+.rmdp-calendar {
+  border-radius: 1.25rem !important;
+  overflow: hidden;
+}

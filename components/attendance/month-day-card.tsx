@@ -1,5 +1,4 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
-import { updateMyAttendanceAction } from "@/actions/my-attendance";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
 
 type MonthDayCardProps = {
@@ -38,19 +37,19 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
           <p className="text-xs">شرکت در این روز تعطیل است.</p>
         </div>
       ) : day.canEdit ? (
-        <form action={updateMyAttendanceAction} className="space-y-3">
+        <div className="space-y-3">
           <input type="hidden" name="date" value={day.dateKey} />
           <label className="dashboard-muted-panel flex items-center justify-between text-sm">
             <span>صبحانه</span>
-            <input className="dashboard-checkbox" type="checkbox" name="meal:BREAKFAST" defaultChecked={day.breakfastStatus === AttendanceStatus.PRESENT} />
+            <input className="dashboard-checkbox" type="checkbox" name={`meal:${day.dateKey}:BREAKFAST`} data-monthly-meal="BREAKFAST" defaultChecked={day.breakfastStatus === AttendanceStatus.PRESENT} />
           </label>
           <label className="dashboard-muted-panel flex items-center justify-between text-sm">
             <span>ناهار</span>
-            <input className="dashboard-checkbox" type="checkbox" name="meal:LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
+            <input className="dashboard-checkbox" type="checkbox" name={`meal:${day.dateKey}:LUNCH`} data-monthly-meal="LUNCH" defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT} />
           </label>
-          <button type="submit" className="dashboard-primary-button w-full">ذخیره</button>
+          <button type="submit" name="targetDate" value={day.dateKey} className="dashboard-primary-button w-full">ذخیره همین روز</button>
           <p className="text-xs text-zinc-400">مهلت: {formatPersianDateTime(day.deadline)}</p>
-        </form>
+        </div>
       ) : (
         <div className="space-y-2 text-sm text-zinc-200">
           <p>صبحانه: {getStatusLabel(day.breakfastStatus)}</p>

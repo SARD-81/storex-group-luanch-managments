@@ -42,6 +42,8 @@ export function AttendanceDatePicker({
       locale={persianFa}
       value={dateKeyToDateObject(selectedDateKey)}
       calendarPosition="bottom-right"
+      portal
+      zIndex={10000}
       render={(value, openCalendar) => (
         <Button
           type="button"
