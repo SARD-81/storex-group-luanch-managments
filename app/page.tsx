@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AttendanceStatus, MealType, UserRole } from "@/app/generated/prisma/client";
-import { generateNextWeekAttendanceAction } from "@/actions/attendance";
 import { logoutAction } from "@/actions/auth";
 import { updateMyAttendanceAction } from "@/actions/my-attendance";
 import { AttendanceDatePicker } from "@/components/attendance/attendance-date-picker";
@@ -8,7 +7,9 @@ import { MonthlyAttendanceBoard } from "@/components/attendance/monthly-attendan
 import { TehranClock } from "@/components/attendance/tehran-clock";
 import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
+import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
+import { formatUserWeeklyMealPlan, getAdminPlanWindowLabel } from "@/lib/attendance/admin-weekly-summary";
 import {
   getAdminDashboardData,
   getUserDashboardData,
@@ -23,9 +24,11 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
   const params = await searchParams;
   const currentUser = await requireUser();
   const isAdmin = currentUser.role === UserRole.ADMIN;
-  const { selectedDate } = resolveSelectedDate(params.date);
-  const dashboardData = isAdmin ? await getAdminDashboardData(selectedDate) : await getUserDashboardData(currentUser.id, selectedDate);
-  const { users, attendances, selectedDateKey, canEditSelectedDate, deadline } = dashboardData;
+  const { selectedDate: requestedDate } = resolveSelectedDate(params.date);
+  const dashboardData = isAdmin ? await getAdminDashboardData(requestedDate) : await getUserDashboardData(currentUser.id, requestedDate);
+  const { users, attendances, selectedDate, selectedDateKey, canEditSelectedDate, deadline } = dashboardData;
+  const selectedDateLabel = formatPersianWeekdayDate(selectedDate);
+  const adminPlanWindowLabel = getAdminPlanWindowLabel();
 
   const mealPresentNames = MEAL_TYPES.reduce((acc, mealType) => {
     acc[mealType] = attendances.filter((a) => a.mealType === mealType && a.status === AttendanceStatus.PRESENT).map((a) => a.user.name);
@@ -75,7 +78,7 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
                 const names = mealPresentNames[mealType];
                 return (
                   <article key={mealType} className="dashboard-glass-card">
-                    <h2 className="text-lg font-semibold">{MEAL_LABELS[mealType]}</h2><p className="mt-2 text-sm text-zinc-300">تاریخ انتخاب‌شده: {selectedDateKey}</p><p className="mt-3 text-2xl font-bold">{names.length} نفر</p>
+                    <h2 className="text-lg font-semibold">{MEAL_LABELS[mealType]}</h2><p className="mt-2 text-sm text-zinc-300">تاریخ انتخاب‌شده: {selectedDateLabel}</p><p className="mt-3 text-2xl font-bold">{names.length} نفر</p>
                     {names.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{names.map((name) => <span key={`${mealType}-${name}`} className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-zinc-100">{name}</span>)}</div> : <p className="mt-3 text-xs text-zinc-300">هنوز کسی ثبت نشده است.</p>}
                   </article>
                 );
@@ -86,14 +89,13 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-semibold">اعضای تیم</h2>
                 <div className="flex flex-wrap gap-3">
-                  <form action={generateNextWeekAttendanceAction}><button type="submit" className="dashboard-primary-button">ساخت حضور هفته کاری آینده</button></form>
                   <Link href="/settings/weekly-plan" className="dashboard-action-button">تنظیم برنامه هفتگی</Link>
                   <Link href="/settings/users" className="dashboard-action-button">مدیریت کاربران</Link>
                   <Link href="/reports" className="dashboard-action-button">گزارش‌ها</Link>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-xl border border-white/10">
-                <table className="w-full text-right text-sm"><thead className="border-b border-white/10 bg-white/5 text-zinc-300"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">برنامه‌های هفتگی فعال</th></tr></thead><tbody>{users.map((user) => <tr key={user.id} className="border-b border-white/10"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{user.weeklyPreferences.length}</td></tr>)}</tbody></table>
+              <div className="overflow-x-auto rounded-xl border border-white/10">
+                <table className="w-full text-right text-sm"><thead className="border-b border-white/10 bg-white/5 text-zinc-300"><tr><th className="p-4">نام</th><th className="p-4">نام کاربری</th><th className="p-4">نقش</th><th className="p-4">{adminPlanWindowLabel}</th></tr></thead><tbody>{users.map((user) => <tr key={user.id} className="border-b border-white/10"><td className="p-4">{user.name}</td><td className="p-4">{user.username}</td><td className="p-4">{roleLabels[user.role]}</td><td className="p-4">{formatUserWeeklyMealPlan(user.weeklyPreferences)}</td></tr>)}</tbody></table>
               </div>
             </section>
           </>
