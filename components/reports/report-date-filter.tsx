@@ -27,16 +27,23 @@ function dateKeyToDateObject(dateKey: string) {
 function dateObjectToGregorianDate(value: DateObject) {
   const date = value.toDate();
 
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
 }
 
-export function ReportDateFilter({ fromDateKey, toDateKey }: ReportDateFilterProps) {
+export function ReportDateFilter({
+  fromDateKey,
+  toDateKey,
+}: ReportDateFilterProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const updateRange = (nextFromDateKey: string, nextToDateKey: string) => {
     startTransition(() => {
-      router.push(`/reports?from=${encodeURIComponent(nextFromDateKey)}&to=${encodeURIComponent(nextToDateKey)}`);
+      router.push(
+        `/reports?from=${encodeURIComponent(nextFromDateKey)}&to=${encodeURIComponent(nextToDateKey)}`,
+      );
     });
   };
 
@@ -103,7 +110,9 @@ export function ReportDateFilter({ fromDateKey, toDateKey }: ReportDateFilterPro
           />
         </label>
 
-        {isPending ? <p className="text-sm text-zinc-300">در حال به‌روزرسانی گزارش...</p> : null}
+        {isPending ? (
+          <p className="text-sm text-zinc-300">در حال به‌روزرسانی گزارش...</p>
+        ) : null}
 
         <Link
           href={`/reports/export?from=${encodeURIComponent(fromDateKey)}&to=${encodeURIComponent(toDateKey)}`}

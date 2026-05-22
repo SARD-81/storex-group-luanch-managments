@@ -23,9 +23,17 @@ const COLORS = {
   white: "FFFFFFFF",
 } as const;
 
-function setWorksheetDefaults(worksheet: ExcelJS.Worksheet, ySplit: number, xSplit = 0) {
+function setWorksheetDefaults(
+  worksheet: ExcelJS.Worksheet,
+  ySplit: number,
+  xSplit = 0,
+) {
   worksheet.views = [{ rightToLeft: true, state: "frozen", ySplit, xSplit }];
-  worksheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1 };
+  worksheet.pageSetup = {
+    orientation: "landscape",
+    fitToPage: true,
+    fitToWidth: 1,
+  };
   worksheet.properties.defaultRowHeight = 22;
 }
 
@@ -40,20 +48,42 @@ function applyBorders(row: ExcelJS.Row) {
   });
 }
 
-function addSheetTitle(worksheet: ExcelJS.Worksheet, title: string, subtitle: string, endColumn: string) {
+function addSheetTitle(
+  worksheet: ExcelJS.Worksheet,
+  title: string,
+  subtitle: string,
+  endColumn: string,
+) {
   worksheet.mergeCells(`A1:${endColumn}1`);
   worksheet.mergeCells(`A2:${endColumn}2`);
 
   const titleCell = worksheet.getCell("A1");
   titleCell.value = title;
-  titleCell.font = { name: "Tahoma", size: 16, bold: true, color: { argb: COLORS.white } };
-  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.primaryDark } };
+  titleCell.font = {
+    name: "Tahoma",
+    size: 16,
+    bold: true,
+    color: { argb: COLORS.white },
+  };
+  titleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: COLORS.primaryDark },
+  };
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
 
   const subtitleCell = worksheet.getCell("A2");
   subtitleCell.value = subtitle;
-  subtitleCell.font = { name: "Tahoma", size: 11, color: { argb: COLORS.white } };
-  subtitleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.secondaryDark } };
+  subtitleCell.font = {
+    name: "Tahoma",
+    size: 11,
+    color: { argb: COLORS.white },
+  };
+  subtitleCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: COLORS.secondaryDark },
+  };
   subtitleCell.alignment = { horizontal: "center", vertical: "middle" };
 
   worksheet.getRow(1).height = 32;
@@ -61,9 +91,18 @@ function addSheetTitle(worksheet: ExcelJS.Worksheet, title: string, subtitle: st
 }
 
 function styleHeaderRow(row: ExcelJS.Row) {
-  row.font = { name: "Tahoma", size: 11, bold: true, color: { argb: COLORS.white } };
+  row.font = {
+    name: "Tahoma",
+    size: 11,
+    bold: true,
+    color: { argb: COLORS.white },
+  };
   row.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-  row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.secondaryDark } };
+  row.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: COLORS.secondaryDark },
+  };
   row.height = 24;
   applyBorders(row);
 }
@@ -81,10 +120,23 @@ function styleDataRow(row: ExcelJS.Row, rowIndex: number) {
 
 function styleStatusCell(cell: ExcelJS.Cell, status: string) {
   if (status === STATUS_LABELS.PRESENT) {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.successBg } };
-    cell.font = { name: "Tahoma", size: 10, bold: true, color: { argb: COLORS.successText } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.successBg },
+    };
+    cell.font = {
+      name: "Tahoma",
+      size: 10,
+      bold: true,
+      color: { argb: COLORS.successText },
+    };
   } else {
-    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.mutedBg } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.mutedBg },
+    };
     cell.font = { name: "Tahoma", size: 10, color: { argb: COLORS.mutedText } };
   }
   cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -99,7 +151,10 @@ export async function GET(request: Request) {
     to: searchParams.get("to") ?? undefined,
   });
 
-  const { dailySummary, userRows } = await getAttendanceReport(fromDate, toDate);
+  const { dailySummary, userRows } = await getAttendanceReport(
+    fromDate,
+    toDate,
+  );
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Storex Lunch Dashboard";
@@ -111,17 +166,33 @@ export async function GET(request: Request) {
   const toLabel = formatPersianWeekdayDate(toDate);
   const reportRangeLabel = `بازه گزارش: از ${fromLabel} تا ${toLabel}`;
 
-  const totalBreakfast = dailySummary.reduce((sum, day) => sum + day.breakfastCount, 0);
+  const totalBreakfast = dailySummary.reduce(
+    (sum, day) => sum + day.breakfastCount,
+    0,
+  );
   const totalLunch = dailySummary.reduce((sum, day) => sum + day.lunchCount, 0);
   const totalMeals = totalBreakfast + totalLunch;
 
-  const dashboardSheet = workbook.addWorksheet("داشبورد گزارش", { views: [{ rightToLeft: true }] });
+  const dashboardSheet = workbook.addWorksheet("داشبورد گزارش", {
+    views: [{ rightToLeft: true }],
+  });
   setWorksheetDefaults(dashboardSheet, 8);
   dashboardSheet.columns = [
-    { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 },
-    { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
+    { width: 14 },
   ];
-  addSheetTitle(dashboardSheet, "گزارش حضور وعده‌های غذایی", reportRangeLabel, "H");
+  addSheetTitle(
+    dashboardSheet,
+    "گزارش حضور وعده‌های غذایی",
+    reportRangeLabel,
+    "H",
+  );
 
   const kpiCards = [
     { label: "تعداد روزهای کاری", value: dailySummary.length },
@@ -137,17 +208,39 @@ export async function GET(request: Request) {
     dashboardSheet.mergeCells(valueRange);
     dashboardSheet.mergeCells(labelRange);
 
-    const valueCell = dashboardSheet.getCell(`${String.fromCharCode(64 + startCol)}4`);
+    const valueCell = dashboardSheet.getCell(
+      `${String.fromCharCode(64 + startCol)}4`,
+    );
     valueCell.value = card.value;
-    valueCell.font = { name: "Tahoma", size: 24, bold: true, color: { argb: COLORS.primaryDark } };
+    valueCell.font = {
+      name: "Tahoma",
+      size: 24,
+      bold: true,
+      color: { argb: COLORS.primaryDark },
+    };
     valueCell.alignment = { horizontal: "center", vertical: "middle" };
-    valueCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.warningBg } };
+    valueCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.warningBg },
+    };
 
-    const labelCell = dashboardSheet.getCell(`${String.fromCharCode(64 + startCol)}6`);
+    const labelCell = dashboardSheet.getCell(
+      `${String.fromCharCode(64 + startCol)}6`,
+    );
     labelCell.value = card.label;
-    labelCell.font = { name: "Tahoma", size: 10, bold: true, color: { argb: COLORS.warningText } };
+    labelCell.font = {
+      name: "Tahoma",
+      size: 10,
+      bold: true,
+      color: { argb: COLORS.warningText },
+    };
     labelCell.alignment = { horizontal: "center", vertical: "middle" };
-    labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.mutedBg } };
+    labelCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: COLORS.mutedBg },
+    };
 
     [4, 5, 6].forEach((rowNum) => applyBorders(dashboardSheet.getRow(rowNum)));
   });
@@ -155,12 +248,22 @@ export async function GET(request: Request) {
   dashboardSheet.mergeCells("A8:H8");
   const noteCell = dashboardSheet.getCell("A8");
   noteCell.value = "این گزارش فقط شامل روزهای کاری شنبه تا چهارشنبه است.";
-  noteCell.font = { name: "Tahoma", size: 10, color: { argb: COLORS.mutedText } };
-  noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.mutedBg } };
+  noteCell.font = {
+    name: "Tahoma",
+    size: 10,
+    color: { argb: COLORS.mutedText },
+  };
+  noteCell.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: COLORS.mutedBg },
+  };
   noteCell.alignment = { horizontal: "right", vertical: "middle" };
   applyBorders(dashboardSheet.getRow(8));
 
-  const summarySheet = workbook.addWorksheet("خلاصه روزانه", { views: [{ rightToLeft: true }] });
+  const summarySheet = workbook.addWorksheet("خلاصه روزانه", {
+    views: [{ rightToLeft: true }],
+  });
   setWorksheetDefaults(summarySheet, 4);
   summarySheet.columns = [
     { header: "تاریخ جلالی", key: "date", width: 30 },
@@ -189,21 +292,46 @@ export async function GET(request: Request) {
     dataRow.getCell(4).alignment = { horizontal: "center", vertical: "middle" };
   });
 
-  const totalRow = summarySheet.addRow({ date: "جمع کل", breakfast: 0, lunch: 0, total: 0 });
+  const totalRow = summarySheet.addRow({
+    date: "جمع کل",
+    breakfast: 0,
+    lunch: 0,
+    total: 0,
+  });
   const firstDataRow = 5;
   const lastDataRow = totalRow.number - 1;
-  totalRow.getCell(2).value = { formula: `SUM(B${firstDataRow}:B${lastDataRow})` };
-  totalRow.getCell(3).value = { formula: `SUM(C${firstDataRow}:C${lastDataRow})` };
-  totalRow.getCell(4).value = { formula: `SUM(D${firstDataRow}:D${lastDataRow})` };
-  totalRow.font = { name: "Tahoma", size: 11, bold: true, color: { argb: COLORS.primaryDark } };
-  totalRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.warningBg } };
+  totalRow.getCell(2).value = {
+    formula: `SUM(B${firstDataRow}:B${lastDataRow})`,
+  };
+  totalRow.getCell(3).value = {
+    formula: `SUM(C${firstDataRow}:C${lastDataRow})`,
+  };
+  totalRow.getCell(4).value = {
+    formula: `SUM(D${firstDataRow}:D${lastDataRow})`,
+  };
+  totalRow.font = {
+    name: "Tahoma",
+    size: 11,
+    bold: true,
+    color: { argb: COLORS.primaryDark },
+  };
+  totalRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: COLORS.warningBg },
+  };
   totalRow.alignment = { horizontal: "center", vertical: "middle" };
   totalRow.getCell(1).alignment = { horizontal: "right", vertical: "middle" };
   applyBorders(totalRow);
 
-  summarySheet.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: 4 } };
+  summarySheet.autoFilter = {
+    from: { row: 4, column: 1 },
+    to: { row: 4, column: 4 },
+  };
 
-  const detailsSheet = workbook.addWorksheet("جزئیات کاربران", { views: [{ rightToLeft: true }] });
+  const detailsSheet = workbook.addWorksheet("جزئیات کاربران", {
+    views: [{ rightToLeft: true }],
+  });
   setWorksheetDefaults(detailsSheet, 4, 1);
   detailsSheet.columns = [
     { header: "تاریخ جلالی", key: "date", width: 30 },
@@ -232,18 +360,26 @@ export async function GET(request: Request) {
     });
 
     styleDataRow(dataRow, index);
-    dataRow.getCell(3).alignment = { horizontal: "center", vertical: "middle", readingOrder: "ltr" as const };
+    dataRow.getCell(3).alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      readingOrder: "ltr" as const,
+    };
     styleStatusCell(dataRow.getCell(4), breakfastLabel);
     styleStatusCell(dataRow.getCell(5), lunchLabel);
   });
 
-  detailsSheet.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4, column: 5 } };
+  detailsSheet.autoFilter = {
+    from: { row: 4, column: 1 },
+    to: { row: 4, column: 5 },
+  };
 
   const buffer = await workbook.xlsx.writeBuffer();
 
   return new Response(buffer as BodyInit, {
     headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": 'attachment; filename="attendance-report.xlsx"',
       "Cache-Control": "no-store",
     },

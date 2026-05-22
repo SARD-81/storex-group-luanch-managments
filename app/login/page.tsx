@@ -1,5 +1,6 @@
-import { LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
+import { LockKeyhole, UserRound } from "lucide-react";
 import { loginAction } from "@/actions/auth";
+import { LoginSubmitButton } from "@/components/auth/login-submit-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 type LoginPageProps = {
@@ -32,11 +33,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="relative">
             <div className="mb-8 flex items-start justify-between gap-4">
               <div>
-                {/* <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3 py-1 text-xs text-foreground/75 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
-                  <ShieldCheck className="size-3.5" />
-                  سامانه داخلی شرکت
-                </div> */}
-
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
                   ورود به داشبورد
                 </h1>
@@ -94,17 +90,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 </div>
               </div>
 
-              <button
-  type="submit"
-  className="flex justify-center items-center login-primary-button group mt-2 w-full rounded-2xl bg-foreground px-5 py-3.5 text-sm font-bold text-background shadow-lg shadow-black/15 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 active:scale-[0.99]"
->
-  <span className="inline-flex items-center justify-center gap-2">
-    ورود
-    <span className="transition duration-200 group-hover:-translate-x-0.5">
-      ←
-    </span>
-  </span>
-</button>
+              <LoginSubmitButton />
             </form>
 
             <div className="mt-6 rounded-2xl border border-white/15 bg-white/10 p-4 text-xs leading-6 text-muted-foreground backdrop-blur dark:border-white/10 dark:bg-white/[0.03]">
