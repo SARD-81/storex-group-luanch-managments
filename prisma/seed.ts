@@ -57,6 +57,10 @@ const INITIAL_USERS = [
 ];
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Seed is destructive and must not run in production.");
+  }
+
   const passwordHash = await bcrypt.hash("abc123456", 10);
 
   await prisma.$transaction([

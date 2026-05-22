@@ -1,6 +1,7 @@
 import { updateMyMonthlyAttendanceAction } from "@/actions/my-attendance";
 import { MonthDayCard } from "@/components/attendance/month-day-card";
 import { MonthlyAttendanceActions } from "@/components/attendance/monthly-attendance-actions";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { getUserCurrentMonthAttendanceData } from "@/lib/dashboard/get-user-month-data";
 
 type MonthlyAttendanceBoardProps = {
@@ -33,12 +34,12 @@ export async function MonthlyAttendanceBoard({
             <MonthlyAttendanceActions />
 
           </div>
-          <button
-              type="submit"
+          <PendingSubmitButton
               className="dashboard-primary-button xl:w-auto"
+              pendingText="در حال ذخیره..."
             >
               ذخیره کل ماه
-            </button>
+            </PendingSubmitButton>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">

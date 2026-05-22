@@ -20,47 +20,11 @@ const roleLabels = {
 
 type SearchParams = Promise<{ error?: string; saved?: string }>;
 
-function renderError(error?: string) {
-  if (error === "duplicate-username") {
-    return "این نام کاربری قبلاً ثبت شده است.";
-  }
-
-  if (error === "last-admin") {
-    return "غیرفعال کردن آخرین مدیر فعال مجاز نیست.";
-  }
-
-  if (error === "missing") {
-    return "لطفاً تمام فیلدهای ضروری را کامل کنید.";
-  }
-
-  if (error === "user-not-found" || error === "invalid-user") {
-    return "کاربر مورد نظر یافت نشد.";
-  }
-
-  return null;
-}
-
-function renderSuccess(saved?: string) {
-  if (saved === "created") {
-    return "کاربر جدید با موفقیت ایجاد شد.";
-  }
-
-  if (saved === "status") {
-    return "وضعیت کاربر با موفقیت به‌روزرسانی شد.";
-  }
-
-  if (saved === "password") {
-    return "رمز عبور کاربر با موفقیت بازنشانی شد.";
-  }
-
-  return null;
-}
-
 export default async function UsersManagementPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdmin();
   noStore();
 
-  const params = await searchParams;
+  await searchParams;
 
   const users = await prisma.user.findMany({
     orderBy: {
@@ -71,9 +35,6 @@ export default async function UsersManagementPage({ searchParams }: { searchPara
   const totalUsers = users.length;
   const activeUsers = users.filter((user) => user.isActive).length;
   const activeAdmins = users.filter((user) => user.isActive && user.role === UserRole.ADMIN).length;
-
-  const errorMessage = renderError(params.error);
-  const successMessage = renderSuccess(params.saved);
 
   return (
     <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8">
@@ -96,13 +57,6 @@ export default async function UsersManagementPage({ searchParams }: { searchPara
               بازگشت به داشبورد
             </Link>
           </div>
-
-          {errorMessage ? (
-            <p className="rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">{errorMessage}</p>
-          ) : null}
-          {successMessage ? (
-            <p className="rounded-2xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{successMessage}</p>
-          ) : null}
         </header>
 
         <section className="dashboard-glass-card">
@@ -174,16 +128,16 @@ export default async function UsersManagementPage({ searchParams }: { searchPara
                       <form action={updateUserStatusAction}>
                         <input type="hidden" name="userId" value={user.id} />
                         <input type="hidden" name="isActive" value={user.isActive ? "false" : "true"} />
-                        <button type="submit" className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${user.isActive ? "bg-rose-500/20 text-rose-100 hover:bg-rose-500/30" : "bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30"}`}>
+                        <PendingSubmitButton pendingText="در حال ذخیره..." className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${user.isActive ? "bg-rose-500/20 text-rose-100 hover:bg-rose-500/30" : "bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30"}`}>
                           {user.isActive ? "غیرفعال‌سازی" : "فعال‌سازی"}
-                        </button>
+                        </PendingSubmitButton>
                       </form>
                     </td>
                     <td className="border-b border-white/10 p-3">
                       <form action={resetUserPasswordAction} className="flex items-center gap-2">
                         <input type="hidden" name="userId" value={user.id} />
                         <input name="password" type="password" required placeholder="رمز جدید" className="dashboard-muted-panel min-w-[170px] px-3 py-2 text-xs" />
-                        <button type="submit" className="rounded-xl bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200">ثبت</button>
+                        <PendingSubmitButton pendingText="در حال ثبت..." className="rounded-xl bg-zinc-50 px-3 py-2 text-xs font-semibold text-zinc-950 transition hover:bg-zinc-200">ثبت</PendingSubmitButton>
                       </form>
                     </td>
                   </tr>

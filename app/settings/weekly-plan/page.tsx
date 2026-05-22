@@ -23,7 +23,7 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
   await requireAdmin();
   noStore();
 
-  const params = await searchParams;
+  await searchParams;
   const { weekStart, weekEndExclusive } = getAdminPlanWeekRange();
 
   const [users, weeklyAttendances] = await Promise.all([
@@ -101,12 +101,6 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
           </div>
         </section>
 
-        {params.saved === "1" ? (
-          <section className="dashboard-glass-card border border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
-            برنامه هفتگی با موفقیت ذخیره شد و اطلاعات از دیتابیس به‌روزرسانی شد.
-          </section>
-        ) : null}
-
         <section className="dashboard-glass-card">
           <h2 className="mb-3 text-lg font-semibold">اقدامات سریع</h2>
           <WeeklyPlanActions />
@@ -143,7 +137,7 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
                       .map((preference) => `${preference.dayOfWeek}:${preference.mealType}`),
                   );
                   const attendancePreferenceKeys = weeklyAttendanceKeysByUserId.get(user.id) ?? new Set<string>();
-                  const hasSavedWeeklyPreferences = enabledPreferenceKeys.size > 0;
+                  const hasSavedWeeklyPreferences = user.weeklyPreferences.length > 0;
 
                   return (
                     <tr key={user.id} className="odd:bg-white/[0.03]">
