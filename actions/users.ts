@@ -39,6 +39,7 @@ export async function createUserAction(formData: FormData) {
   });
 
   revalidatePath("/settings/users");
+  redirect("/settings/users?saved=created");
 }
 
 export async function updateUserStatusAction(formData: FormData) {
@@ -76,6 +77,7 @@ export async function updateUserStatusAction(formData: FormData) {
   });
 
   revalidatePath("/settings/users");
+  redirect("/settings/users?saved=status");
 }
 
 export async function resetUserPasswordAction(formData: FormData) {
@@ -96,4 +98,5 @@ export async function resetUserPasswordAction(formData: FormData) {
   });
 
   revalidatePath("/settings/users");
+  redirect("/settings/users?saved=password");
 }
