@@ -1,99 +1,107 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
-import { WORK_DAYS } from "@/lib/attendance/week";
-import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { updateWeeklyPreferencesAction } from "@/actions/weekly-preferences";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { WeeklyPlanActions } from "@/components/weekly-plan/weekly-plan-actions";
+import { requireAdmin } from "@/lib/auth/session";
+import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
+import { getAdminPlanWeekRange, getAdminPlanWindowLabel } from "@/lib/attendance/admin-weekly-summary";
+import { WORK_DAYS } from "@/lib/attendance/week";
+import { formatPersianDate, formatPersianWeekdayDate } from "@/lib/date/persian-format";
+import { prisma } from "@/lib/prisma";
 
 export default async function WeeklyPlanPage() {
   await requireAdmin();
 
   const users = await prisma.user.findMany({
-    where: {
-      isActive: true,
-    },
-    include: {
-      weeklyPreferences: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
+    where: { isActive: true },
+    include: { weeklyPreferences: true },
+    orderBy: { createdAt: "asc" },
   });
 
+  const { weekStart, weekEndExclusive } = getAdminPlanWeekRange();
+  const planWindowLabel = getAdminPlanWindowLabel();
+
   return (
-    <main
-      dir="rtl"
-      className="min-h-screen bg-zinc-950 p-8 text-right text-zinc-50"
-    >
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <header className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-  <div className="flex flex-wrap items-center justify-between gap-3">
-    <h1 className="text-2xl font-bold">تنظیم برنامه هفتگی</h1>
-    <ThemeToggle />
-  </div>
+    <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8">
+      <div className="dashboard-aurora dashboard-aurora-one" />
+      <div className="dashboard-aurora dashboard-aurora-two" />
+      <div className="dashboard-aurora dashboard-aurora-three" />
 
-          <p className="mt-2 text-sm text-zinc-400">
-            فقط روزهای کاری شنبه تا چهارشنبه قابل تنظیم هستند.
-          </p>
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6">
+        <header className="dashboard-glass-card flex flex-col gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-sm text-zinc-300">مدیریت برنامه هفتگی وعده‌های تیم</p>
+              <h1 className="mt-1 text-3xl font-bold">تنظیم برنامه هفتگی</h1>
+            </div>
+            <ThemeToggle />
+          </div>
 
-          <Link
-            href="/"
-            className="mt-4 inline-block rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-100 transition hover:bg-zinc-800"
-          >
-            بازگشت به داشبورد
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/" className="dashboard-action-button inline-flex items-center gap-2">
+              بازگشت به داشبورد
+            </Link>
+          </div>
         </header>
 
-        <form
-          action={updateWeeklyPreferencesAction}
-          className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6"
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-right text-sm">
-              <thead className="border-b border-zinc-800 text-zinc-400">
-                <tr>
-                  <th className="p-3">نام</th>
-                  <th className="p-3">نام کاربری</th>
+        <section className="dashboard-glass-card">
+          <h2 className="text-lg font-semibold">{planWindowLabel}</h2>
+          <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+            <p className="dashboard-muted-panel">شروع بازه: {formatPersianWeekdayDate(weekStart)}</p>
+            <p className="dashboard-muted-panel">پایان بازه (غیرشامل): {formatPersianDate(weekEndExclusive)}</p>
+          </div>
+        </section>
 
+        <section className="dashboard-glass-card">
+          <h2 className="mb-3 text-lg font-semibold">اقدامات سریع</h2>
+          <WeeklyPlanActions />
+        </section>
+
+        <form action={updateWeeklyPreferencesAction} className="dashboard-glass-card">
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-right text-sm">
+              <thead>
+                <tr className="bg-white/5 text-zinc-200">
+                  <th rowSpan={2} className="sticky right-0 z-30 min-w-[220px] border-b border-white/10 bg-white/10 p-3 text-right">کاربر</th>
+                  {WORK_DAYS.map((day) => (
+                    <th key={day.dayOfWeek} colSpan={MEAL_TYPES.length} className="border-b border-white/10 p-3 text-center">{day.label}</th>
+                  ))}
+                </tr>
+                <tr className="bg-white/5 text-zinc-300">
                   {WORK_DAYS.flatMap((day) =>
                     MEAL_TYPES.map((mealType) => (
-                      <th
-                        key={`${day.dayOfWeek}-${mealType}`}
-                        className="p-3"
-                      >
-                        {day.label} - {MEAL_LABELS[mealType]}
+                      <th key={`${day.dayOfWeek}-${mealType}`} className="border-b border-white/10 p-3 text-center">
+                        {MEAL_LABELS[mealType]}
                       </th>
                     )),
                   )}
                 </tr>
               </thead>
-
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-b border-zinc-800">
-                    <td className="p-3">{user.name}</td>
-                    <td className="p-3">{user.username}</td>
-
+                  <tr key={user.id} className="odd:bg-white/[0.03]">
+                    <td className="sticky right-0 z-20 border-b border-white/10 bg-zinc-950/70 p-3 align-middle backdrop-blur-xl">
+                      <p className="font-semibold text-zinc-100">{user.name}</p>
+                      <p className="text-xs text-zinc-300">@{user.username}</p>
+                    </td>
                     {WORK_DAYS.flatMap((day) =>
                       MEAL_TYPES.map((mealType) => {
                         const isChecked = user.weeklyPreferences.some(
-                          (preference) =>
-                            preference.dayOfWeek === day.dayOfWeek &&
-                            preference.mealType === mealType &&
-                            preference.isEnabled,
+                          (preference) => preference.dayOfWeek === day.dayOfWeek && preference.mealType === mealType && preference.isEnabled,
                         );
 
                         return (
-                          <td
-                            key={`${user.id}-${day.dayOfWeek}-${mealType}`}
-                            className="p-3"
-                          >
+                          <td key={`${user.id}-${day.dayOfWeek}-${mealType}`} className="border-b border-white/10 p-3 text-center">
                             <input
                               type="checkbox"
                               name={`preference:${user.id}:${day.dayOfWeek}:${mealType}`}
                               defaultChecked={isChecked}
-                              className="h-4 w-4"
+                              data-weekly-preference
+                              data-weekly-meal={mealType}
+                              data-weekly-day={day.dayOfWeek}
+                              data-weekly-user={user.id}
+                              className="dashboard-checkbox"
                             />
                           </td>
                         );
@@ -105,12 +113,15 @@ export default async function WeeklyPlanPage() {
             </table>
           </div>
 
-          <button
-            type="submit"
-            className="mt-6 rounded-xl bg-zinc-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200"
-          >
-            ذخیره برنامه هفتگی
-          </button>
+          <div className="mt-6">
+            <PendingSubmitButton
+              type="submit"
+              pendingText="در حال ذخیره..."
+              className="dashboard-primary-button"
+            >
+              ذخیره برنامه هفتگی
+            </PendingSubmitButton>
+          </div>
         </form>
       </div>
     </main>
