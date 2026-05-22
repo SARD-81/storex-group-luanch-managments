@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { updateWeeklyPreferencesAction } from "@/actions/weekly-preferences";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -10,8 +11,17 @@ import { WORK_DAYS } from "@/lib/attendance/week";
 import { formatPersianDate, formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { prisma } from "@/lib/prisma";
 
-export default async function WeeklyPlanPage() {
+export const dynamic = "force-dynamic";
+
+type WeeklyPlanPageProps = {
+  searchParams: Promise<{ saved?: string }>
+};
+
+export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPageProps) {
   await requireAdmin();
+  noStore();
+
+  const params = await searchParams;
 
   const users = await prisma.user.findMany({
     where: { isActive: true },
@@ -53,6 +63,12 @@ export default async function WeeklyPlanPage() {
           </div>
         </section>
 
+        {params.saved === "1" ? (
+          <section className="dashboard-glass-card border border-emerald-400/40 bg-emerald-500/10 text-emerald-100">
+            برنامه هفتگی با موفقیت ذخیره شد و اطلاعات از دیتابیس به‌روزرسانی شد.
+          </section>
+        ) : null}
+
         <section className="dashboard-glass-card">
           <h2 className="mb-3 text-lg font-semibold">اقدامات سریع</h2>
           <WeeklyPlanActions />
@@ -79,17 +95,22 @@ export default async function WeeklyPlanPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} className="odd:bg-white/[0.03]">
+                {users.map((user) => {
+                  const enabledPreferenceKeys = new Set(
+                    user.weeklyPreferences
+                      .filter((preference) => preference.isEnabled)
+                      .map((preference) => `${preference.dayOfWeek}:${preference.mealType}`),
+                  );
+
+                  return (
+                    <tr key={user.id} className="odd:bg-white/[0.03]">
                     <td className="sticky right-0 z-20 border-b border-white/10 bg-zinc-950/70 p-3 align-middle backdrop-blur-xl">
                       <p className="font-semibold text-zinc-100">{user.name}</p>
                       <p className="text-xs text-zinc-300">@{user.username}</p>
                     </td>
                     {WORK_DAYS.flatMap((day) =>
                       MEAL_TYPES.map((mealType) => {
-                        const isChecked = user.weeklyPreferences.some(
-                          (preference) => preference.dayOfWeek === day.dayOfWeek && preference.mealType === mealType && preference.isEnabled,
-                        );
+                        const isChecked = enabledPreferenceKeys.has(`${day.dayOfWeek}:${mealType}`);
 
                         return (
                           <td key={`${user.id}-${day.dayOfWeek}-${mealType}`} className="border-b border-white/10 p-3 text-center">
@@ -107,8 +128,9 @@ export default async function WeeklyPlanPage() {
                         );
                       }),
                     )}
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
