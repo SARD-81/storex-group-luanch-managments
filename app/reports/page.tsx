@@ -16,17 +16,28 @@ const statusLabels = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ReportsPage({ searchParams }: { searchParams: ReportSearchParams }) {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: ReportSearchParams;
+}) {
   await requireAdmin();
   noStore();
 
   const params = await searchParams;
-  const { fromDate, toDate, fromDateKey, toDateKey } = resolveReportDateRange(params);
-  const { dailySummary, userRows } = await getAttendanceReport(fromDate, toDate);
+  const { fromDate, toDate, fromDateKey, toDateKey } =
+    resolveReportDateRange(params);
+  const { dailySummary, userRows } = await getAttendanceReport(
+    fromDate,
+    toDate,
+  );
   const activeRangeLabel = `${formatPersianWeekdayDate(fromDate)} تا ${formatPersianWeekdayDate(toDate)}`;
 
   return (
-    <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8">
+    <main
+      dir="rtl"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8"
+    >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
       <div className="dashboard-aurora dashboard-aurora-three" />
@@ -36,9 +47,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
             <h1 className="text-2xl font-bold">گزارش حضور</h1>
             <ThemeToggle />
           </div>
-          <p className="mt-2 text-sm text-zinc-400">در این گزارش فقط روزهای کاری شنبه تا چهارشنبه نمایش داده می‌شوند.</p>
-          <p className="dashboard-muted-panel mt-4 text-sm">بازهٔ فعال گزارش: {activeRangeLabel}</p>
-          <Link href="/" className="mt-4 inline-block rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800">بازگشت به داشبورد</Link>
+          <p className="mt-2 text-sm text-zinc-400">
+            در این گزارش فقط روزهای کاری شنبه تا چهارشنبه نمایش داده می‌شوند.
+          </p>
+          <p className="dashboard-muted-panel mt-4 text-sm">
+            بازهٔ فعال گزارش: {activeRangeLabel}
+          </p>
+          <Link
+            href="/"
+            className="mt-4 inline-block rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
+          >
+            بازگشت به داشبورد
+          </Link>
         </header>
 
         <ReportDateFilter fromDateKey={fromDateKey} toDateKey={toDateKey} />
@@ -49,13 +69,17 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
             <table className="w-full text-sm">
               <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
                 <tr>
-                  <th className="p-3">تاریخ جلالی</th><th className="p-3">صبحانه حاضر</th><th className="p-3">ناهار حاضر</th>
+                  <th className="p-3">تاریخ جلالی</th>
+                  <th className="p-3">صبحانه حاضر</th>
+                  <th className="p-3">ناهار حاضر</th>
                 </tr>
               </thead>
               <tbody>
                 {dailySummary.map((row) => (
                   <tr key={row.dateKey} className="border-b border-zinc-800">
-                    <td className="p-3">{row.persianDateLabel}</td><td className="p-3">{row.breakfastCount}</td><td className="p-3">{row.lunchCount}</td>
+                    <td className="p-3">{row.persianDateLabel}</td>
+                    <td className="p-3">{row.breakfastCount}</td>
+                    <td className="p-3">{row.lunchCount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -69,21 +93,34 @@ export default async function ReportsPage({ searchParams }: { searchParams: Repo
             <table className="w-full min-w-[900px] text-sm">
               <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
                 <tr>
-                  <th className="p-3">تاریخ جلالی</th><th className="p-3">کاربر</th><th className="p-3">صبحانه</th><th className="p-3">ناهار</th>
+                  <th className="p-3">تاریخ جلالی</th>
+                  <th className="p-3">کاربر</th>
+                  <th className="p-3">صبحانه</th>
+                  <th className="p-3">ناهار</th>
                 </tr>
               </thead>
               <tbody>
                 {userRows.map((row) => (
-                  <tr key={`${row.dateKey}-${row.username}`} className="border-b border-zinc-800">
+                  <tr
+                    key={`${row.dateKey}-${row.username}`}
+                    className="border-b border-zinc-800"
+                  >
                     <td className="p-3">{row.persianDateLabel}</td>
-                    <td className="p-3">{row.userName} <span className="text-zinc-400">({row.username})</span></td>
                     <td className="p-3">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.breakfastStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>
+                      {row.userName}{" "}
+                      <span className="text-zinc-400">({row.username})</span>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.breakfastStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
+                      >
                         {statusLabels[row.breakfastStatus]}
                       </span>
                     </td>
                     <td className="p-3">
-                      <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.lunchStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.lunchStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
+                      >
                         {statusLabels[row.lunchStatus]}
                       </span>
                     </td>
