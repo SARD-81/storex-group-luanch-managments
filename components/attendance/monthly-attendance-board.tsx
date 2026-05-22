@@ -19,27 +19,18 @@ export async function MonthlyAttendanceBoard({
         <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">نمای ماهانه</p>
-
-            <h2 className="text-2xl font-bold">
-              برنامه حضور ماه جاری من
-            </h2>
-
-            {/* <p className="text-sm leading-6 text-muted-foreground">
-              روزهای کاری ماه جاری نمایش داده می‌شوند؛ پنجشنبه و جمعه از این نما حذف شده‌اند.
-            </p> */}
+            <h2 className="text-2xl font-bold">برنامه حضور ماه جاری من</h2>
           </div>
 
-            
           <div className="dashboard-muted-panel sticky top-4 z-20 flex flex-col gap-3 p-3 backdrop-blur-xl xl:items-end">
             <MonthlyAttendanceActions />
-
-          </div>
-          <PendingSubmitButton
-              className="dashboard-primary-button xl:w-auto"
+            <PendingSubmitButton
+              className="dashboard-primary-button w-full xl:w-auto"
               pendingText="در حال ذخیره..."
             >
               ذخیره کل ماه
             </PendingSubmitButton>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
