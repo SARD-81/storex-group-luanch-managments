@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
+import { AttendanceStatus } from "@/app/generated/prisma/client";
 import { updateWeeklyPreferencesAction } from "@/actions/weekly-preferences";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -8,6 +9,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { getAdminPlanWeekRange, getAdminPlanWindowLabel } from "@/lib/attendance/admin-weekly-summary";
 import { WORK_DAYS } from "@/lib/attendance/week";
+import { getDateKey } from "@/lib/date/date-key";
 import { formatPersianDate, formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { prisma } from "@/lib/prisma";
 
@@ -22,14 +24,50 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
   noStore();
 
   const params = await searchParams;
-
-  const users = await prisma.user.findMany({
-    where: { isActive: true },
-    include: { weeklyPreferences: true },
-    orderBy: { createdAt: "asc" },
-  });
-
   const { weekStart, weekEndExclusive } = getAdminPlanWeekRange();
+
+  const [users, weeklyAttendances] = await Promise.all([
+    prisma.user.findMany({
+      where: { isActive: true },
+      include: { weeklyPreferences: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.mealAttendance.findMany({
+      where: {
+        date: { gte: weekStart, lt: weekEndExclusive },
+        status: AttendanceStatus.PRESENT,
+      },
+      select: {
+        userId: true,
+        date: true,
+        mealType: true,
+      },
+    }),
+  ]);
+
+  const dayMillis = 24 * 60 * 60 * 1000;
+  const weekStartKey = getDateKey(weekStart);
+  const weekStartUtcMillis = Date.parse(`${weekStartKey}T00:00:00.000Z`);
+  const weeklyAttendanceKeysByUserId = new Map<string, Set<string>>();
+
+  for (const attendance of weeklyAttendances) {
+    const attendanceKey = getDateKey(attendance.date);
+    const attendanceUtcMillis = Date.parse(`${attendanceKey}T00:00:00.000Z`);
+    const dayOffset = Math.floor((attendanceUtcMillis - weekStartUtcMillis) / dayMillis);
+
+    if (dayOffset < 0 || dayOffset > 4) {
+      continue;
+    }
+
+    if (!weeklyAttendanceKeysByUserId.has(attendance.userId)) {
+      weeklyAttendanceKeysByUserId.set(attendance.userId, new Set());
+    }
+
+    weeklyAttendanceKeysByUserId
+      .get(attendance.userId)
+      ?.add(`${dayOffset}:${attendance.mealType}`);
+  }
+
   const planWindowLabel = getAdminPlanWindowLabel();
 
   return (
@@ -75,6 +113,9 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
         </section>
 
         <form action={updateWeeklyPreferencesAction} className="dashboard-glass-card">
+          <p className="mb-3 text-sm text-zinc-300">
+            اگر برای کاربری برنامه هفتگی ذخیره نشده باشد، وضعیت حضور ثبت‌شده در همین بازه به‌عنوان مقدار اولیه نمایش داده می‌شود.
+          </p>
           <div className="overflow-x-auto rounded-2xl border border-white/10">
             <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-right text-sm">
               <thead>
@@ -101,6 +142,8 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
                       .filter((preference) => preference.isEnabled)
                       .map((preference) => `${preference.dayOfWeek}:${preference.mealType}`),
                   );
+                  const attendancePreferenceKeys = weeklyAttendanceKeysByUserId.get(user.id) ?? new Set<string>();
+                  const hasSavedWeeklyPreferences = enabledPreferenceKeys.size > 0;
 
                   return (
                     <tr key={user.id} className="odd:bg-white/[0.03]">
@@ -110,7 +153,10 @@ export default async function WeeklyPlanPage({ searchParams }: WeeklyPlanPagePro
                     </td>
                     {WORK_DAYS.flatMap((day) =>
                       MEAL_TYPES.map((mealType) => {
-                        const isChecked = enabledPreferenceKeys.has(`${day.dayOfWeek}:${mealType}`);
+                        const preferenceKey = `${day.dayOfWeek}:${mealType}`;
+                        const isChecked = hasSavedWeeklyPreferences
+                          ? enabledPreferenceKeys.has(preferenceKey)
+                          : attendancePreferenceKeys.has(preferenceKey);
 
                         return (
                           <td key={`${user.id}-${day.dayOfWeek}-${mealType}`} className="border-b border-white/10 p-3 text-center">
