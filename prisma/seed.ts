@@ -11,47 +11,47 @@ const prisma = new PrismaClient({ adapter });
 
 const INITIAL_USERS = [
   {
-    username: "zand",
+    username: "a.zand",
     name: "علی زند",
   },
   {
-    username: "moinei",
+    username: "h.moinei",
     name: "حمید معینی",
   },
   {
-    username: "barzegar",
+    username: "m.barzegar",
     name: "مهدی برزگر",
   },
   {
-    username: "mohammadi nasab",
+    username: "m.nasab",
     name: "بهروز محمدی نسب",
   },
   {
-    username: "jeddi",
+    username: "a.jeddi",
     name: "محمد حسین جدی",
   },
   {
-    username: "rasouli",
+    username: "a.rasouli",
     name: "امیر علی رسولی",
   },
   {
-    username: "zare",
+    username: "a.zare",
     name: "امیر حسین زارع",
   },
   {
-    username: "davarzani",
+    username: "a.davarzani",
     name: "سید امیررضا داورزنی",
   },
   {
-    username: "nobaqi",
+    username: "m.nobaqi",
     name: "محمد نوباغی",
   },
   {
-    username: "malek poor",
+    username: "m.poor",
     name: "ملک پور",
   },
   {
-    username: "khoda karami",
+    username: "k.karami",
     name: "خدا کرمی",
   },
 ];
