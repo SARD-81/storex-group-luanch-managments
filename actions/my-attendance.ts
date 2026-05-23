@@ -16,58 +16,62 @@ export async function updateMyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
   const parsedDateKey = dateSchema.safeParse(formData.get("date"));
 
-  if (!parsedDateKey.success) {
-    redirect("/?error=invalid-date");
-  }
-
+  if (!parsedDateKey.success) redirect("/?error=invalid-date");
   const dateKey = parsedDateKey.data;
   const date = parseDateKey(dateKey);
 
-  if (!date) {
-    redirect("/?error=invalid-date");
+  if (!date) redirect("/?error=invalid-date");
+  if (!isSelectableAttendanceDate(date)) redirect(`/?date=${dateKey}&error=invalid-date`);
+  if (!canEditAttendance(date)) redirect(`/?date=${dateKey}&error=deadline`);
+
+  // گرفتن دیتای موجود از دیتابیس برای مقایسه
+  const existingRecords = await prisma.mealAttendance.findMany({
+    where: { userId: currentUser.id, date },
+    select: { mealType: true, status: true },
+  });
+
+  const existingMap = new Map<string, AttendanceStatus>();
+  for (const record of existingRecords) {
+    existingMap.set(record.mealType, record.status);
   }
 
-  if (!isSelectableAttendanceDate(date)) {
-    redirect(`/?date=${dateKey}&error=invalid-date`);
-  }
+  const mutations = [];
+  for (const mealType of MEAL_TYPES) {
+    const checked = formData.get(`meal:${mealType}`) === "on";
+    const newStatus = checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT;
+    const existingStatus = existingMap.get(mealType);
 
-  if (!canEditAttendance(date)) {
-    redirect(`/?date=${dateKey}&error=deadline`);
-  }
-
-  await Promise.all(
-    MEAL_TYPES.map((mealType) => {
-      const checked = formData.get(`meal:${mealType}`) === "on";
-
-      return prisma.mealAttendance.upsert({
-        where: {
-          userId_date_mealType: {
+    // Validation: فقط در صورتی رکورد آپدیت می‌شود که تغییر وضعیتی وجود داشته باشد
+    if (existingStatus !== newStatus) {
+      mutations.push(
+        prisma.mealAttendance.upsert({
+          where: { userId_date_mealType: { userId: currentUser.id, date, mealType } },
+          create: {
             userId: currentUser.id,
             date,
             mealType,
+            status: newStatus,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
           },
-        },
-        create: {
-          userId: currentUser.id,
-          date,
-          mealType,
-          status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-          generatedFromWeeklyPlan: false,
-          manuallyEdited: true,
-        },
-        update: {
-          status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-          generatedFromWeeklyPlan: false,
-          manuallyEdited: true,
-        },
-      });
-    }),
-  );
+          update: {
+            status: newStatus,
+            generatedFromWeeklyPlan: false,
+            manuallyEdited: true,
+          },
+        })
+      );
+    }
+  }
+
+  // اجرا فقط در صورتی که دیتایی برای تغییر وجود داشته باشد
+  if (mutations.length > 0) {
+    await prisma.$transaction(mutations);
+  }
 
   revalidatePath("/");
-  redirect(`/?date=${getDateKey(date)}&saved=1`);
+  redirect(`/?date=${dateKey}&saved=1`);
 }
-
 
 export async function updateMyMonthlyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
@@ -79,116 +83,87 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
     .filter((result): result is { success: true; data: string } => result.success)
     .map((result) => result.data);
 
+  let processDates: { dateKey: string; date: Date }[] = [];
+
+  // بررسی اینکه فرم برای یک روز ارسال شده یا کل ماه
   if (targetDateValue !== null) {
     const parsedTargetDate = dateSchema.safeParse(targetDateValue);
-
-    if (!parsedTargetDate.success) {
-      redirect("/?error=invalid-date");
-    }
+    if (!parsedTargetDate.success) redirect("/?error=invalid-date");
 
     const targetDateKey = parsedTargetDate.data;
     const date = parseDateKey(targetDateKey);
+    if (!date) redirect("/?error=invalid-date");
+    if (!isSelectableAttendanceDate(date)) redirect(`/?date=${targetDateKey}&error=invalid-date`);
+    if (!canEditAttendance(date)) redirect(`/?date=${targetDateKey}&error=deadline`);
 
-    if (!date) {
-      redirect("/?error=invalid-date");
-    }
+    processDates = [{ dateKey: targetDateKey, date }];
+  } else {
+    if (parsedDateEntries.length === 0) redirect("/?error=invalid-date");
 
-    if (!isSelectableAttendanceDate(date)) {
-      redirect(`/?date=${targetDateKey}&error=invalid-date`);
-    }
-
-    if (!canEditAttendance(date)) {
-      redirect(`/?date=${targetDateKey}&error=deadline`);
-    }
-
-    await prisma.$transaction(
-      MEAL_TYPES.map((mealType) => {
-        const checked = formData.get(`meal:${targetDateKey}:${mealType}`) === "on";
-
-        return prisma.mealAttendance.upsert({
-          where: {
-            userId_date_mealType: {
-              userId: currentUser.id,
-              date,
-              mealType,
-            },
-          },
-          create: {
-            userId: currentUser.id,
-            date,
-            mealType,
-            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-            generatedFromWeeklyPlan: false,
-            manuallyEdited: true,
-          },
-          update: {
-            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-            generatedFromWeeklyPlan: false,
-            manuallyEdited: true,
-          },
-        });
-      }),
-    );
-
-    revalidatePath("/");
-    redirect(`/?date=${targetDateKey}&saved=1`);
+    const uniqueDateKeys = [...new Set(parsedDateEntries)];
+    processDates = uniqueDateKeys.map((dateKey) => {
+      const date = parseDateKey(dateKey);
+      if (!date) redirect("/?error=invalid-date");
+      if (!isSelectableAttendanceDate(date)) redirect(`/?date=${dateKey}&error=invalid-date`);
+      if (!canEditAttendance(date)) redirect(`/?date=${dateKey}&error=deadline`);
+      return { dateKey, date };
+    });
   }
 
-  if (parsedDateEntries.length === 0) {
-    redirect("/?error=invalid-date");
-  }
-
-  const uniqueDateKeys = [...new Set(parsedDateEntries)];
-
-  const validatedDates = uniqueDateKeys.map((dateKey) => {
-    const date = parseDateKey(dateKey);
-
-    if (!date) {
-      redirect("/?error=invalid-date");
-    }
-
-    if (!isSelectableAttendanceDate(date)) {
-      redirect(`/?date=${dateKey}&error=invalid-date`);
-    }
-
-    if (!canEditAttendance(date)) {
-      redirect(`/?date=${dateKey}&error=deadline`);
-    }
-
-    return { dateKey, date };
+  // ۱. واکشی اطلاعات تمام روزهای مورد نیاز با یک کوئری سریع
+  const existingRecords = await prisma.mealAttendance.findMany({
+    where: {
+      userId: currentUser.id,
+      date: { in: processDates.map((d) => d.date) },
+    },
+    select: { date: true, mealType: true, status: true },
   });
 
-  await prisma.$transaction(
-    validatedDates.flatMap(({ dateKey, date }) =>
-      MEAL_TYPES.map((mealType) => {
-        const checked = formData.get(`meal:${dateKey}:${mealType}`) === "on";
+  const existingMap = new Map<string, AttendanceStatus>();
+  for (const record of existingRecords) {
+    existingMap.set(`${getDateKey(record.date)}-${record.mealType}`, record.status);
+  }
 
-        return prisma.mealAttendance.upsert({
-          where: {
-            userId_date_mealType: {
+  // ۲. پیدا کردن رکوردهایی که کاربر در فرم تغییر داده است
+  const mutations = [];
+
+  for (const { dateKey, date } of processDates) {
+    for (const mealType of MEAL_TYPES) {
+      const checked = formData.get(`meal:${dateKey}:${mealType}`) === "on";
+      const newStatus = checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT;
+      const existingStatus = existingMap.get(`${dateKey}-${mealType}`);
+
+      // Validation: در صورت تکراری بودن تغییری انجام نمی‌شود
+      if (existingStatus !== newStatus) {
+        mutations.push(
+          prisma.mealAttendance.upsert({
+            where: {
+              userId_date_mealType: { userId: currentUser.id, date, mealType },
+            },
+            create: {
               userId: currentUser.id,
               date,
               mealType,
+              status: newStatus,
+              generatedFromWeeklyPlan: false,
+              manuallyEdited: true,
             },
-          },
-          create: {
-            userId: currentUser.id,
-            date,
-            mealType,
-            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-            generatedFromWeeklyPlan: false,
-            manuallyEdited: true,
-          },
-          update: {
-            status: checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT,
-            generatedFromWeeklyPlan: false,
-            manuallyEdited: true,
-          },
-        });
-      }),
-    ),
-  );
+            update: {
+              status: newStatus,
+              generatedFromWeeklyPlan: false,
+              manuallyEdited: true,
+            },
+          })
+        );
+      }
+    }
+  }
+
+  // ۳. ثبت تراکنش در دیتابیس (فقط اگر تغییری صورت گرفته باشد)
+  if (mutations.length > 0) {
+    await prisma.$transaction(mutations);
+  }
 
   revalidatePath("/");
-  redirect(`/?date=${validatedDates[0].dateKey}&saved=1`);
+  redirect(`/?date=${processDates[0].dateKey}&saved=1`);
 }
