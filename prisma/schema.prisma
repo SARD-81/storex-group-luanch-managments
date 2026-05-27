@@ -27,6 +27,34 @@ enum UserRole {
   ADMIN
 }
 
+enum CalendarDateSystem {
+  GREGORIAN
+  JALALI
+  HIJRI
+}
+
+enum CalendarEventType {
+  NATIONAL
+  RELIGIOUS
+  INTERNATIONAL
+  CULTURAL
+  ORGANIZATIONAL
+  OFFICIAL
+  OTHER
+}
+
+enum CalendarOverrideType {
+  FORCE_HOLIDAY
+  FORCE_WORKDAY
+}
+
+enum CalendarImportStatus {
+  DRAFT
+  IMPORTED
+  VERIFIED
+  REJECTED
+}
+
 model User {
   id           String   @id @default(cuid())
   username     String   @unique
@@ -36,9 +64,11 @@ model User {
   role         UserRole @default(USER)
   isActive     Boolean  @default(true)
 
-  weeklyPreferences WeeklyMealPreference[]
-  attendances        MealAttendance[]
-  sessions           Session[]
+  weeklyPreferences     WeeklyMealPreference[]
+  attendances          MealAttendance[]
+  sessions             Session[]
+  calendarOverrides     CalendarOverride[]    @relation("CalendarOverrideCreatedBy")
+  calendarImportBatches CalendarImportBatch[] @relation("CalendarImportBatchCreatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,3 +125,150 @@ model MealAttendance {
   @@index([date, mealType])
   @@index([userId, date])
 }
+
+model CalendarImportBatch {
+  id String @id @default(cuid())
+
+  year       Int
+  yearSystem CalendarDateSystem @default(JALALI)
+
+  sourceName    String
+  sourceUrl     String?
+  sourceVersion String?
+  notes         String?
+
+  status     CalendarImportStatus @default(DRAFT)
+  importedAt DateTime?
+  verifiedAt DateTime?
+
+  createdById String?
+  createdBy   User? @relation("CalendarImportBatchCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  calendarDays   CalendarDay[]
+  calendarEvents CalendarEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([year, yearSystem])
+  @@index([status])
+  @@index([createdById])
+}
+
+model CalendarDay {
+  id String @id @default(cuid())
+
+  date    DateTime @unique @db.Date
+  dateKey String   @unique
+
+  gregorianYear  Int
+  gregorianMonth Int
+  gregorianDay   Int
+
+  jalaliYear    Int
+  jalaliMonth   Int
+  jalaliDay     Int
+  jalaliDateKey String @unique
+
+  hijriYear    Int?
+  hijriMonth   Int?
+  hijriDay     Int?
+  hijriDateKey String?
+
+  /// 0 = Saturday, 1 = Sunday, ..., 6 = Friday
+  dayOfWeek Int
+  dayNameFa String
+
+  isWeeklyOffDay    Boolean @default(false)
+  isOfficialHoliday Boolean @default(false)
+  isManualHoliday   Boolean @default(false)
+  isForcedWorkday   Boolean @default(false)
+
+  /// Final decision used by the application.
+  isWorkday Boolean @default(true)
+
+  holidayTitle String?
+  description  String?
+
+  sourceName    String?
+  sourceVersion String?
+  verifiedAt    DateTime?
+
+  importBatchId String?
+  importBatch   CalendarImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  events   CalendarEvent[]
+  override CalendarOverride?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([dateKey])
+  @@index([jalaliYear, jalaliMonth])
+  @@index([jalaliDateKey])
+  @@index([dayOfWeek])
+  @@index([isWorkday])
+  @@index([isOfficialHoliday])
+  @@index([isWeeklyOffDay])
+  @@index([date, isWorkday])
+}
+
+model CalendarEvent {
+  id String @id @default(cuid())
+
+  calendarDayId String
+  calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
+
+  title        String
+  type         CalendarEventType
+  calendarType CalendarDateSystem
+
+  isHoliday  Boolean @default(false)
+  isOfficial Boolean @default(true)
+
+  referenceDate String?
+  description   String?
+
+  sourceName    String?
+  sourceVersion String?
+
+  importBatchId String?
+  importBatch   CalendarImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([calendarDayId])
+  @@index([type])
+  @@index([calendarType])
+  @@index([isHoliday])
+  @@index([isOfficial])
+  @@index([importBatchId])
+}
+
+model CalendarOverride {
+  id String @id @default(cuid())
+
+  calendarDayId String @unique
+  calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
+
+  date    DateTime @db.Date
+  dateKey String
+
+  type        CalendarOverrideType
+  title       String
+  description String?
+
+  createdById String?
+  createdBy   User? @relation("CalendarOverrideCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@index([dateKey])
+  @@index([type])
+  @@index([createdById])
+}
+
