@@ -36,7 +36,9 @@ export default async function Home({
   const params = await searchParams;
   const currentUser = await requireUser();
   const isAdmin = currentUser.role === UserRole.ADMIN;
-  const { selectedDate: requestedDate } = await resolveSelectedDate(params.date);
+  const { selectedDate: requestedDate } = await resolveSelectedDate(
+    params.date,
+  );
   const dashboardData = isAdmin
     ? await getAdminDashboardData(requestedDate)
     : await getUserDashboardData(currentUser.id, requestedDate);
@@ -45,6 +47,8 @@ export default async function Home({
     attendances,
     selectedDate,
     selectedDateKey,
+    selectedDatePolicy,
+    datePickerPolicies,
     canEditSelectedDate,
     deadline,
     weeklyPlanAttendances,
@@ -112,7 +116,10 @@ export default async function Home({
 
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap items-center gap-3">
-              <AttendanceDatePicker selectedDateKey={selectedDateKey} />
+              <AttendanceDatePicker
+                selectedDateKey={selectedDateKey}
+                datePickerPolicies={datePickerPolicies}
+              />
               <TehranClock />
               <ThemeToggle />
             </div>
@@ -124,6 +131,39 @@ export default async function Home({
                 خروج از حساب
               </PendingSubmitButton>
             </form>
+          </div>
+
+          <div className="dashboard-muted-panel space-y-2 text-xs text-zinc-200">
+            {selectedDatePolicy.calendarDay ? (
+              <>
+                {selectedDatePolicy.holidayTitle ? (
+                  <p>تعطیلی/مناسبت رسمی: {selectedDatePolicy.holidayTitle}</p>
+                ) : null}
+                {selectedDatePolicy.calendarDay.events.length > 0 ? (
+                  <div className="space-y-1">
+                    <p>مناسبت‌های این روز:</p>
+                    <ul className="flex flex-wrap gap-2">
+                      {selectedDatePolicy.calendarDay.events.map((event) => (
+                        <li
+                          key={`${event.displayOrder}-${event.title}`}
+                          className="rounded-full border border-white/10 bg-white/10 px-2 py-1"
+                        >
+                          {event.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {selectedDatePolicy.isWeeklyOffDay ? <p>تعطیلی هفتگی</p> : null}
+                {!selectedDatePolicy.isSelectable ? (
+                  <p className="text-amber-300">
+                    این تاریخ برای ثبت حضور قابل انتخاب نیست.
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p>اطلاعات تقویمی این تاریخ در سامانه موجود نیست.</p>
+            )}
           </div>
         </header>
 
