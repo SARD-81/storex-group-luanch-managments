@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "calendar:import-base-year": "tsx scripts/import-calendar-base-year.ts",
     "calendar:apply-fixed-holidays": "tsx scripts/apply-fixed-jalali-holidays.ts",
-    "calendar:validate-official-1405": "tsx scripts/validate-official-calendar-events-1405.ts"
+    "calendar:validate-official-1405": "tsx scripts/validate-official-calendar-events-1405.ts",
+    "calendar:import-official-1405": "tsx scripts/import-official-calendar-events-1405.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
