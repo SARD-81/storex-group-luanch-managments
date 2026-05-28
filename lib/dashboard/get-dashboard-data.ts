@@ -1,6 +1,10 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
+import type { CalendarAttendanceDatePolicy } from "@/lib/attendance/calendar-attendance-policy";
 import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
-import { getAttendanceDeadline, canEditAttendance } from "@/lib/attendance/rules";
+import {
+  getAttendanceDeadline,
+  canEditAttendance,
+} from "@/lib/attendance/rules";
 import {
   getAttendanceSelectableDateRange,
   getAttendanceDatePolicyByDateKey,
@@ -8,6 +12,40 @@ import {
 } from "@/lib/attendance/calendar-attendance-policy";
 import { parseDateKey, getDateKey } from "@/lib/date/date-key";
 import { prisma } from "@/lib/prisma";
+
+export type DashboardDatePickerPolicy = {
+  dateKey: string;
+  jalaliDateKey: string | null;
+  dayNameFa: string | null;
+  isSelectable: boolean;
+  isWorkday: boolean | null;
+  isWeeklyOffDay: boolean | null;
+  isOfficialHoliday: boolean | null;
+  isManualHoliday: boolean | null;
+  isForcedWorkday: boolean | null;
+  holidayTitle: string | null;
+  eventCount: number;
+  reasons: string[];
+};
+
+function mapDatePickerPolicy(
+  policy: CalendarAttendanceDatePolicy,
+): DashboardDatePickerPolicy {
+  return {
+    dateKey: policy.dateKey,
+    jalaliDateKey: policy.jalaliDateKey,
+    dayNameFa: policy.dayNameFa,
+    isSelectable: policy.isSelectable,
+    isWorkday: policy.isWorkday,
+    isWeeklyOffDay: policy.isWeeklyOffDay,
+    isOfficialHoliday: policy.isOfficialHoliday,
+    isManualHoliday: policy.isManualHoliday,
+    isForcedWorkday: policy.isForcedWorkday,
+    holidayTitle: policy.holidayTitle,
+    eventCount: policy.eventCount,
+    reasons: policy.reasons,
+  };
+}
 
 export async function getDefaultSelectedDateKey(now = new Date()) {
   const { todayDateKey, maxDateKey } = getAttendanceSelectableDateRange(now);
@@ -50,37 +88,45 @@ export async function resolveSelectedDate(dateParam?: string) {
 export async function getAdminDashboardData(selectedDate: Date) {
   const now = new Date();
   const { weekStart, weekEndExclusive } = getAdminPlanWeekRange(now);
-  const [users, attendances, weeklyPlanAttendances] = await Promise.all([
-    prisma.user.findMany({
-      where: { isActive: true },
-      include: {
-        weeklyPreferences: {
-          where: {
-            isEnabled: true,
-            dayOfWeek: { gte: 0, lte: 4 },
+  const selectableRange = getAttendanceSelectableDateRange(now);
+  const [users, attendances, weeklyPlanAttendances, datePickerPolicies] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: { isActive: true },
+        include: {
+          weeklyPreferences: {
+            where: {
+              isEnabled: true,
+              dayOfWeek: { gte: 0, lte: 4 },
+            },
           },
         },
-      },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.mealAttendance.findMany({
-      where: { date: selectedDate },
-      include: { user: true },
-      orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
-    }),
-    prisma.mealAttendance.findMany({
-      where: {
-        date: { gte: weekStart, lt: weekEndExclusive },
-        status: AttendanceStatus.PRESENT,
-      },
-      select: {
-        userId: true,
-        date: true,
-        mealType: true,
-        status: true,
-      },
-    }),
-  ]);
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.mealAttendance.findMany({
+        where: { date: selectedDate },
+        include: { user: true },
+        orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
+      }),
+      prisma.mealAttendance.findMany({
+        where: {
+          date: { gte: weekStart, lt: weekEndExclusive },
+          status: AttendanceStatus.PRESENT,
+        },
+        select: {
+          userId: true,
+          date: true,
+          mealType: true,
+          status: true,
+        },
+      }),
+      getAttendanceDatePoliciesByDateRange(
+        prisma,
+        selectableRange.todayDateKey,
+        selectableRange.maxDateKey,
+        now,
+      ),
+    ]);
 
   const selectedDateKey = getDateKey(selectedDate);
   const selectedDatePolicy = await getAttendanceDatePolicyByDateKey(
@@ -95,6 +141,7 @@ export async function getAdminDashboardData(selectedDate: Date) {
     selectedDate,
     selectedDateKey,
     selectedDatePolicy,
+    datePickerPolicies: datePickerPolicies.map(mapDatePickerPolicy),
     now,
     deadline: getAttendanceDeadline(selectedDate),
     canEditSelectedDate:
@@ -107,7 +154,8 @@ export async function getAdminDashboardData(selectedDate: Date) {
 
 export async function getUserDashboardData(userId: string, selectedDate: Date) {
   const now = new Date();
-  const [users, attendances] = await Promise.all([
+  const selectableRange = getAttendanceSelectableDateRange(now);
+  const [users, attendances, datePickerPolicies] = await Promise.all([
     prisma.user.findMany({
       where: {
         isActive: true,
@@ -130,6 +178,12 @@ export async function getUserDashboardData(userId: string, selectedDate: Date) {
       include: { user: true },
       orderBy: [{ mealType: "asc" }],
     }),
+    getAttendanceDatePoliciesByDateRange(
+      prisma,
+      selectableRange.todayDateKey,
+      selectableRange.maxDateKey,
+      now,
+    ),
   ]);
 
   const selectedDateKey = getDateKey(selectedDate);
@@ -145,6 +199,7 @@ export async function getUserDashboardData(userId: string, selectedDate: Date) {
     selectedDate,
     selectedDateKey,
     selectedDatePolicy,
+    datePickerPolicies: datePickerPolicies.map(mapDatePickerPolicy),
     now,
     deadline: getAttendanceDeadline(selectedDate),
     canEditSelectedDate:

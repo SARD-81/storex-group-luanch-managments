@@ -7,11 +7,26 @@ import persian from "react-date-object/calendars/persian";
 import persianFa from "react-date-object/locales/persian_fa";
 import DateObject from "react-date-object";
 import { getDateKey } from "@/lib/date/date-key";
-import { isSelectableAttendanceDate } from "@/lib/attendance/rules";
 import { Button } from "@/components/ui/button";
+
+type AttendanceDatePickerPolicy = {
+  dateKey: string;
+  jalaliDateKey: string | null;
+  dayNameFa: string | null;
+  isSelectable: boolean;
+  isWorkday: boolean | null;
+  isWeeklyOffDay: boolean | null;
+  isOfficialHoliday: boolean | null;
+  isManualHoliday: boolean | null;
+  isForcedWorkday: boolean | null;
+  holidayTitle: string | null;
+  eventCount: number;
+  reasons: string[];
+};
 
 type AttendanceDatePickerProps = {
   selectedDateKey: string;
+  datePickerPolicies: AttendanceDatePickerPolicy[];
 };
 
 function dateKeyToDateObject(dateKey: string) {
@@ -34,9 +49,13 @@ function dateObjectToGregorianDate(value: DateObject) {
 
 export function AttendanceDatePicker({
   selectedDateKey,
+  datePickerPolicies,
 }: AttendanceDatePickerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const policyByDateKey = new Map(
+    datePickerPolicies.map((policy) => [policy.dateKey, policy]),
+  );
 
   return (
     <DatePicker
@@ -59,11 +78,20 @@ export function AttendanceDatePicker({
       )}
       mapDays={({ date }) => {
         const gregorianDate = dateObjectToGregorianDate(date);
-        const disabled = !isSelectableAttendanceDate(gregorianDate);
+        const dateKey = getDateKey(gregorianDate);
+        const policy = policyByDateKey.get(dateKey);
+        const disabled = policy?.isSelectable !== true;
+        const classNames = [
+          disabled ? "opacity-40" : "",
+          policy?.isOfficialHoliday ? "text-rose-300" : "",
+          policy?.isWeeklyOffDay ? "text-amber-300" : "",
+        ].filter(Boolean);
 
         return {
           disabled,
-          className: disabled ? "opacity-40" : "",
+          className: classNames.join(" "),
+          title:
+            policy?.holidayTitle ?? (disabled ? "غیرقابل انتخاب" : undefined),
         };
       }}
       onChange={(value) => {
@@ -72,8 +100,14 @@ export function AttendanceDatePicker({
         }
 
         const gregorianDate = dateObjectToGregorianDate(value);
+        const dateKey = getDateKey(gregorianDate);
+
+        if (policyByDateKey.get(dateKey)?.isSelectable !== true) {
+          return;
+        }
+
         startTransition(() => {
-          router.push(`/?date=${getDateKey(gregorianDate)}`);
+          router.push(`/?date=${dateKey}`);
         });
       }}
     />
