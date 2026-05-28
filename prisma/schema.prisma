@@ -43,6 +43,13 @@ enum CalendarEventType {
   OTHER
 }
 
+enum CalendarEventSourceSection {
+  MAIN_MONTH_TABLE
+  APPENDIX_TABLE
+  ASTRONOMICAL_NOTES
+  MANUAL
+}
+
 enum CalendarOverrideType {
   FORCE_HOLIDAY
   FORCE_WORKDAY
@@ -217,10 +224,13 @@ model CalendarDay {
 model CalendarEvent {
   id String @id @default(cuid())
 
+  eventKey String? @unique
+
   calendarDayId String
   calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
 
   title        String
+  displayOrder Int @default(0)
   type         CalendarEventType
   calendarType CalendarDateSystem
 
@@ -232,6 +242,8 @@ model CalendarEvent {
 
   sourceName    String?
   sourceVersion String?
+  sourcePage    Int?
+  sourceSection CalendarEventSourceSection?
 
   importBatchId String?
   importBatch   CalendarImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
@@ -240,10 +252,13 @@ model CalendarEvent {
   updatedAt DateTime @updatedAt
 
   @@index([calendarDayId])
+  @@index([calendarDayId, displayOrder])
   @@index([type])
   @@index([calendarType])
   @@index([isHoliday])
   @@index([isOfficial])
+  @@index([sourcePage])
+  @@index([sourceSection])
   @@index([importBatchId])
 }
 
@@ -271,4 +286,3 @@ model CalendarOverride {
   @@index([type])
   @@index([createdById])
 }
-
