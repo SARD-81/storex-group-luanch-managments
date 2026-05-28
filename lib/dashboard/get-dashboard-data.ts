@@ -1,37 +1,44 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
 import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
-import { getAttendanceDeadline, canEditAttendance, isSelectableAttendanceDate } from "@/lib/attendance/rules";
-import { addDays } from "@/lib/attendance/week";
+import { getAttendanceDeadline, canEditAttendance } from "@/lib/attendance/rules";
+import {
+  getAttendanceSelectableDateRange,
+  getAttendanceDatePolicyByDateKey,
+  getAttendanceDatePoliciesByDateRange,
+} from "@/lib/attendance/calendar-attendance-policy";
 import { parseDateKey, getDateKey } from "@/lib/date/date-key";
 import { prisma } from "@/lib/prisma";
 
-export function getDefaultSelectedDateKey(now = new Date()) {
-  if (isSelectableAttendanceDate(now, now)) {
-    return getDateKey(now);
-  }
+export async function getDefaultSelectedDateKey(now = new Date()) {
+  const { todayDateKey, maxDateKey } = getAttendanceSelectableDateRange(now);
+  const policies = await getAttendanceDatePoliciesByDateRange(
+    prisma,
+    todayDateKey,
+    maxDateKey,
+    now,
+  );
+  const firstSelectablePolicy = policies.find((policy) => policy.isSelectable);
 
-  for (let dayOffset = 1; dayOffset <= 31; dayOffset += 1) {
-    const candidate = addDays(now, dayOffset);
-    if (isSelectableAttendanceDate(candidate, now)) {
-      return getDateKey(candidate);
-    }
-  }
-
-  return getDateKey(now);
+  return firstSelectablePolicy?.dateKey ?? todayDateKey;
 }
 
-export function resolveSelectedDate(dateParam?: string) {
+export async function resolveSelectedDate(dateParam?: string) {
   const parsed = dateParam ? parseDateKey(dateParam) : null;
   const now = new Date();
 
-  if (parsed && isSelectableAttendanceDate(parsed, now)) {
-    return {
-      selectedDateKey: getDateKey(parsed),
-      selectedDate: parsed,
-    };
+  if (parsed) {
+    const dateKey = getDateKey(parsed);
+    const policy = await getAttendanceDatePolicyByDateKey(prisma, dateKey, now);
+
+    if (policy.isSelectable) {
+      return {
+        selectedDateKey: dateKey,
+        selectedDate: parsed,
+      };
+    }
   }
 
-  const selectedDateKey = getDefaultSelectedDateKey(now);
+  const selectedDateKey = await getDefaultSelectedDateKey(now);
   const selectedDate = parseDateKey(selectedDateKey) ?? now;
 
   return {
@@ -75,14 +82,23 @@ export async function getAdminDashboardData(selectedDate: Date) {
     }),
   ]);
 
+  const selectedDateKey = getDateKey(selectedDate);
+  const selectedDatePolicy = await getAttendanceDatePolicyByDateKey(
+    prisma,
+    selectedDateKey,
+    now,
+  );
+
   return {
     users,
     attendances,
     selectedDate,
-    selectedDateKey: getDateKey(selectedDate),
+    selectedDateKey,
+    selectedDatePolicy,
     now,
     deadline: getAttendanceDeadline(selectedDate),
-    canEditSelectedDate: canEditAttendance(selectedDate, now),
+    canEditSelectedDate:
+      selectedDatePolicy.isSelectable && canEditAttendance(selectedDate, now),
     weeklyPlanAttendances,
     adminPlanWeekStart: weekStart,
     adminPlanWeekEndExclusive: weekEndExclusive,
@@ -116,14 +132,23 @@ export async function getUserDashboardData(userId: string, selectedDate: Date) {
     }),
   ]);
 
+  const selectedDateKey = getDateKey(selectedDate);
+  const selectedDatePolicy = await getAttendanceDatePolicyByDateKey(
+    prisma,
+    selectedDateKey,
+    now,
+  );
+
   return {
     users,
     attendances,
     selectedDate,
-    selectedDateKey: getDateKey(selectedDate),
+    selectedDateKey,
+    selectedDatePolicy,
     now,
     deadline: getAttendanceDeadline(selectedDate),
-    canEditSelectedDate: canEditAttendance(selectedDate, now),
+    canEditSelectedDate:
+      selectedDatePolicy.isSelectable && canEditAttendance(selectedDate, now),
     weeklyPlanAttendances: [],
     adminPlanWeekStart: selectedDate,
     adminPlanWeekEndExclusive: selectedDate,

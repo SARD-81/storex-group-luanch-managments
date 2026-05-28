@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
 import { MEAL_TYPES } from "@/lib/attendance/meals";
-import { canEditAttendance, isSelectableAttendanceDate } from "@/lib/attendance/rules";
+import { canSelectAttendanceDateByDateKey } from "@/lib/attendance/calendar-attendance-policy";
+import { canEditAttendance } from "@/lib/attendance/rules";
 import { parseDateKey, getDateKey } from "@/lib/date/date-key";
 import { prisma } from "@/lib/prisma";
 
@@ -21,7 +22,9 @@ export async function updateMyAttendanceAction(formData: FormData) {
   const date = parseDateKey(dateKey);
 
   if (!date) redirect("/?error=invalid-date");
-  if (!isSelectableAttendanceDate(date)) redirect(`/?date=${dateKey}&error=invalid-date`);
+  if (!(await canSelectAttendanceDateByDateKey(prisma, dateKey))) {
+    redirect(`/?date=${dateKey}&error=invalid-date`);
+  }
   if (!canEditAttendance(date)) redirect(`/?date=${dateKey}&error=deadline`);
 
   // گرفتن دیتای موجود از دیتابیس برای مقایسه
@@ -93,7 +96,9 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
     const targetDateKey = parsedTargetDate.data;
     const date = parseDateKey(targetDateKey);
     if (!date) redirect("/?error=invalid-date");
-    if (!isSelectableAttendanceDate(date)) redirect(`/?date=${targetDateKey}&error=invalid-date`);
+    if (!(await canSelectAttendanceDateByDateKey(prisma, targetDateKey))) {
+      redirect(`/?date=${targetDateKey}&error=invalid-date`);
+    }
     if (!canEditAttendance(date)) redirect(`/?date=${targetDateKey}&error=deadline`);
 
     processDates = [{ dateKey: targetDateKey, date }];
@@ -101,13 +106,17 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
     if (parsedDateEntries.length === 0) redirect("/?error=invalid-date");
 
     const uniqueDateKeys = [...new Set(parsedDateEntries)];
-    processDates = uniqueDateKeys.map((dateKey) => {
+    processDates = [];
+
+    for (const dateKey of uniqueDateKeys) {
       const date = parseDateKey(dateKey);
       if (!date) redirect("/?error=invalid-date");
-      if (!isSelectableAttendanceDate(date)) redirect(`/?date=${dateKey}&error=invalid-date`);
+      if (!(await canSelectAttendanceDateByDateKey(prisma, dateKey))) {
+        redirect(`/?date=${dateKey}&error=invalid-date`);
+      }
       if (!canEditAttendance(date)) redirect(`/?date=${dateKey}&error=deadline`);
-      return { dateKey, date };
-    });
+      processDates.push({ dateKey, date });
+    }
   }
 
   // ۱. واکشی اطلاعات تمام روزهای مورد نیاز با یک کوئری سریع

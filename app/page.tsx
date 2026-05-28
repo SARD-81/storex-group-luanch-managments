@@ -36,7 +36,7 @@ export default async function Home({
   const params = await searchParams;
   const currentUser = await requireUser();
   const isAdmin = currentUser.role === UserRole.ADMIN;
-  const { selectedDate: requestedDate } = resolveSelectedDate(params.date);
+  const { selectedDate: requestedDate } = await resolveSelectedDate(params.date);
   const dashboardData = isAdmin
     ? await getAdminDashboardData(requestedDate)
     : await getUserDashboardData(currentUser.id, requestedDate);
