@@ -135,7 +135,7 @@ if (errors.length > 0) {
 }
 
 console.log("Official 1405 calendar event validation passed.");
-console.log("Total events: 426");
+console.log(`Total events: ${OFFICIAL_1405_EXPECTED_TOTAL_EVENTS}`);
 console.log("Event counts by month:");
 for (const month of sortedMonths) {
   console.log(`  ${String(month).padStart(2, "0")}: ${eventCountsByMonth.get(month) ?? 0}`);

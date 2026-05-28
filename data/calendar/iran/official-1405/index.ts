@@ -41,16 +41,16 @@ export const OFFICIAL_1405_EVENT_MONTH_COUNTS = {
   khordad: 39,
   tir: 40,
   mordad: 34,
-  shahrivar: 47,
+  shahrivar: 46,
   mehr: 37,
   aban: 28,
   azar: 36,
-  dey: 41,
+  dey: 40,
   bahman: 19,
   esfand: 33,
 } as const;
 
-export const OFFICIAL_1405_EXPECTED_TOTAL_EVENTS = 426;
+export const OFFICIAL_1405_EXPECTED_TOTAL_EVENTS = 424;
 
 export const OFFICIAL_1405_EVENTS: OfficialCalendarEvent1405[] = [
   ...FARVARDIN_1405_EVENTS,
