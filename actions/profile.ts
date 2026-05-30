@@ -41,30 +41,10 @@ export async function updateMyProfileAction(formData: FormData) {
 
 export async function updateMyPasswordAction(formData: FormData) {
   const currentUser = await requireUser();
-  const currentPassword = formData.get("currentPassword")?.toString() ?? "";
   const newPassword = formData.get("newPassword")?.toString() ?? "";
-  const confirmPassword = formData.get("confirmPassword")?.toString() ?? "";
 
-  if (
-    !currentPassword ||
-    !newPassword ||
-    !confirmPassword ||
-    newPassword.length < 8 ||
-    newPassword !== confirmPassword
-  ) {
+  if (newPassword.length < 8) {
     redirect("/profile?error=invalid-password");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: currentUser.id },
-    select: { passwordHash: true },
-  });
-
-  if (
-    !user?.passwordHash ||
-    !(await bcrypt.compare(currentPassword, user.passwordHash))
-  ) {
-    redirect("/profile?error=current-password");
   }
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
