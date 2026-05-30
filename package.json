@@ -17,6 +17,7 @@
     "calendar:validate-official-1405": "tsx scripts/validate-official-calendar-events-1405.ts",
     "calendar:import-official-1405": "tsx scripts/import-official-calendar-events-1405.ts",
     "calendar:check-service": "tsx scripts/check-calendar-service.ts",
+    "calendar:check-overrides": "tsx scripts/check-calendar-overrides.ts",
     "calendar:check-attendance-policy": "tsx scripts/check-calendar-attendance-policy.ts",
     "calendar:check-dashboard-integration": "tsx scripts/check-calendar-dashboard-integration.ts",
     "calendar:check-weekly-plan": "tsx scripts/check-calendar-weekly-plan.ts",
