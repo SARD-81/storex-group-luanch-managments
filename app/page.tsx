@@ -111,12 +111,12 @@ export default async function Home({
                   <span className="font-semibold">{currentUser.name}</span>
                 </p>
                 <p>نقش: {roleLabels[currentUser.role]}</p>
-                <Link
+                <a
                   href="/profile"
                   className="text-xs font-semibold text-sky-600 transition hover:text-sky-500 dark:text-sky-300 dark:hover:text-sky-200"
                 >
                   ویرایش حساب
-                </Link>
+                </a>
               </div>
             </div>
           </div>
