@@ -31,7 +31,7 @@ function revalidateCalendarOverrideConsumers(): void {
 export async function applyManualHolidayOverrideAction(
   formData: FormData,
 ): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const dateKey = getStringValue(formData, "dateKey");
   const title = getStringValue(formData, "title").trim();
@@ -42,7 +42,11 @@ export async function applyManualHolidayOverrideAction(
     redirect(getInvalidInputRedirect(dateKey));
   }
 
-  await forceCalendarDayHoliday(prisma, dateKey, { title, description });
+  await forceCalendarDayHoliday(prisma, dateKey, {
+    title,
+    description,
+    createdById: admin.id,
+  });
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=manual-holiday`);
 }
@@ -50,7 +54,7 @@ export async function applyManualHolidayOverrideAction(
 export async function applyForcedWorkdayOverrideAction(
   formData: FormData,
 ): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const dateKey = getStringValue(formData, "dateKey");
   const title = getStringValue(formData, "title").trim();
@@ -61,7 +65,11 @@ export async function applyForcedWorkdayOverrideAction(
     redirect(getInvalidInputRedirect(dateKey));
   }
 
-  await forceCalendarDayWorkday(prisma, dateKey, { title, description });
+  await forceCalendarDayWorkday(prisma, dateKey, {
+    title,
+    description,
+    createdById: admin.id,
+  });
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=forced-workday`);
 }
