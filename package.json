@@ -19,7 +19,8 @@
     "calendar:check-service": "tsx scripts/check-calendar-service.ts",
     "calendar:check-attendance-policy": "tsx scripts/check-calendar-attendance-policy.ts",
     "calendar:check-dashboard-integration": "tsx scripts/check-calendar-dashboard-integration.ts",
-    "calendar:check-weekly-plan": "tsx scripts/check-calendar-weekly-plan.ts"
+    "calendar:check-weekly-plan": "tsx scripts/check-calendar-weekly-plan.ts",
+    "calendar:check-reports": "tsx scripts/check-calendar-reports.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
