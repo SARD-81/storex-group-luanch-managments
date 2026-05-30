@@ -11,6 +11,10 @@ function sha256(value: string) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+function shouldUseSecureSessionCookie() {
+  return process.env.AUTH_COOKIE_SECURE === "true";
+}
+
 async function getSessionCookieTokens() {
   const cookieStore = await cookies();
   return [
@@ -40,9 +44,10 @@ export async function createSession(userId: string) {
   cookieStore.set(SESSION_COOKIE_NAME, rawToken, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureSessionCookie(),
     path: "/",
     expires: expiresAt,
+    maxAge: SESSION_MAX_AGE_SECONDS,
   });
 }
 
