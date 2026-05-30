@@ -113,7 +113,7 @@ export default async function WeeklyPlanPage({
   return (
     <main
       dir="rtl"
-      className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
     >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
@@ -123,7 +123,7 @@ export default async function WeeklyPlanPage({
         <header className="dashboard-glass-card flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-muted-foreground">
                 مدیریت برنامه هفتگی وعده‌های تیم
               </p>
               <h1 className="mt-1 text-3xl font-bold">تنظیم برنامه هفتگی</h1>
@@ -162,21 +162,21 @@ export default async function WeeklyPlanPage({
           action={updateWeeklyPreferencesAction}
           className="dashboard-glass-card"
         >
-          <p className="mb-3 text-sm text-zinc-300">
+          <p className="mb-3 text-sm text-muted-foreground">
             اگر برای کاربری برنامه هفتگی ذخیره نشده باشد، وضعیت حضور ثبت‌شده در
             همین بازه به‌عنوان مقدار اولیه نمایش داده می‌شود.
           </p>
-          <p className="mb-3 text-xs text-zinc-400">
+          <p className="mb-3 text-xs text-muted-foreground">
             تعطیلی‌های رسمی این بازه از تقویم رسمی سامانه نمایش داده می‌شوند؛
             تنظیمات هفتگی همچنان بر اساس روز هفته ذخیره می‌شوند.
           </p>
-          <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <div className="overflow-x-auto rounded-2xl border border-border/60">
             <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-right text-sm">
               <thead>
-                <tr className="bg-white/5 text-zinc-200">
+                <tr className="bg-muted/60 text-foreground">
                   <th
                     rowSpan={2}
-                    className="sticky right-0 z-30 min-w-[220px] border-b border-white/10 bg-white/10 p-3 text-right"
+                    className="sticky right-0 z-30 min-w-[220px] border-b border-border/60 bg-muted/50 p-3 text-right"
                   >
                     کاربر
                   </th>
@@ -185,17 +185,17 @@ export default async function WeeklyPlanPage({
                       ? "text-rose-300"
                       : day.isWeeklyOffDay
                         ? "text-amber-300"
-                        : "text-zinc-400";
+                        : "text-muted-foreground";
 
                     return (
                       <th
                         key={day.dateKey}
                         colSpan={MEAL_TYPES.length}
-                        className="border-b border-white/10 p-3 text-center"
+                        className="border-b border-border/60 p-3 text-center"
                       >
                         <div className="space-y-1">
                           <p>{day.dayNameFa ?? `روز ${day.dayOfWeek}`}</p>
-                          <p className="text-xs text-zinc-400">
+                          <p className="text-xs text-muted-foreground">
                             {day.jalaliDateKey ?? day.dateKey}
                           </p>
                           <p className={`text-xs ${statusClassName}`}>
@@ -206,12 +206,12 @@ export default async function WeeklyPlanPage({
                     );
                   })}
                 </tr>
-                <tr className="bg-white/5 text-zinc-300">
+                <tr className="bg-muted/60 text-muted-foreground">
                   {weeklyPlanDays.flatMap((day) =>
                     MEAL_TYPES.map((mealType) => (
                       <th
                         key={`${day.dayOfWeek}-${mealType}`}
-                        className="border-b border-white/10 p-3 text-center"
+                        className="border-b border-border/60 p-3 text-center"
                       >
                         {MEAL_LABELS[mealType]}
                       </th>
@@ -236,12 +236,12 @@ export default async function WeeklyPlanPage({
                     user.weeklyPreferences.length > 0;
 
                   return (
-                    <tr key={user.id} className="odd:bg-white/[0.03]">
-                      <td className="sticky right-0 z-20 border-b border-white/10 bg-zinc-950/70 p-3 align-middle backdrop-blur-xl">
-                        <p className="font-semibold text-zinc-100">
+                    <tr key={user.id} className="odd:bg-muted/30">
+                      <td className="sticky right-0 z-20 border-b border-border/60 bg-card/80 p-3 align-middle backdrop-blur-xl">
+                        <p className="font-semibold text-foreground">
                           {user.name}
                         </p>
-                        <p className="text-xs text-zinc-300">
+                        <p className="text-xs text-muted-foreground">
                           @{user.username}
                         </p>
                       </td>
@@ -256,7 +256,7 @@ export default async function WeeklyPlanPage({
                           return (
                             <td
                               key={`${user.id}-${day.dayOfWeek}-${mealType}`}
-                              className="border-b border-white/10 p-3 text-center"
+                              className="border-b border-border/60 p-3 text-center"
                             >
                               <input
                                 type="checkbox"

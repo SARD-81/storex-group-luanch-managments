@@ -71,7 +71,7 @@ export function AttendanceDatePicker({
           variant="outline"
           onClick={openCalendar}
           disabled={isPending}
-          className="h-10 min-w-36 justify-center rounded-2xl border-white/10 bg-white/10 px-4 text-center text-sm font-semibold backdrop-blur transition hover:bg-white/15 dark:bg-white/[0.04]"
+          className="h-10 min-w-36 justify-center rounded-2xl border-border/60 bg-muted/50 px-4 text-center text-sm font-semibold text-foreground backdrop-blur transition hover:bg-muted/70"
         >
           {isPending ? "در حال تغییر..." : value || "انتخاب تاریخ"}
         </Button>

@@ -16,7 +16,7 @@ export async function MonthlyAttendanceBoard({
   return (
     <section className="dashboard-glass-card p-6">
       <form action={updateMyMonthlyAttendanceAction} className="space-y-5">
-        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">نمای ماهانه</p>
             <h2 className="text-2xl font-bold">برنامه حضور ماه جاری من</h2>
@@ -33,7 +33,7 @@ export async function MonthlyAttendanceBoard({
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid items-stretch gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
           {days.map((day) => (
             <MonthDayCard key={day.dateKey} day={day} />
           ))}

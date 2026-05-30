@@ -51,7 +51,7 @@ export function TehranClock() {
   }, []);
 
   return (
-    <p className="rounded-2xl border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-zinc-200 backdrop-blur dark:bg-white/[0.04]">
+    <p className="rounded-2xl border border-border/60 bg-muted/50 px-4 py-2 text-xs font-semibold text-foreground backdrop-blur">
       {hasError ? "ساعت تهران --:--" : `ساعت تهران ${formatted}`}
     </p>
   );

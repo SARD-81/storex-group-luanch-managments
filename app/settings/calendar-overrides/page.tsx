@@ -96,7 +96,7 @@ export default async function CalendarOverridesPage({
   return (
     <main
       dir="rtl"
-      className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
     >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
@@ -106,7 +106,7 @@ export default async function CalendarOverridesPage({
         <header className="dashboard-glass-card flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm text-zinc-300">
+              <p className="text-sm text-muted-foreground">
                 در این صفحه می‌توانید برای موارد خاص شرکت، یک روز را تعطیل دستی
                 یا روز کاری اجباری کنید.
               </p>
@@ -134,11 +134,11 @@ export default async function CalendarOverridesPage({
 
         <section className="dashboard-glass-card space-y-4">
           <div className="flex flex-wrap items-end gap-4">
-            <div className="flex flex-col gap-2 text-sm text-zinc-200">
+            <div className="flex flex-col gap-2 text-sm text-foreground">
               <span>انتخاب تاریخ</span>
               <CalendarOverrideDatePicker selectedDateKey={selectedDateKey} />
             </div>
-            <p className="max-w-xl text-sm text-zinc-300">
+            <p className="max-w-xl text-sm text-muted-foreground">
               برای بررسی یا تغییر وضعیت یک روز، تاریخ مورد نظر را از تقویم
               انتخاب کنید.
             </p>
@@ -158,13 +158,13 @@ export default async function CalendarOverridesPage({
         </section>
 
         {!selectedDateKey ? (
-          <section className="dashboard-muted-panel text-sm text-zinc-300">
+          <section className="dashboard-muted-panel text-sm text-muted-foreground">
             برای شروع، یک تاریخ را از تقویم انتخاب کنید.
           </section>
         ) : null}
 
         {selectedDateKey && !calendarDay ? (
-          <section className="dashboard-glass-card text-sm text-zinc-200">
+          <section className="dashboard-glass-card text-sm text-foreground">
             اطلاعات تقویمی این تاریخ هنوز در سامانه ثبت نشده است. ابتدا باید سال
             مربوطه در تقویم سامانه import شود.
           </section>
@@ -174,60 +174,67 @@ export default async function CalendarOverridesPage({
           <section className="dashboard-glass-card space-y-6">
             <div>
               <h2 className="text-xl font-semibold">وضعیت تاریخ انتخاب‌شده</h2>
-              <p className="mt-2 text-sm text-zinc-300">
-                تغییر دستی فعلی: {getManualChangeLabel(overrideStatus?.overrideType)}
+              <p className="mt-2 text-sm text-muted-foreground">
+                تغییر دستی فعلی:{" "}
+                {getManualChangeLabel(overrideStatus?.overrideType)}
               </p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">تاریخ میلادی</p>
+                <p className="text-xs text-muted-foreground">تاریخ میلادی</p>
                 <p className="mt-1 font-semibold" dir="ltr">
                   {calendarDay.dateKey}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">تاریخ شمسی</p>
+                <p className="text-xs text-muted-foreground">تاریخ شمسی</p>
                 <p className="mt-1 font-semibold" dir="ltr">
                   {calendarDay.jalaliDateKey}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">روز هفته</p>
+                <p className="text-xs text-muted-foreground">روز هفته</p>
                 <p className="mt-1 font-semibold">{calendarDay.dayNameFa}</p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">روز کاری</p>
+                <p className="text-xs text-muted-foreground">روز کاری</p>
                 <p className="mt-1 font-semibold">
                   {booleanLabel(calendarDay.isWorkday)}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">تعطیلی هفتگی</p>
+                <p className="text-xs text-muted-foreground">تعطیلی هفتگی</p>
                 <p className="mt-1 font-semibold">
                   {booleanLabel(calendarDay.isWeeklyOffDay)}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">تعطیلی رسمی</p>
+                <p className="text-xs text-muted-foreground">تعطیلی رسمی</p>
                 <p className="mt-1 font-semibold">
                   {booleanLabel(calendarDay.isOfficialHoliday)}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">تعطیلی دستی شرکت</p>
+                <p className="text-xs text-muted-foreground">
+                  تعطیلی دستی شرکت
+                </p>
                 <p className="mt-1 font-semibold">
                   {booleanLabel(calendarDay.isManualHoliday)}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">روز کاری اجباری شرکت</p>
+                <p className="text-xs text-muted-foreground">
+                  روز کاری اجباری شرکت
+                </p>
                 <p className="mt-1 font-semibold">
                   {booleanLabel(calendarDay.isForcedWorkday)}
                 </p>
               </div>
               <div className="dashboard-muted-panel">
-                <p className="text-xs text-zinc-400">عنوان تعطیلی یا مناسبت</p>
+                <p className="text-xs text-muted-foreground">
+                  عنوان تعطیلی یا مناسبت
+                </p>
                 <p className="mt-1 font-semibold">
                   {calendarDay.holidayTitle ?? "—"}
                 </p>
@@ -237,23 +244,23 @@ export default async function CalendarOverridesPage({
             <div className="dashboard-muted-panel space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="font-semibold">مناسبت‌های ثبت‌شده</h3>
-                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-zinc-200">
+                <span className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs text-foreground">
                   تعداد مناسبت: {calendarDay.events.length}
                 </span>
               </div>
               {calendarDay.events.length > 0 ? (
-                <ul className="flex flex-wrap gap-2 text-sm text-zinc-200">
+                <ul className="flex flex-wrap gap-2 text-sm text-foreground">
                   {calendarDay.events.map((event) => (
                     <li
                       key={`${event.displayOrder}-${event.title}`}
-                      className="rounded-full border border-white/10 bg-white/10 px-3 py-1"
+                      className="rounded-full border border-border/60 bg-muted/50 px-3 py-1"
                     >
                       {event.title}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-zinc-400">
+                <p className="text-sm text-muted-foreground">
                   برای این روز مناسبتی ثبت نشده است.
                 </p>
               )}
@@ -269,13 +276,16 @@ export default async function CalendarOverridesPage({
                 <input
                   name="title"
                   defaultValue="تعطیلی دستی شرکت"
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-zinc-50 outline-none transition focus:border-emerald-300/60"
+                  className="w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-foreground outline-none transition focus:border-emerald-300/60"
                 />
                 <textarea
                   name="description"
-                  className="min-h-28 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-zinc-50 outline-none transition focus:border-emerald-300/60"
+                  className="min-h-28 w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-foreground outline-none transition focus:border-emerald-300/60"
                 />
-                <button type="submit" className="dashboard-action-button w-full">
+                <button
+                  type="submit"
+                  className="dashboard-action-button w-full"
+                >
                   اعمال تعطیلی دستی
                 </button>
               </form>
@@ -289,13 +299,16 @@ export default async function CalendarOverridesPage({
                 <input
                   name="title"
                   defaultValue="روز کاری اجباری شرکت"
-                  className="w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-zinc-50 outline-none transition focus:border-emerald-300/60"
+                  className="w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-foreground outline-none transition focus:border-emerald-300/60"
                 />
                 <textarea
                   name="description"
-                  className="min-h-28 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-zinc-50 outline-none transition focus:border-emerald-300/60"
+                  className="min-h-28 w-full rounded-2xl border border-border/60 bg-muted/50 px-4 py-3 text-foreground outline-none transition focus:border-emerald-300/60"
                 />
-                <button type="submit" className="dashboard-action-button w-full">
+                <button
+                  type="submit"
+                  className="dashboard-action-button w-full"
+                >
                   اعمال روز کاری اجباری
                 </button>
               </form>
@@ -306,11 +319,14 @@ export default async function CalendarOverridesPage({
               >
                 <input type="hidden" name="dateKey" value={selectedDateKey} />
                 <h3 className="font-semibold">پاک کردن تغییر دستی</h3>
-                <p className="text-sm text-zinc-300">
+                <p className="text-sm text-muted-foreground">
                   این عملیات تغییر دستی این تاریخ را حذف می‌کند و وضعیت روز را
                   دوباره بر اساس تقویم رسمی و تعطیلی هفتگی محاسبه می‌کند.
                 </p>
-                <button type="submit" className="dashboard-action-button mt-auto">
+                <button
+                  type="submit"
+                  className="dashboard-action-button mt-auto"
+                >
                   پاک کردن تغییر دستی
                 </button>
               </form>

@@ -1,6 +1,9 @@
 export default function Loading() {
   return (
-    <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8">
+    <main
+      dir="rtl"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
+    >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
       <div className="dashboard-aurora dashboard-aurora-three" />

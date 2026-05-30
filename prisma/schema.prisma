@@ -66,10 +66,15 @@ model User {
   id           String   @id @default(cuid())
   username     String   @unique
   name         String
-  email        String?  @unique
-  passwordHash String?
-  role         UserRole @default(USER)
-  isActive     Boolean  @default(true)
+  email           String?   @unique
+  passwordHash    String?
+  role            UserRole @default(USER)
+  isActive        Boolean  @default(true)
+  firstName       String?
+  lastName        String?
+  avatarImage     Bytes?
+  avatarMimeType  String?
+  avatarUpdatedAt DateTime?
 
   weeklyPreferences     WeeklyMealPreference[]
   attendances          MealAttendance[]

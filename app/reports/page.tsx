@@ -27,16 +27,14 @@ export default async function ReportsPage({
   const params = await searchParams;
   const { fromDate, toDate, fromDateKey, toDateKey } =
     resolveReportDateRange(params);
-  const { dailySummary, userRows, calendarExcludedDays } = await getAttendanceReport(
-    fromDate,
-    toDate,
-  );
+  const { dailySummary, userRows, calendarExcludedDays } =
+    await getAttendanceReport(fromDate, toDate);
   const activeRangeLabel = `${formatPersianWeekdayDate(fromDate)} تا ${formatPersianWeekdayDate(toDate)}`;
 
   return (
     <main
       dir="rtl"
-      className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
     >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
@@ -47,16 +45,14 @@ export default async function ReportsPage({
             <h1 className="text-2xl font-bold">گزارش حضور</h1>
             <ThemeToggle />
           </div>
-          <p className="mt-2 text-sm text-zinc-400">
-            در این گزارش فقط روزهای کاری ثبت‌شده در تقویم رسمی سامانه نمایش داده می‌شوند.
+          <p className="mt-2 text-sm text-muted-foreground">
+            در این گزارش فقط روزهای کاری ثبت‌شده در تقویم رسمی سامانه نمایش داده
+            می‌شوند.
           </p>
           <p className="dashboard-muted-panel mt-4 text-sm">
             بازهٔ فعال گزارش: {activeRangeLabel}
           </p>
-          <Link
-            href="/"
-            className="mt-4 inline-block rounded-xl border border-zinc-700 px-4 py-2 text-sm transition hover:bg-zinc-800"
-          >
+          <Link href="/" className="dashboard-action-button mt-4 inline-block">
             بازگشت به داشبورد
           </Link>
         </header>
@@ -65,9 +61,9 @@ export default async function ReportsPage({
 
         <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">خلاصه روزانه</h2>
-          <div className="overflow-x-auto rounded-xl border border-zinc-800">
+          <div className="overflow-x-auto rounded-xl border border-border/60">
             <table className="w-full text-sm">
-              <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+              <thead className="border-b border-border/60 bg-muted/60 text-muted-foreground">
                 <tr>
                   <th className="p-3">تاریخ جلالی</th>
                   <th className="p-3">وضعیت تقویمی</th>
@@ -77,14 +73,20 @@ export default async function ReportsPage({
               </thead>
               <tbody>
                 {dailySummary.map((row) => (
-                  <tr key={row.dateKey} className="border-b border-zinc-800">
+                  <tr key={row.dateKey} className="border-b border-border/60">
                     <td className="p-3">{row.persianDateLabel}</td>
                     <td className="p-3">
-                      {row.eventCount > 0 ? <div>{`${row.eventCount} مناسبت`}</div> : null}
-                      {row.holidayTitle ? (
-                        <div className="mt-1 text-xs text-zinc-400">{row.holidayTitle}</div>
+                      {row.eventCount > 0 ? (
+                        <div>{`${row.eventCount} مناسبت`}</div>
                       ) : null}
-                      {row.eventCount === 0 && !row.holidayTitle ? <div>روز کاری</div> : null}
+                      {row.holidayTitle ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {row.holidayTitle}
+                        </div>
+                      ) : null}
+                      {row.eventCount === 0 && !row.holidayTitle ? (
+                        <div>روز کاری</div>
+                      ) : null}
                     </td>
                     <td className="p-3">{row.breakfastCount}</td>
                     <td className="p-3">{row.lunchCount}</td>
@@ -96,13 +98,17 @@ export default async function ReportsPage({
         </section>
 
         <section className="dashboard-glass-card">
-          <h2 className="mb-4 text-xl font-semibold">روزهای حذف‌شده از گزارش</h2>
+          <h2 className="mb-4 text-xl font-semibold">
+            روزهای حذف‌شده از گزارش
+          </h2>
           {calendarExcludedDays.length === 0 ? (
-            <p className="text-sm text-zinc-400">در این بازه، روز غیرکاری وجود ندارد.</p>
+            <p className="text-sm text-muted-foreground">
+              در این بازه، روز غیرکاری وجود ندارد.
+            </p>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-zinc-800">
+            <div className="overflow-x-auto rounded-xl border border-border/60">
               <table className="w-full text-sm">
-                <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+                <thead className="border-b border-border/60 bg-muted/60 text-muted-foreground">
                   <tr>
                     <th className="p-3">تاریخ</th>
                     <th className="p-3">وضعیت</th>
@@ -111,7 +117,8 @@ export default async function ReportsPage({
                 </thead>
                 <tbody>
                   {calendarExcludedDays.map((day) => {
-                    const dateLabel = `${day.dayNameFa ?? ""} ${day.jalaliDateKey ?? day.dateKey}`.trim();
+                    const dateLabel =
+                      `${day.dayNameFa ?? ""} ${day.jalaliDateKey ?? day.dateKey}`.trim();
                     const statusLabel = day.isOfficialHoliday
                       ? day.holidayTitle
                         ? `تعطیل رسمی: ${day.holidayTitle}`
@@ -119,10 +126,16 @@ export default async function ReportsPage({
                       : day.isWeeklyOffDay
                         ? "تعطیلی هفتگی"
                         : "غیرکاری";
-                    const eventsLabel = day.eventTitles.length > 0 ? day.eventTitles.join("، ") : "—";
+                    const eventsLabel =
+                      day.eventTitles.length > 0
+                        ? day.eventTitles.join("، ")
+                        : "—";
 
                     return (
-                      <tr key={day.dateKey} className="border-b border-zinc-800">
+                      <tr
+                        key={day.dateKey}
+                        className="border-b border-border/60"
+                      >
                         <td className="p-3">{dateLabel}</td>
                         <td className="p-3">{statusLabel}</td>
                         <td className="p-3">{eventsLabel}</td>
@@ -137,9 +150,9 @@ export default async function ReportsPage({
 
         <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">جزئیات کاربران</h2>
-          <div className="overflow-x-auto rounded-xl border border-zinc-800">
+          <div className="overflow-x-auto rounded-xl border border-border/60">
             <table className="w-full min-w-[900px] text-sm">
-              <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+              <thead className="border-b border-border/60 bg-muted/60 text-muted-foreground">
                 <tr>
                   <th className="p-3">تاریخ جلالی</th>
                   <th className="p-3">وضعیت تقویمی</th>
@@ -152,32 +165,48 @@ export default async function ReportsPage({
                 {userRows.map((row) => (
                   <tr
                     key={`${row.dateKey}-${row.username}`}
-                    className="border-b border-zinc-800"
+                    className="border-b border-border/60"
                   >
                     <td className="p-3">{row.persianDateLabel}</td>
                     <td className="p-3">
-                      {row.eventCount > 0 ? <div>{`${row.eventCount} مناسبت`}</div> : null}
-                      {row.holidayTitle ? (
-                        <div className="mt-1 text-xs text-zinc-400">{row.holidayTitle}</div>
+                      {row.eventCount > 0 ? (
+                        <div>{`${row.eventCount} مناسبت`}</div>
                       ) : null}
-                      {row.eventCount === 0 && !row.holidayTitle ? <div>روز کاری</div> : null}
+                      {row.holidayTitle ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {row.holidayTitle}
+                        </div>
+                      ) : null}
+                      {row.eventCount === 0 && !row.holidayTitle ? (
+                        <div>روز کاری</div>
+                      ) : null}
                     </td>
                     <td className="p-3">
                       {row.userName}{" "}
-                      <span className="text-zinc-400">({row.username})</span>
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.breakfastStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
-                      >
-                        {statusLabels[row.breakfastStatus as keyof typeof statusLabels]}
+                      <span className="text-muted-foreground">
+                        ({row.username})
                       </span>
                     </td>
                     <td className="p-3">
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.lunchStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.breakfastStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-rose-500/20 text-rose-700 dark:text-rose-300"}`}
                       >
-                        {statusLabels[row.lunchStatus as keyof typeof statusLabels]}
+                        {
+                          statusLabels[
+                            row.breakfastStatus as keyof typeof statusLabels
+                          ]
+                        }
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.lunchStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-rose-500/20 text-rose-700 dark:text-rose-300"}`}
+                      >
+                        {
+                          statusLabels[
+                            row.lunchStatus as keyof typeof statusLabels
+                          ]
+                        }
                       </span>
                     </td>
                   </tr>

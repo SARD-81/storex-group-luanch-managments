@@ -5,14 +5,12 @@ import {
   UserRole,
 } from "@/app/generated/prisma/client";
 import { logoutAction } from "@/actions/auth";
-import { updateMyAttendanceAction } from "@/actions/my-attendance";
 import { AttendanceDatePicker } from "@/components/attendance/attendance-date-picker";
 import { MonthlyAttendanceBoard } from "@/components/attendance/monthly-attendance-board";
 import { TehranClock } from "@/components/attendance/tehran-clock";
 import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
-import { formatPersianDateTime } from "@/lib/date/tehran-time";
 import { formatUserAdminWeeklyPlan } from "@/lib/attendance/admin-weekly-summary";
 import {
   getAdminDashboardData,
@@ -21,6 +19,7 @@ import {
 } from "@/lib/dashboard/get-dashboard-data";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { UserAvatar } from "@/components/user/user-avatar";
 
 const roleLabels = { [UserRole.ADMIN]: "مدیر", [UserRole.USER]: "کاربر" };
 type SearchParams = Promise<{ date?: string; error?: string; saved?: string }>;
@@ -46,8 +45,6 @@ export default async function Home({
     selectedDateKey,
     selectedDatePolicy,
     datePickerPolicies,
-    canEditSelectedDate,
-    deadline,
     weeklyPlanAttendances,
     adminPlanWeekStart,
   } = dashboardData;
@@ -80,16 +77,10 @@ export default async function Home({
     { [MealType.BREAKFAST]: [] as string[], [MealType.LUNCH]: [] as string[] },
   );
 
-  const myPresentMeals = new Set(
-    attendances
-      .filter((a) => a.status === AttendanceStatus.PRESENT)
-      .map((a) => a.mealType),
-  );
-
   return (
     <main
       dir="rtl"
-      className="dashboard-aurora-shell min-h-screen p-6 text-right text-zinc-50 md:p-8"
+      className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
     >
       <div className="dashboard-aurora dashboard-aurora-one" />
       <div className="dashboard-aurora dashboard-aurora-two" />
@@ -99,18 +90,34 @@ export default async function Home({
         <header className="dashboard-glass-card flex flex-col gap-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="mb-2 text-sm text-zinc-300">
+              <p className="mb-2 text-sm text-muted-foreground">
                 مدیریت حضور وعده‌های غذایی تیم
               </p>
               <h1 className="text-3xl font-bold">داشبورد وعده‌های غذایی</h1>
-              {/* <p className="mt-2 text-xs text-zinc-300">وضعیت ثبت حضور روزانه شما در یک نمای سازمانی.</p> */}
+              {/* <p className="mt-2 text-xs text-muted-foreground">وضعیت ثبت حضور روزانه شما در یک نمای سازمانی.</p> */}
             </div>
-            <div className="dashboard-muted-panel text-sm">
-              <p>
-                کاربر جاری:{" "}
-                <span className="font-semibold">{currentUser.name}</span>
-              </p>
-              <p>نقش: {roleLabels[currentUser.role]}</p>
+            <div className="dashboard-muted-panel flex items-center gap-3 text-sm">
+              <UserAvatar
+                user={{
+                  id: currentUser.id,
+                  name: currentUser.name,
+                  avatarUpdatedAt: currentUser.avatarUpdatedAt,
+                }}
+                size="md"
+              />
+              <div className="space-y-1">
+                <p>
+                  کاربر جاری:{" "}
+                  <span className="font-semibold">{currentUser.name}</span>
+                </p>
+                <p>نقش: {roleLabels[currentUser.role]}</p>
+                <Link
+                  href="/profile"
+                  className="text-xs font-semibold text-sky-600 transition hover:text-sky-500 dark:text-sky-300 dark:hover:text-sky-200"
+                >
+                  ویرایش حساب
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -133,7 +140,7 @@ export default async function Home({
             </form>
           </div>
 
-          <div className="dashboard-muted-panel space-y-2 text-xs text-zinc-200">
+          <div className="dashboard-muted-panel space-y-2 text-xs text-muted-foreground">
             {selectedDatePolicy.calendarDay ? (
               <>
                 {selectedDatePolicy.holidayTitle ? (
@@ -146,7 +153,7 @@ export default async function Home({
                       {selectedDatePolicy.calendarDay.events.map((event) => (
                         <li
                           key={`${event.displayOrder}-${event.title}`}
-                          className="rounded-full border border-white/10 bg-white/10 px-2 py-1"
+                          className="rounded-full border border-border/60 bg-muted/50 px-2 py-1"
                         >
                           {event.title}
                         </li>
@@ -177,7 +184,7 @@ export default async function Home({
                     <h2 className="text-lg font-semibold">
                       {MEAL_LABELS[mealType]}
                     </h2>
-                    <p className="mt-2 text-sm text-zinc-300">
+                    <p className="mt-2 text-sm text-muted-foreground">
                       تاریخ انتخاب‌شده: {selectedDateLabel}
                     </p>
                     <p className="mt-3 text-2xl font-bold">
@@ -188,14 +195,14 @@ export default async function Home({
                         {names.map((name) => (
                           <span
                             key={`${mealType}-${name}`}
-                            className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-zinc-100"
+                            className="rounded-full border border-border/60 bg-muted/50 px-3 py-1 text-xs text-foreground"
                           >
                             {name}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-3 text-xs text-zinc-300">
+                      <p className="mt-3 text-xs text-muted-foreground">
                         هنوز کسی ثبت نشده است.
                       </p>
                     )}
@@ -231,9 +238,9 @@ export default async function Home({
                   </Link>
                 </div>
               </div>
-              <div className="overflow-x-auto rounded-xl border border-white/10">
+              <div className="overflow-x-auto rounded-xl border border-border/60">
                 <table className="w-full text-right text-sm">
-                  <thead className="border-b border-white/10 bg-white/5 text-zinc-300">
+                  <thead className="border-b border-border/60 bg-muted/60 text-muted-foreground">
                     <tr>
                       <th className="p-4">نام</th>
                       <th className="p-4">نام کاربری</th>
@@ -243,7 +250,7 @@ export default async function Home({
                   </thead>
                   <tbody>
                     {users.map((user) => (
-                      <tr key={user.id} className="border-b border-white/10">
+                      <tr key={user.id} className="border-b border-border/60">
                         <td className="p-4">{user.name}</td>
                         <td className="p-4">{user.username}</td>
                         <td className="p-4">{roleLabels[user.role]}</td>
@@ -264,48 +271,7 @@ export default async function Home({
             </section>
           </>
         ) : (
-          <>
-            <section className="dashboard-glass-card relative z-10">
-              <h2 className="mb-4 text-xl font-semibold">
-                حضور من در تاریخ انتخاب‌شده
-              </h2>
-              <form action={updateMyAttendanceAction} className="space-y-4">
-                <input type="hidden" name="date" value={selectedDateKey} />
-                {MEAL_TYPES.map((mealType) => (
-                  <label
-                    key={mealType}
-                    className="dashboard-muted-panel flex items-center justify-between text-sm"
-                  >
-                    <span>{MEAL_LABELS[mealType]}</span>
-                    <input
-                      className="dashboard-checkbox"
-                      type="checkbox"
-                      name={`meal:${mealType}`}
-                      defaultChecked={myPresentMeals.has(mealType)}
-                      disabled={!canEditSelectedDate}
-                    />
-                  </label>
-                ))}
-                {!canEditSelectedDate ? (
-                  <p className="text-sm text-amber-300">
-                    مهلت تغییر این تاریخ گذشته است.
-                  </p>
-                ) : null}
-                {canEditSelectedDate ? (
-                  <PendingSubmitButton
-                    className="dashboard-primary-button"
-                    pendingText="در حال ذخیره..."
-                  >
-                    ذخیره وضعیت حضور
-                  </PendingSubmitButton>
-                ) : null}
-                <p className="text-xs text-zinc-300">
-                  مهلت این تاریخ: {formatPersianDateTime(deadline)}
-                </p>
-              </form>
-            </section>
-            <MonthlyAttendanceBoard userId={currentUser.id} />
-          </>
+          <MonthlyAttendanceBoard userId={currentUser.id} />
         )}
       </div>
     </main>
