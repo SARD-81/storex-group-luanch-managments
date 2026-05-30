@@ -220,6 +220,12 @@ export default async function Home({
                   >
                     مدیریت کاربران
                   </Link>
+                  <Link
+                    href="/settings/calendar-overrides"
+                    className="dashboard-action-button"
+                  >
+                    مدیریت Override تقویم
+                  </Link>
                   <Link href="/reports" className="dashboard-action-button">
                     گزارش‌ها
                   </Link>
