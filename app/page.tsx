@@ -13,10 +13,7 @@ import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
-import {
-  formatUserAdminWeeklyPlan,
-  getAdminPlanWindowLabel,
-} from "@/lib/attendance/admin-weekly-summary";
+import { formatUserAdminWeeklyPlan } from "@/lib/attendance/admin-weekly-summary";
 import {
   getAdminDashboardData,
   getUserDashboardData,
@@ -54,8 +51,11 @@ export default async function Home({
     weeklyPlanAttendances,
     adminPlanWeekStart,
   } = dashboardData;
+  const { adminPlanWindowLabel, adminCalendarPlanDays } =
+    "adminPlanWindowLabel" in dashboardData
+      ? dashboardData
+      : { adminPlanWindowLabel: "", adminCalendarPlanDays: undefined };
   const selectedDateLabel = formatPersianWeekdayDate(selectedDate);
-  const adminPlanWindowLabel = getAdminPlanWindowLabel();
 
   const weeklyPlanAttendancesByUserId = weeklyPlanAttendances.reduce(
     (acc, attendance) => {
@@ -247,6 +247,7 @@ export default async function Home({
                               weeklyPlanAttendancesByUserId.get(user.id) ?? [],
                             weeklyPreferences: user.weeklyPreferences,
                             weekStart: adminPlanWeekStart,
+                            calendarPlanDays: adminCalendarPlanDays,
                           })}
                         </td>
                       </tr>
