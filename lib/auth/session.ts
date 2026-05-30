@@ -11,6 +11,18 @@ function sha256(value: string) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+async function getSessionCookieTokens() {
+  const cookieStore = await cookies();
+  return [
+    ...new Set(
+      cookieStore
+        .getAll(SESSION_COOKIE_NAME)
+        .map((cookie) => cookie.value)
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export async function createSession(userId: string) {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = sha256(rawToken);
@@ -35,27 +47,33 @@ export async function createSession(userId: string) {
 }
 
 export async function getCurrentUser() {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const sessionTokens = await getSessionCookieTokens();
 
-  if (!sessionToken) {
+  if (sessionTokens.length === 0) {
     return null;
   }
 
-  const session = await prisma.session.findUnique({
+  const session = await prisma.session.findFirst({
     where: {
-      tokenHash: sha256(sessionToken),
+      tokenHash: {
+        in: sessionTokens.map(sha256),
+      },
+      expiresAt: {
+        gt: new Date(),
+      },
+      user: {
+        isActive: true,
+      },
     },
     include: {
       user: true,
     },
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
-  if (!session || session.expiresAt <= new Date() || !session.user.isActive) {
-    return null;
-  }
-
-  return session.user;
+  return session?.user ?? null;
 }
 
 export async function requireUser() {
@@ -80,12 +98,14 @@ export async function requireAdmin() {
 
 export async function deleteCurrentSession() {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const sessionTokens = await getSessionCookieTokens();
 
-  if (sessionToken) {
+  if (sessionTokens.length > 0) {
     await prisma.session.deleteMany({
       where: {
-        tokenHash: sha256(sessionToken),
+        tokenHash: {
+          in: sessionTokens.map(sha256),
+        },
       },
     });
   }
