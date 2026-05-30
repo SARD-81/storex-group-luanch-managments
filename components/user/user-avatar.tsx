@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type UserAvatarProps = {
@@ -29,30 +29,50 @@ function getInitials(name: string) {
   return initials || "ک";
 }
 
+function AvatarFallback({
+  initials,
+  size,
+  className,
+}: {
+  initials: string;
+  size: "sm" | "md" | "lg";
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/70 font-bold text-foreground shadow-sm",
+        sizeClasses[size],
+        className,
+      )}
+    >
+      {initials}
+    </div>
+  );
+}
+
 export function UserAvatar({ user, size = "md", className }: UserAvatarProps) {
   const [hasImageError, setHasImageError] = useState(false);
+  const initials = getInitials(user.name);
+  const avatarVersion = user.avatarUpdatedAt
+    ? new Date(user.avatarUpdatedAt).getTime()
+    : null;
+  const hasAvatar = Boolean(avatarVersion);
   const src = useMemo(() => {
-    const baseSrc = `/api/users/avatar/${user.id}`;
-
-    if (!user.avatarUpdatedAt) {
-      return baseSrc;
+    if (!avatarVersion) {
+      return null;
     }
 
-    return `${baseSrc}?v=${new Date(user.avatarUpdatedAt).getTime()}`;
-  }, [user.avatarUpdatedAt, user.id]);
-  const initials = getInitials(user.name);
+    return `/api/users/avatar/${user.id}?v=${avatarVersion}`;
+  }, [avatarVersion, user.id]);
 
-  if (hasImageError) {
+  useEffect(() => {
+    setHasImageError(false);
+  }, [avatarVersion, user.id]);
+
+  if (!hasAvatar || !src || hasImageError) {
     return (
-      <div
-        className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/70 font-bold text-foreground shadow-sm",
-          sizeClasses[size],
-          className,
-        )}
-      >
-        {initials}
-      </div>
+      <AvatarFallback initials={initials} size={size} className={className} />
     );
   }
 
