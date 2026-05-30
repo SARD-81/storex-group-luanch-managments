@@ -1,12 +1,17 @@
 import { UserRole } from "@/app/generated/prisma/client";
-import { requireUser } from "@/lib/auth/session";
+import { getCurrentUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ userId: string }> },
 ) {
-  const currentUser = await requireUser();
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return new Response(null, { status: 401 });
+  }
+
   const { userId } = await params;
 
   if (currentUser.role !== UserRole.ADMIN && currentUser.id !== userId) {
