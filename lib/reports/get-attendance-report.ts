@@ -1,33 +1,20 @@
 import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
+import { getAttendanceDatePoliciesByDateRange } from "@/lib/attendance/calendar-attendance-policy";
 import { getDateKey } from "@/lib/date/date-key";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { prisma } from "@/lib/prisma";
 
-function getAppDayOfWeek(date: Date) {
-  return (date.getUTCDay() + 1) % 7;
-}
-
-function isWorkDay(date: Date) {
-  const appDay = getAppDayOfWeek(date);
-  return appDay >= 0 && appDay <= 4;
-}
-
-function buildWorkDays(fromDate: Date, toDate: Date) {
-  const dates: Date[] = [];
-
-  for (let cursor = new Date(fromDate); cursor <= toDate; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-    const currentDate = new Date(cursor);
-
-    if (isWorkDay(currentDate)) {
-      dates.push(currentDate);
-    }
-  }
-
-  return dates;
-}
+type ReportUser = {
+  id: string;
+  name: string;
+  username: string;
+};
 
 export async function getAttendanceReport(fromDate: Date, toDate: Date) {
-  const workDays = buildWorkDays(fromDate, toDate);
+  const fromDateKey = getDateKey(fromDate);
+  const toDateKey = getDateKey(toDate);
+  const policies = await getAttendanceDatePoliciesByDateRange(prisma, fromDateKey, toDateKey);
+  const reportDays = policies.filter((policy) => policy.isWorkday === true);
 
   const [attendances, users] = await Promise.all([
     prisma.mealAttendance.findMany({
@@ -48,7 +35,7 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
     }),
   ]);
 
-  const workDateKeys = new Set(workDays.map(getDateKey));
+  const workDateKeys = new Set(reportDays.map((policy) => policy.dateKey));
   const presentMap = new Map<string, AttendanceStatus>();
 
   for (const attendance of attendances) {
@@ -61,8 +48,12 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
     presentMap.set(`${dateKey}:${attendance.userId}:${attendance.mealType}`, AttendanceStatus.PRESENT);
   }
 
-  const dailySummary = workDays.map((date) => {
-    const dateKey = getDateKey(date);
+  const dailySummary = reportDays.map((policy) => {
+    const date = new Date(`${policy.dateKey}T00:00:00.000Z`);
+    const dateKey = policy.dateKey;
+    const persianDateLabel = policy.jalaliDateKey
+      ? `${policy.dayNameFa ?? ""} ${policy.jalaliDateKey}`.trim()
+      : formatPersianWeekdayDate(date);
     let breakfastCount = 0;
     let lunchCount = 0;
 
@@ -78,19 +69,32 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
 
     return {
       dateKey,
-      persianDateLabel: formatPersianWeekdayDate(date),
+      persianDateLabel,
+      isOfficialHoliday: policy.isOfficialHoliday === true,
+      isWeeklyOffDay: policy.isWeeklyOffDay === true,
+      holidayTitle: policy.holidayTitle,
+      eventTitles: policy.calendarDay?.events.map((event) => event.title) ?? [],
+      eventCount: policy.eventCount,
       breakfastCount,
       lunchCount,
     };
   });
 
-  const userRows = workDays.flatMap((date) => {
-    const dateKey = getDateKey(date);
-    const persianDateLabel = formatPersianWeekdayDate(date);
+  const userRows = reportDays.flatMap((policy) => {
+    const date = new Date(`${policy.dateKey}T00:00:00.000Z`);
+    const dateKey = policy.dateKey;
+    const persianDateLabel = policy.jalaliDateKey
+      ? `${policy.dayNameFa ?? ""} ${policy.jalaliDateKey}`.trim()
+      : formatPersianWeekdayDate(date);
 
-    return users.map((user) => ({
+    return users.map((user: ReportUser) => ({
       dateKey,
       persianDateLabel,
+      isOfficialHoliday: policy.isOfficialHoliday === true,
+      isWeeklyOffDay: policy.isWeeklyOffDay === true,
+      holidayTitle: policy.holidayTitle,
+      eventTitles: policy.calendarDay?.events.map((event) => event.title) ?? [],
+      eventCount: policy.eventCount,
       userName: user.name,
       username: user.username,
       breakfastStatus:
@@ -100,8 +104,23 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
     }));
   });
 
+  const calendarExcludedDays = policies
+    .filter((policy) => policy.isWorkday !== true)
+    .map((policy) => ({
+      dateKey: policy.dateKey,
+      jalaliDateKey: policy.jalaliDateKey,
+      dayNameFa: policy.dayNameFa,
+      isOfficialHoliday: policy.isOfficialHoliday === true,
+      isWeeklyOffDay: policy.isWeeklyOffDay === true,
+      holidayTitle: policy.holidayTitle,
+      eventTitles: policy.calendarDay?.events.map((event) => event.title) ?? [],
+      eventCount: policy.eventCount,
+      reasons: policy.reasons,
+    }));
+
   return {
     dailySummary,
     userRows,
+    calendarExcludedDays,
   };
 }

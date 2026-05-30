@@ -27,7 +27,7 @@ export default async function ReportsPage({
   const params = await searchParams;
   const { fromDate, toDate, fromDateKey, toDateKey } =
     resolveReportDateRange(params);
-  const { dailySummary, userRows } = await getAttendanceReport(
+  const { dailySummary, userRows, calendarExcludedDays } = await getAttendanceReport(
     fromDate,
     toDate,
   );
@@ -48,7 +48,7 @@ export default async function ReportsPage({
             <ThemeToggle />
           </div>
           <p className="mt-2 text-sm text-zinc-400">
-            در این گزارش فقط روزهای کاری شنبه تا چهارشنبه نمایش داده می‌شوند.
+            در این گزارش فقط روزهای کاری ثبت‌شده در تقویم رسمی سامانه نمایش داده می‌شوند.
           </p>
           <p className="dashboard-muted-panel mt-4 text-sm">
             بازهٔ فعال گزارش: {activeRangeLabel}
@@ -70,6 +70,7 @@ export default async function ReportsPage({
               <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
                 <tr>
                   <th className="p-3">تاریخ جلالی</th>
+                  <th className="p-3">وضعیت تقویمی</th>
                   <th className="p-3">صبحانه حاضر</th>
                   <th className="p-3">ناهار حاضر</th>
                 </tr>
@@ -78,6 +79,13 @@ export default async function ReportsPage({
                 {dailySummary.map((row) => (
                   <tr key={row.dateKey} className="border-b border-zinc-800">
                     <td className="p-3">{row.persianDateLabel}</td>
+                    <td className="p-3">
+                      {row.eventCount > 0 ? <div>{`${row.eventCount} مناسبت`}</div> : null}
+                      {row.holidayTitle ? (
+                        <div className="mt-1 text-xs text-zinc-400">{row.holidayTitle}</div>
+                      ) : null}
+                      {row.eventCount === 0 && !row.holidayTitle ? <div>روز کاری</div> : null}
+                    </td>
                     <td className="p-3">{row.breakfastCount}</td>
                     <td className="p-3">{row.lunchCount}</td>
                   </tr>
@@ -88,12 +96,53 @@ export default async function ReportsPage({
         </section>
 
         <section className="dashboard-glass-card">
+          <h2 className="mb-4 text-xl font-semibold">روزهای حذف‌شده از گزارش</h2>
+          {calendarExcludedDays.length === 0 ? (
+            <p className="text-sm text-zinc-400">در این بازه، روز غیرکاری وجود ندارد.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-zinc-800">
+              <table className="w-full text-sm">
+                <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
+                  <tr>
+                    <th className="p-3">تاریخ</th>
+                    <th className="p-3">وضعیت</th>
+                    <th className="p-3">مناسبت‌ها</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calendarExcludedDays.map((day) => {
+                    const dateLabel = `${day.dayNameFa ?? ""} ${day.jalaliDateKey ?? day.dateKey}`.trim();
+                    const statusLabel = day.isOfficialHoliday
+                      ? day.holidayTitle
+                        ? `تعطیل رسمی: ${day.holidayTitle}`
+                        : "تعطیل رسمی"
+                      : day.isWeeklyOffDay
+                        ? "تعطیلی هفتگی"
+                        : "غیرکاری";
+                    const eventsLabel = day.eventTitles.length > 0 ? day.eventTitles.join("، ") : "—";
+
+                    return (
+                      <tr key={day.dateKey} className="border-b border-zinc-800">
+                        <td className="p-3">{dateLabel}</td>
+                        <td className="p-3">{statusLabel}</td>
+                        <td className="p-3">{eventsLabel}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">جزئیات کاربران</h2>
           <div className="overflow-x-auto rounded-xl border border-zinc-800">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="border-b border-zinc-800 bg-zinc-950 text-zinc-400">
                 <tr>
                   <th className="p-3">تاریخ جلالی</th>
+                  <th className="p-3">وضعیت تقویمی</th>
                   <th className="p-3">کاربر</th>
                   <th className="p-3">صبحانه</th>
                   <th className="p-3">ناهار</th>
@@ -107,6 +156,13 @@ export default async function ReportsPage({
                   >
                     <td className="p-3">{row.persianDateLabel}</td>
                     <td className="p-3">
+                      {row.eventCount > 0 ? <div>{`${row.eventCount} مناسبت`}</div> : null}
+                      {row.holidayTitle ? (
+                        <div className="mt-1 text-xs text-zinc-400">{row.holidayTitle}</div>
+                      ) : null}
+                      {row.eventCount === 0 && !row.holidayTitle ? <div>روز کاری</div> : null}
+                    </td>
+                    <td className="p-3">
                       {row.userName}{" "}
                       <span className="text-zinc-400">({row.username})</span>
                     </td>
@@ -114,14 +170,14 @@ export default async function ReportsPage({
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.breakfastStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
                       >
-                        {statusLabels[row.breakfastStatus]}
+                        {statusLabels[row.breakfastStatus as keyof typeof statusLabels]}
                       </span>
                     </td>
                     <td className="p-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${row.lunchStatus === "PRESENT" ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
                       >
-                        {statusLabels[row.lunchStatus]}
+                        {statusLabels[row.lunchStatus as keyof typeof statusLabels]}
                       </span>
                     </td>
                   </tr>
