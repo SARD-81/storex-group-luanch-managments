@@ -1,6 +1,12 @@
 import { AttendanceStatus } from "@/app/generated/prisma/client";
 import type { CalendarAttendanceDatePolicy } from "@/lib/attendance/calendar-attendance-policy";
 import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
+import type { AdminWeeklyPlanCalendarDay } from "@/lib/attendance/admin-weekly-summary";
+import {
+  formatCalendarWeeklyPlanDayStatus,
+  getCalendarWeeklyPlanWindow,
+  type CalendarWeeklyPlanDay,
+} from "@/lib/attendance/calendar-weekly-plan";
 import {
   getAttendanceDeadline,
   canEditAttendance,
@@ -27,6 +33,26 @@ export type DashboardDatePickerPolicy = {
   eventCount: number;
   reasons: string[];
 };
+
+function mapAdminWeeklyPlanCalendarDay(
+  day: CalendarWeeklyPlanDay,
+): AdminWeeklyPlanCalendarDay {
+  return {
+    dateKey: day.dateKey,
+    jalaliDateKey: day.jalaliDateKey,
+    dayNameFa: day.dayNameFa,
+    dayOfWeek: day.dayOfWeek,
+    isWorkday: day.isWorkday,
+    isWeeklyOffDay: day.isWeeklyOffDay,
+    isOfficialHoliday: day.isOfficialHoliday,
+    isManualHoliday: day.isManualHoliday,
+    isForcedWorkday: day.isForcedWorkday,
+    holidayTitle: day.holidayTitle,
+    eventTitles: day.eventTitles,
+    eventCount: day.eventCount,
+    statusLabel: formatCalendarWeeklyPlanDayStatus(day),
+  };
+}
 
 function mapDatePickerPolicy(
   policy: CalendarAttendanceDatePolicy,
@@ -89,44 +115,50 @@ export async function getAdminDashboardData(selectedDate: Date) {
   const now = new Date();
   const { weekStart, weekEndExclusive } = getAdminPlanWeekRange(now);
   const selectableRange = getAttendanceSelectableDateRange(now);
-  const [users, attendances, weeklyPlanAttendances, datePickerPolicies] =
-    await Promise.all([
-      prisma.user.findMany({
-        where: { isActive: true },
-        include: {
-          weeklyPreferences: {
-            where: {
-              isEnabled: true,
-              dayOfWeek: { gte: 0, lte: 4 },
-            },
+  const [
+    users,
+    attendances,
+    weeklyPlanAttendances,
+    datePickerPolicies,
+    calendarWeeklyPlanWindow,
+  ] = await Promise.all([
+    prisma.user.findMany({
+      where: { isActive: true },
+      include: {
+        weeklyPreferences: {
+          where: {
+            isEnabled: true,
+            dayOfWeek: { gte: 0, lte: 4 },
           },
         },
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.mealAttendance.findMany({
-        where: { date: selectedDate },
-        include: { user: true },
-        orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
-      }),
-      prisma.mealAttendance.findMany({
-        where: {
-          date: { gte: weekStart, lt: weekEndExclusive },
-          status: AttendanceStatus.PRESENT,
-        },
-        select: {
-          userId: true,
-          date: true,
-          mealType: true,
-          status: true,
-        },
-      }),
-      getAttendanceDatePoliciesByDateRange(
-        prisma,
-        selectableRange.todayDateKey,
-        selectableRange.maxDateKey,
-        now,
-      ),
-    ]);
+      },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.mealAttendance.findMany({
+      where: { date: selectedDate },
+      include: { user: true },
+      orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
+    }),
+    prisma.mealAttendance.findMany({
+      where: {
+        date: { gte: weekStart, lt: weekEndExclusive },
+        status: AttendanceStatus.PRESENT,
+      },
+      select: {
+        userId: true,
+        date: true,
+        mealType: true,
+        status: true,
+      },
+    }),
+    getAttendanceDatePoliciesByDateRange(
+      prisma,
+      selectableRange.todayDateKey,
+      selectableRange.maxDateKey,
+      now,
+    ),
+    getCalendarWeeklyPlanWindow(prisma, now),
+  ]);
 
   const selectedDateKey = getDateKey(selectedDate);
   const selectedDatePolicy = await getAttendanceDatePolicyByDateKey(
@@ -149,6 +181,10 @@ export async function getAdminDashboardData(selectedDate: Date) {
     weeklyPlanAttendances,
     adminPlanWeekStart: weekStart,
     adminPlanWeekEndExclusive: weekEndExclusive,
+    adminPlanWindowLabel: calendarWeeklyPlanWindow.label,
+    adminCalendarPlanDays: calendarWeeklyPlanWindow.days.map(
+      mapAdminWeeklyPlanCalendarDay,
+    ),
   };
 }
 

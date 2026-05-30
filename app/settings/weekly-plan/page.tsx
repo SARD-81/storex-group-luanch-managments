@@ -7,11 +7,12 @@ import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { WeeklyPlanActions } from "@/components/weekly-plan/weekly-plan-actions";
 import { requireAdmin } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
+import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
 import {
-  getAdminPlanWeekRange,
-  getAdminPlanWindowLabel,
-} from "@/lib/attendance/admin-weekly-summary";
-import { WORK_DAYS } from "@/lib/attendance/week";
+  formatCalendarWeeklyPlanDayStatus,
+  getCalendarWeeklyPlanWindow,
+} from "@/lib/attendance/calendar-weekly-plan";
+import { addDays, WORK_DAYS } from "@/lib/attendance/week";
 import { getDateKey } from "@/lib/date/date-key";
 import {
   formatPersianDate,
@@ -25,6 +26,16 @@ type WeeklyPlanPageProps = {
   searchParams: Promise<{ saved?: string }>;
 };
 
+type WeeklyPlanDisplayDay = {
+  dateKey: string;
+  jalaliDateKey: string | null;
+  dayNameFa: string | null;
+  dayOfWeek: number;
+  isOfficialHoliday: boolean | null;
+  isWeeklyOffDay: boolean | null;
+  statusLabel: string;
+};
+
 export default async function WeeklyPlanPage({
   searchParams,
 }: WeeklyPlanPageProps) {
@@ -34,40 +45,59 @@ export default async function WeeklyPlanPage({
   await searchParams;
   const { weekStart, weekEndExclusive } = getAdminPlanWeekRange();
 
-  const [users, weeklyAttendances] = await Promise.all([
-    prisma.user.findMany({
-      where: { isActive: true },
-      include: { weeklyPreferences: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.mealAttendance.findMany({
-      where: {
-        date: { gte: weekStart, lt: weekEndExclusive },
-        status: AttendanceStatus.PRESENT,
-      },
-      select: {
-        userId: true,
-        date: true,
-        mealType: true,
-      },
-    }),
-  ]);
+  const [users, weeklyAttendances, calendarWeeklyPlanWindow] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: { isActive: true },
+        include: { weeklyPreferences: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.mealAttendance.findMany({
+        where: {
+          date: { gte: weekStart, lt: weekEndExclusive },
+          status: AttendanceStatus.PRESENT,
+        },
+        select: {
+          userId: true,
+          date: true,
+          mealType: true,
+        },
+      }),
+      getCalendarWeeklyPlanWindow(prisma),
+    ]);
 
-  const dayMillis = 24 * 60 * 60 * 1000;
-  const weekStartKey = getDateKey(weekStart);
-  const weekStartUtcMillis = Date.parse(`${weekStartKey}T00:00:00.000Z`);
+  const calendarWeeklyPlanDays = calendarWeeklyPlanWindow.days
+    .filter((day) => day.dayOfWeek !== null)
+    .map((day) => ({
+      dateKey: day.dateKey,
+      jalaliDateKey: day.jalaliDateKey,
+      dayNameFa: day.dayNameFa,
+      dayOfWeek: day.dayOfWeek as number,
+      isOfficialHoliday: day.isOfficialHoliday,
+      isWeeklyOffDay: day.isWeeklyOffDay,
+      statusLabel: formatCalendarWeeklyPlanDayStatus(day),
+    }));
+  const fallbackWeeklyPlanDays = WORK_DAYS.map((day) => {
+    const date = addDays(weekStart, day.dayOfWeek);
+
+    return {
+      dateKey: getDateKey(date),
+      jalaliDateKey: null,
+      dayNameFa: day.label,
+      dayOfWeek: day.dayOfWeek,
+      isOfficialHoliday: false,
+      isWeeklyOffDay: false,
+      statusLabel: "روز کاری",
+    };
+  });
+  const weeklyPlanDays: WeeklyPlanDisplayDay[] =
+    calendarWeeklyPlanDays.length > 0
+      ? calendarWeeklyPlanDays
+      : fallbackWeeklyPlanDays;
   const weeklyAttendanceKeysByUserId = new Map<string, Set<string>>();
 
   for (const attendance of weeklyAttendances) {
     const attendanceKey = getDateKey(attendance.date);
-    const attendanceUtcMillis = Date.parse(`${attendanceKey}T00:00:00.000Z`);
-    const dayOffset = Math.floor(
-      (attendanceUtcMillis - weekStartUtcMillis) / dayMillis,
-    );
-
-    if (dayOffset < 0 || dayOffset > 4) {
-      continue;
-    }
 
     if (!weeklyAttendanceKeysByUserId.has(attendance.userId)) {
       weeklyAttendanceKeysByUserId.set(attendance.userId, new Set());
@@ -75,10 +105,10 @@ export default async function WeeklyPlanPage({
 
     weeklyAttendanceKeysByUserId
       .get(attendance.userId)
-      ?.add(`${dayOffset}:${attendance.mealType}`);
+      ?.add(`${attendanceKey}:${attendance.mealType}`);
   }
 
-  const planWindowLabel = getAdminPlanWindowLabel();
+  const planWindowLabel = calendarWeeklyPlanWindow.label;
 
   return (
     <main
@@ -136,6 +166,10 @@ export default async function WeeklyPlanPage({
             اگر برای کاربری برنامه هفتگی ذخیره نشده باشد، وضعیت حضور ثبت‌شده در
             همین بازه به‌عنوان مقدار اولیه نمایش داده می‌شود.
           </p>
+          <p className="mb-3 text-xs text-zinc-400">
+            تعطیلی‌های رسمی این بازه از تقویم رسمی سامانه نمایش داده می‌شوند؛
+            تنظیمات هفتگی همچنان بر اساس روز هفته ذخیره می‌شوند.
+          </p>
           <div className="overflow-x-auto rounded-2xl border border-white/10">
             <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-right text-sm">
               <thead>
@@ -146,18 +180,34 @@ export default async function WeeklyPlanPage({
                   >
                     کاربر
                   </th>
-                  {WORK_DAYS.map((day) => (
-                    <th
-                      key={day.dayOfWeek}
-                      colSpan={MEAL_TYPES.length}
-                      className="border-b border-white/10 p-3 text-center"
-                    >
-                      {day.label}
-                    </th>
-                  ))}
+                  {weeklyPlanDays.map((day) => {
+                    const statusClassName = day.isOfficialHoliday
+                      ? "text-rose-300"
+                      : day.isWeeklyOffDay
+                        ? "text-amber-300"
+                        : "text-zinc-400";
+
+                    return (
+                      <th
+                        key={day.dateKey}
+                        colSpan={MEAL_TYPES.length}
+                        className="border-b border-white/10 p-3 text-center"
+                      >
+                        <div className="space-y-1">
+                          <p>{day.dayNameFa ?? `روز ${day.dayOfWeek}`}</p>
+                          <p className="text-xs text-zinc-400">
+                            {day.jalaliDateKey ?? day.dateKey}
+                          </p>
+                          <p className={`text-xs ${statusClassName}`}>
+                            {day.statusLabel}
+                          </p>
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
                 <tr className="bg-white/5 text-zinc-300">
-                  {WORK_DAYS.flatMap((day) =>
+                  {weeklyPlanDays.flatMap((day) =>
                     MEAL_TYPES.map((mealType) => (
                       <th
                         key={`${day.dayOfWeek}-${mealType}`}
@@ -195,12 +245,13 @@ export default async function WeeklyPlanPage({
                           @{user.username}
                         </p>
                       </td>
-                      {WORK_DAYS.flatMap((day) =>
+                      {weeklyPlanDays.flatMap((day) =>
                         MEAL_TYPES.map((mealType) => {
                           const preferenceKey = `${day.dayOfWeek}:${mealType}`;
+                          const attendanceKey = `${day.dateKey}:${mealType}`;
                           const isChecked = hasSavedWeeklyPreferences
                             ? enabledPreferenceKeys.has(preferenceKey)
-                            : attendancePreferenceKeys.has(preferenceKey);
+                            : attendancePreferenceKeys.has(attendanceKey);
 
                           return (
                             <td

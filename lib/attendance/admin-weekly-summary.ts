@@ -17,6 +17,32 @@ type WeeklyAttendance = {
   status: AttendanceStatus;
 };
 
+export type AdminWeeklyPlanCalendarDay = {
+  dateKey: string;
+  jalaliDateKey: string | null;
+  dayNameFa: string | null;
+  dayOfWeek: number | null;
+  isWorkday: boolean | null;
+  isWeeklyOffDay: boolean | null;
+  isOfficialHoliday: boolean | null;
+  isManualHoliday: boolean | null;
+  isForcedWorkday: boolean | null;
+  holidayTitle: string | null;
+  eventTitles: string[];
+  eventCount: number;
+  statusLabel: string;
+};
+
+type AdminWeeklyPlanDisplayDay = {
+  dayOfWeek: number;
+  label: string;
+  date: Date;
+  dateKey: string;
+  isWorkday: boolean | null;
+  statusLabel: string;
+  isCalendarDay: boolean;
+};
+
 function getTodayDateOnly(now = new Date()) {
   const tehranDateKey = getTehranDateKey(now);
   const parsedDate = parseDateKey(tehranDateKey);
@@ -49,35 +75,83 @@ export function formatUserAdminWeeklyPlan({
   weeklyAttendances,
   weeklyPreferences,
   weekStart,
+  calendarPlanDays,
 }: {
   weeklyAttendances: WeeklyAttendance[];
   weeklyPreferences: WeeklyPreference[];
   weekStart: Date;
+  calendarPlanDays?: AdminWeeklyPlanCalendarDay[];
 }) {
-  const presentAttendances = weeklyAttendances.filter((attendance) => attendance.status === AttendanceStatus.PRESENT);
+  const hasCalendarPlanDays = calendarPlanDays !== undefined;
+  const calendarDisplayDays = (calendarPlanDays ?? [])
+    .filter((day) => day.dayOfWeek !== null)
+    .map((day) => ({
+      dayOfWeek: day.dayOfWeek as number,
+      label: day.dayNameFa ?? `روز ${day.dayOfWeek}`,
+      date:
+        parseDateKey(day.dateKey) ??
+        addDays(weekStart, day.dayOfWeek as number),
+      dateKey: day.dateKey,
+      isWorkday: day.isWorkday,
+      statusLabel: day.statusLabel,
+      isCalendarDay: true,
+    }));
+  const fallbackDisplayDays = WORK_DAYS.map(({ dayOfWeek, label }) => {
+    const date = addDays(weekStart, dayOfWeek);
+
+    return {
+      dayOfWeek,
+      label,
+      date,
+      dateKey: getDateKey(date),
+      isWorkday: true,
+      statusLabel: "روز کاری",
+      isCalendarDay: false,
+    };
+  });
+  const displayDays: AdminWeeklyPlanDisplayDay[] =
+    calendarDisplayDays.length > 0 ? calendarDisplayDays : fallbackDisplayDays;
+  const presentAttendances = weeklyAttendances.filter(
+    (attendance) => attendance.status === AttendanceStatus.PRESENT,
+  );
 
   if (presentAttendances.length > 0) {
-    return WORK_DAYS.map(({ dayOfWeek, label }) => {
-      const dayDate = addDays(weekStart, dayOfWeek);
-      const meals = presentAttendances
-        .filter((attendance) => getDateKey(attendance.date) === getDateKey(dayDate))
-        .map((attendance) => MEAL_LABELS[attendance.mealType]);
+    return displayDays
+      .map((day) => {
+        const meals = presentAttendances
+          .filter((attendance) => getDateKey(attendance.date) === day.dateKey)
+          .map((attendance) => MEAL_LABELS[attendance.mealType]);
 
-      return `${label}: ${meals.length > 0 ? meals.join("، ") : "—"}`;
-    }).join(" | ");
+        if (day.isCalendarDay && day.isWorkday !== true) {
+          return meals.length > 0
+            ? `${day.label}: ${day.statusLabel} / ثبت‌شده: ${meals.join("، ")}`
+            : `${day.label}: ${day.statusLabel}`;
+        }
+
+        return `${day.label}: ${meals.length > 0 ? meals.join("، ") : "—"}`;
+      })
+      .join(" | ");
   }
 
-  const enabledPreferences = weeklyPreferences.filter((preference) => preference.isEnabled);
+  const enabledPreferences = weeklyPreferences.filter(
+    (preference) => preference.isEnabled,
+  );
 
-  if (enabledPreferences.length === 0) {
+  if (enabledPreferences.length === 0 && !hasCalendarPlanDays) {
     return "برنامه‌ای ثبت نشده است";
   }
 
-  return WORK_DAYS.map(({ dayOfWeek, label }) => {
-    const meals = enabledPreferences
-      .filter((preference) => preference.dayOfWeek === dayOfWeek)
-      .map((preference) => MEAL_LABELS[preference.mealType]);
+  return displayDays
+    .map((day) => {
+      if (day.isCalendarDay && day.isWorkday !== true) {
+        return `${day.label}: ${day.statusLabel}`;
+      }
 
-    return `${label}: ${meals.length > 0 ? meals.join("، ") : "—"}`;
-  }).join(" | ");
+      const meals = enabledPreferences
+        .filter((preference) => preference.dayOfWeek === day.dayOfWeek)
+        .map((preference) => MEAL_LABELS[preference.mealType]);
+
+      return `${day.label}: ${meals.length > 0 ? meals.join("، ") : "—"}`;
+    })
+    .join(" | ");
 }
