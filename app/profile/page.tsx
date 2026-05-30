@@ -8,6 +8,7 @@ import {
 } from "@/actions/profile";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { AvatarFileInput } from "@/components/user/avatar-file-input";
 import { UserAvatar } from "@/components/user/user-avatar";
 import { requireUser } from "@/lib/auth/session";
 
@@ -127,32 +128,13 @@ export default async function ProfilePage({
             <div>
               <h2 className="text-xl font-semibold">رمز عبور</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                برای امنیت حساب، تغییر رمز عبور نیازمند رمز فعلی است.
+                رمز جدید باید حداقل ۸ کاراکتر باشد.
               </p>
             </div>
-            <label className="block space-y-2 text-sm font-medium">
-              <span>رمز فعلی</span>
-              <input
-                name="currentPassword"
-                type="password"
-                required
-                className="dashboard-muted-panel w-full p-3"
-              />
-            </label>
             <label className="block space-y-2 text-sm font-medium">
               <span>رمز جدید</span>
               <input
                 name="newPassword"
-                type="password"
-                minLength={8}
-                required
-                className="dashboard-muted-panel w-full p-3"
-              />
-            </label>
-            <label className="block space-y-2 text-sm font-medium">
-              <span>تکرار رمز جدید</span>
-              <input
-                name="confirmPassword"
                 type="password"
                 minLength={8}
                 required
@@ -175,20 +157,8 @@ export default async function ProfilePage({
               فرمت‌های مجاز: PNG، JPG، WEBP — حداکثر ۵۱۲ کیلوبایت
             </p>
           </div>
-          <form
-            action={updateMyAvatarAction}
-            className="flex flex-col gap-4 md:flex-row md:items-end"
-          >
-            <label className="block flex-1 space-y-2 text-sm font-medium">
-              <span>انتخاب تصویر</span>
-              <input
-                name="avatar"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                required
-                className="dashboard-muted-panel w-full p-3 file:ml-3 file:rounded-xl file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground"
-              />
-            </label>
+          <form action={updateMyAvatarAction} className="space-y-4">
+            <AvatarFileInput />
             <PendingSubmitButton
               className="dashboard-primary-button"
               pendingText="در حال ذخیره..."
