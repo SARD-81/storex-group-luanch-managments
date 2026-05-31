@@ -322,7 +322,7 @@ export default async function AuditLogsPage({
           to={params.to}
         />
 
-        <section className="dashboard-glass-card space-y-4">
+        <section className="dashboard-glass-card relative z-10 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">لیست رخدادها</h2>
             <p className="text-xs text-muted-foreground">
