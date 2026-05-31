@@ -30,28 +30,22 @@ function getStatusLabel(status: AttendanceStatus) {
   return status === AttendanceStatus.PRESENT ? "حاضر" : "غایب";
 }
 
-function EventSummary({ titles }: { titles: string[] }) {
+function EventAccordion({ titles }: { titles: string[] }) {
   if (titles.length === 0) {
     return null;
   }
 
-  const visibleTitles = titles.slice(0, 2);
-  const remainingCount = titles.length - visibleTitles.length;
-
   return (
-    <div className="rounded-xl border border-border/60 bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-      <p className="mb-1 text-[11px] font-semibold text-foreground">رویدادها</p>
-      <ul className="space-y-1">
-        {visibleTitles.map((title) => (
-          <li key={title} className="truncate">
-            • {title}
-          </li>
+    <details className="rounded-xl border border-border/60 bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+      <summary className="cursor-pointer text-[11px] font-semibold text-foreground">
+        رویدادها - {titles.length} مورد
+      </summary>
+      <ul className="mt-2 space-y-1">
+        {titles.map((title, index) => (
+          <li key={`${title}-${index}`}>• {title}</li>
         ))}
       </ul>
-      {remainingCount > 0 ? (
-        <p className="mt-1 text-[11px]">+ {remainingCount} مورد دیگر</p>
-      ) : null}
-    </div>
+    </details>
   );
 }
 
@@ -120,19 +114,19 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
           <div className="flex flex-1 flex-col gap-3 text-sm text-muted-foreground">
             <div className="rounded-xl border border-border/60 bg-muted/40 px-3 py-2">
               <p className="font-semibold text-foreground">تعطیل</p>
-              <p className="mt-1 truncate text-xs">
+              <p className="mt-1 text-xs leading-5">
                 {day.holidayTitle ??
                   (day.isWeeklyOffDay
                     ? "تعطیلی هفتگی"
                     : "شرکت در این روز تعطیل است.")}
               </p>
             </div>
-            <EventSummary titles={day.eventTitles} />
+            <EventAccordion titles={day.eventTitles} />
           </div>
         ) : day.canEdit ? (
           <div className="flex flex-1 flex-col gap-3">
             <input type="hidden" name="date" value={day.dateKey} />
-            <EventSummary titles={day.eventTitles} />
+            <EventAccordion titles={day.eventTitles} />
             <div className="space-y-2">
               <label className="dashboard-muted-panel flex items-center justify-between text-sm">
                 <span>صبحانه</span>
@@ -177,7 +171,7 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
               <MealStatusLine label="صبحانه" status={day.breakfastStatus} />
               <MealStatusLine label="ناهار" status={day.lunchStatus} />
             </div>
-            <EventSummary titles={day.eventTitles} />
+            <EventAccordion titles={day.eventTitles} />
             <div className="mt-auto space-y-1 pt-1">
               <p className="text-amber-600 dark:text-amber-300">مهلت گذشته</p>
               <p className="text-xs">
