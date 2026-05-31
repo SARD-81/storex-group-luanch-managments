@@ -7,11 +7,6 @@ import DatePicker from "react-multi-date-picker";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
 import persianFa from "react-date-object/locales/persian_fa";
-import {
-  AuditAction,
-  AuditStatus,
-  AuditTargetType,
-} from "@/app/generated/prisma/client";
 import { getDateKey } from "@/lib/date/date-key";
 
 type AuditLogFilterPanelProps = {
@@ -34,45 +29,90 @@ type OpenDropdown = "action" | "targetType" | "status" | null;
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const actionLabels: Record<AuditAction, string> = {
-  [AuditAction.LOGIN_SUCCESS]: "ورود موفق",
-  [AuditAction.LOGIN_FAILURE]: "ورود ناموفق",
-  [AuditAction.LOGOUT]: "خروج از حساب",
-  [AuditAction.USER_CREATED]: "ایجاد کاربر",
-  [AuditAction.USER_STATUS_CHANGED]: "تغییر وضعیت کاربر",
-  [AuditAction.USER_PASSWORD_RESET]: "بازنشانی رمز عبور",
-  [AuditAction.PROFILE_UPDATED]: "به‌روزرسانی پروفایل",
-  [AuditAction.MY_PASSWORD_CHANGED]: "تغییر رمز عبور",
-  [AuditAction.AVATAR_UPDATED]: "به‌روزرسانی تصویر پروفایل",
-  [AuditAction.AVATAR_DELETED]: "حذف تصویر پروفایل",
-  [AuditAction.ATTENDANCE_UPDATED]: "به‌روزرسانی حضور",
-  [AuditAction.MONTHLY_ATTENDANCE_UPDATED]: "به‌روزرسانی حضور ماهانه",
-  [AuditAction.WEEKLY_ATTENDANCE_GENERATED]: "ایجاد برنامه حضور هفتگی",
-  [AuditAction.WEEKLY_PREFERENCES_UPDATED]: "به‌روزرسانی ترجیحات هفتگی",
-  [AuditAction.CALENDAR_OVERRIDE_FORCE_HOLIDAY]: "ثبت تعطیلی دستی",
-  [AuditAction.CALENDAR_OVERRIDE_FORCE_WORKDAY]: "ثبت روز کاری اجباری",
-  [AuditAction.CALENDAR_OVERRIDE_CLEARED]: "پاک‌کردن تغییر تقویم",
-  [AuditAction.REPORT_EXPORTED]: "خروجی گزارش",
+const AUDIT_ACTION_VALUES = [
+  "LOGIN_SUCCESS",
+  "LOGIN_FAILURE",
+  "LOGOUT",
+  "USER_CREATED",
+  "USER_STATUS_CHANGED",
+  "USER_PASSWORD_RESET",
+  "PROFILE_UPDATED",
+  "MY_PASSWORD_CHANGED",
+  "AVATAR_UPDATED",
+  "AVATAR_DELETED",
+  "ATTENDANCE_UPDATED",
+  "MONTHLY_ATTENDANCE_UPDATED",
+  "WEEKLY_ATTENDANCE_GENERATED",
+  "WEEKLY_PREFERENCES_UPDATED",
+  "CALENDAR_OVERRIDE_FORCE_HOLIDAY",
+  "CALENDAR_OVERRIDE_FORCE_WORKDAY",
+  "CALENDAR_OVERRIDE_CLEARED",
+  "REPORT_EXPORTED",
+] as const;
+
+const AUDIT_TARGET_TYPE_VALUES = [
+  "AUTH",
+  "SESSION",
+  "USER",
+  "PROFILE",
+  "AVATAR",
+  "MEAL_ATTENDANCE",
+  "WEEKLY_MEAL_PREFERENCE",
+  "CALENDAR_OVERRIDE",
+  "CALENDAR_DAY",
+  "REPORT",
+  "SYSTEM",
+] as const;
+
+const AUDIT_STATUS_VALUES = [
+  "SUCCESS",
+  "FAILURE",
+  "DENIED",
+] as const;
+
+type AuditActionValue = (typeof AUDIT_ACTION_VALUES)[number];
+type AuditTargetTypeValue = (typeof AUDIT_TARGET_TYPE_VALUES)[number];
+type AuditStatusValue = (typeof AUDIT_STATUS_VALUES)[number];
+
+const actionLabels: Record<AuditActionValue, string> = {
+  LOGIN_SUCCESS: "ورود موفق",
+  LOGIN_FAILURE: "ورود ناموفق",
+  LOGOUT: "خروج از حساب",
+  USER_CREATED: "ایجاد کاربر",
+  USER_STATUS_CHANGED: "تغییر وضعیت کاربر",
+  USER_PASSWORD_RESET: "بازنشانی رمز عبور",
+  PROFILE_UPDATED: "به‌روزرسانی پروفایل",
+  MY_PASSWORD_CHANGED: "تغییر رمز عبور",
+  AVATAR_UPDATED: "به‌روزرسانی تصویر پروفایل",
+  AVATAR_DELETED: "حذف تصویر پروفایل",
+  ATTENDANCE_UPDATED: "به‌روزرسانی حضور",
+  MONTHLY_ATTENDANCE_UPDATED: "به‌روزرسانی حضور ماهانه",
+  WEEKLY_ATTENDANCE_GENERATED: "ایجاد برنامه حضور هفتگی",
+  WEEKLY_PREFERENCES_UPDATED: "به‌روزرسانی ترجیحات هفتگی",
+  CALENDAR_OVERRIDE_FORCE_HOLIDAY: "ثبت تعطیلی دستی",
+  CALENDAR_OVERRIDE_FORCE_WORKDAY: "ثبت روز کاری اجباری",
+  CALENDAR_OVERRIDE_CLEARED: "پاک‌کردن تغییر تقویم",
+  REPORT_EXPORTED: "خروجی گزارش",
 };
 
-const targetTypeLabels: Record<AuditTargetType, string> = {
-  [AuditTargetType.AUTH]: "احراز هویت",
-  [AuditTargetType.SESSION]: "نشست",
-  [AuditTargetType.USER]: "کاربر",
-  [AuditTargetType.PROFILE]: "پروفایل",
-  [AuditTargetType.AVATAR]: "تصویر پروفایل",
-  [AuditTargetType.MEAL_ATTENDANCE]: "حضور وعده غذایی",
-  [AuditTargetType.WEEKLY_MEAL_PREFERENCE]: "برنامه هفتگی",
-  [AuditTargetType.CALENDAR_OVERRIDE]: "تغییر تقویم",
-  [AuditTargetType.CALENDAR_DAY]: "روز تقویم",
-  [AuditTargetType.REPORT]: "گزارش",
-  [AuditTargetType.SYSTEM]: "سامانه",
+const targetTypeLabels: Record<AuditTargetTypeValue, string> = {
+  AUTH: "احراز هویت",
+  SESSION: "نشست",
+  USER: "کاربر",
+  PROFILE: "پروفایل",
+  AVATAR: "تصویر پروفایل",
+  MEAL_ATTENDANCE: "حضور وعده غذایی",
+  WEEKLY_MEAL_PREFERENCE: "برنامه هفتگی",
+  CALENDAR_OVERRIDE: "تغییر تقویم",
+  CALENDAR_DAY: "روز تقویم",
+  REPORT: "گزارش",
+  SYSTEM: "سامانه",
 };
 
-const statusLabels: Record<AuditStatus, string> = {
-  [AuditStatus.SUCCESS]: "موفق",
-  [AuditStatus.FAILURE]: "ناموفق",
-  [AuditStatus.DENIED]: "رد شده",
+const statusLabels: Record<AuditStatusValue, string> = {
+  SUCCESS: "موفق",
+  FAILURE: "ناموفق",
+  DENIED: "رد شده",
 };
 
 function isValidDateKey(value: string | undefined): boolean {
@@ -129,15 +169,15 @@ function buildAuditLogsHref(filters: AuditLogFilters): string {
 }
 
 function getActionLabel(action: string): string {
-  return actionLabels[action as AuditAction] ?? action;
+  return actionLabels[action as AuditActionValue] ?? action;
 }
 
 function getTargetTypeLabel(targetType: string): string {
-  return targetTypeLabels[targetType as AuditTargetType] ?? targetType;
+  return targetTypeLabels[targetType as AuditTargetTypeValue] ?? targetType;
 }
 
 function getStatusLabel(status: string): string {
-  return statusLabels[status as AuditStatus] ?? status;
+  return statusLabels[status as AuditStatusValue] ?? status;
 }
 
 function FilterDropdown({
@@ -243,24 +283,18 @@ export default function AuditLogFilterPanel({
   const [fromDateKey, setFromDateKey] = useState(from ?? "");
   const [toDateKey, setToDateKey] = useState(to ?? "");
 
-  const actionOptions = (Object.values(AuditAction) as string[]).map(
-    (value) => ({
-      value,
-      label: getActionLabel(value),
-    }),
-  );
-  const targetTypeOptions = (Object.values(AuditTargetType) as string[]).map(
-    (value) => ({
-      value,
-      label: getTargetTypeLabel(value),
-    }),
-  );
-  const statusOptions = (Object.values(AuditStatus) as string[]).map(
-    (value) => ({
-      value,
-      label: getStatusLabel(value),
-    }),
-  );
+  const actionOptions = AUDIT_ACTION_VALUES.map((value) => ({
+    value,
+    label: getActionLabel(value),
+  }));
+  const targetTypeOptions = AUDIT_TARGET_TYPE_VALUES.map((value) => ({
+    value,
+    label: getTargetTypeLabel(value),
+  }));
+  const statusOptions = AUDIT_STATUS_VALUES.map((value) => ({
+    value,
+    label: getStatusLabel(value),
+  }));
 
   const applyFilters = () => {
     startTransition(() => {
