@@ -15,7 +15,6 @@ import { getNextDayMealReport } from "@/lib/reporter/next-day-report";
 
 const COLORS = {
   border: "FF000000",
-  header: "FFE2E8F0",
   light: "FFF8FAFC",
 } as const;
 
@@ -46,7 +45,7 @@ function styleRange(
 ) {
   for (let columnNumber = fromColumn; columnNumber <= toColumn; columnNumber += 1) {
     const cell = worksheet.getCell(rowNumber, columnNumber);
-    cell.font = { name: "Tahoma", size: 10, ...options.font };
+    cell.font = { name: "Tahoma", size: 8, ...options.font };
     cell.alignment = {
       horizontal: "center",
       vertical: "middle",
@@ -60,33 +59,26 @@ function styleRange(
   }
 }
 
-function addMealSection(
+function addCompactMealTable(
   worksheet: ExcelJS.Worksheet,
   startRow: number,
-  meal: MealReport,
+  breakfastMeal: MealReport,
+  lunchMeal: MealReport,
 ) {
-  worksheet.mergeCells(startRow, 1, startRow, 4);
-  const titleCell = worksheet.getCell(startRow, 1);
-  titleCell.value = meal.mealLabel;
-  styleRange(worksheet, startRow, 1, 4, {
-    font: { bold: true, size: 12 },
-    fill: {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: COLORS.header },
-    },
-  });
-
-  const headerRowNumber = startRow + 1;
-  const headerRow = worksheet.getRow(headerRowNumber);
+  const headerRow = worksheet.getRow(startRow);
   headerRow.values = [
     "ردیف",
-    "نام و نام خانوادگی پرسنل",
+    "پرسنل صبحانه",
     "ردیف مهمان",
-    "مهمان",
+    "مهمان صبحانه",
+    "ردیف",
+    "پرسنل ناهار",
+    "ردیف مهمان",
+    "مهمان ناهار",
   ];
-  styleRange(worksheet, headerRowNumber, 1, 4, {
-    font: { bold: true },
+  headerRow.height = 14;
+  styleRange(worksheet, startRow, 1, 8, {
+    font: { bold: true, size: 8 },
     fill: {
       type: "pattern",
       pattern: "solid",
@@ -94,37 +86,46 @@ function addMealSection(
     },
   });
 
-  const rowCount = Math.max(meal.employeeNames.length, meal.guestLabels.length, 1);
+  const rowCount = Math.max(
+    breakfastMeal.employeeNames.length,
+    breakfastMeal.guestLabels.length,
+    lunchMeal.employeeNames.length,
+    lunchMeal.guestLabels.length,
+    1,
+  );
+
   for (let index = 0; index < rowCount; index += 1) {
-    const rowNumber = headerRowNumber + index + 1;
+    const rowNumber = startRow + index + 1;
+    const breakfastEmployee = breakfastMeal.employeeNames[index];
+    const breakfastGuest = breakfastMeal.guestLabels[index];
+    const lunchEmployee = lunchMeal.employeeNames[index];
+    const lunchGuest = lunchMeal.guestLabels[index];
     const row = worksheet.getRow(rowNumber);
     row.values = [
-      meal.employeeNames[index] ? formatDisplayNumber(index + 1) : "",
-      meal.employeeNames[index] ?? "",
-      meal.guestLabels[index] ? formatDisplayNumber(index + 1) : "",
-      meal.guestLabels[index] ?? "",
+      breakfastEmployee ? formatDisplayNumber(index + 1) : "",
+      breakfastEmployee ?? "",
+      breakfastGuest ? formatDisplayNumber(index + 1) : "",
+      breakfastGuest ?? "",
+      lunchEmployee ? formatDisplayNumber(index + 1) : "",
+      lunchEmployee ?? "",
+      lunchGuest ? formatDisplayNumber(index + 1) : "",
+      lunchGuest ?? "",
     ];
-    styleRange(worksheet, rowNumber, 1, 4, {
+    row.height = 14;
+    styleRange(worksheet, rowNumber, 1, 8, {
+      font: { size: 8 },
       alignment: { horizontal: "right" },
     });
-    worksheet.getCell(rowNumber, 1).alignment = { horizontal: "center", vertical: "middle" };
-    worksheet.getCell(rowNumber, 3).alignment = { horizontal: "center", vertical: "middle" };
+    [1, 3, 5, 7].forEach((columnNumber) => {
+      worksheet.getCell(rowNumber, columnNumber).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      };
+    });
   }
 
-  const totalRowNumber = headerRowNumber + rowCount + 1;
-  worksheet.mergeCells(totalRowNumber, 1, totalRowNumber, 4);
-  const totalCell = worksheet.getCell(totalRowNumber, 1);
-  totalCell.value = `جمع کل ${meal.mealLabel} = ${formatDisplayNumber(meal.totalCount)}`;
-  styleRange(worksheet, totalRowNumber, 1, 4, {
-    font: { bold: true },
-    fill: {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: COLORS.light },
-    },
-  });
-
-  return totalRowNumber + 2;
+  return startRow + rowCount + 1;
 }
 
 export async function GET() {
@@ -144,37 +145,51 @@ export async function GET() {
   const worksheet = workbook.addWorksheet("فرم تحویل غذا", {
     views: [{ rightToLeft: true }],
     pageSetup: {
+      paperSize: 11,
       orientation: "landscape",
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 0,
-      paperSize: 9,
+      fitToHeight: 1,
+      margins: {
+        left: 0.15,
+        right: 0.15,
+        top: 0.15,
+        bottom: 0.15,
+        header: 0,
+        footer: 0,
+      },
     },
   });
-  worksheet.properties.defaultRowHeight = 24;
+  worksheet.properties.defaultRowHeight = 14;
   worksheet.columns = [
-    { key: "employeeIndex", width: 12 },
-    { key: "employeeName", width: 38 },
-    { key: "guestIndex", width: 14 },
-    { key: "guestLabel", width: 30 },
+    { key: "breakfastEmployeeIndex", width: 5 },
+    { key: "breakfastEmployeeName", width: 20 },
+    { key: "breakfastGuestIndex", width: 7 },
+    { key: "breakfastGuestLabel", width: 14 },
+    { key: "lunchEmployeeIndex", width: 5 },
+    { key: "lunchEmployeeName", width: 20 },
+    { key: "lunchGuestIndex", width: 7 },
+    { key: "lunchGuestLabel", width: 14 },
   ];
 
-  worksheet.mergeCells("A1:D1");
+  worksheet.mergeCells("A1:H1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "فرم تحویل آمار وعده‌های غذایی";
-  titleCell.font = { name: "Tahoma", size: 16, bold: true };
+  titleCell.font = { name: "Tahoma", size: 12, bold: true };
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
-  applyBorder(titleCell);
-  worksheet.getRow(1).height = 36;
+  styleRange(worksheet, 1, 1, 8, { font: { size: 12, bold: true } });
+  worksheet.getRow(1).height = 20;
 
-  worksheet.mergeCells("A2:B2");
+  worksheet.mergeCells("A2:B3");
   worksheet.getCell("A2").value = `تاریخ گزارش: ${report.reportDateLabel}`;
   styleRange(worksheet, 2, 1, 2, { font: { bold: true } });
+  styleRange(worksheet, 3, 1, 2, { font: { bold: true } });
+  worksheet.getRow(2).height = 16;
+  worksheet.getRow(3).height = 16;
 
-  worksheet.mergeCells("C2:D4");
-  styleRange(worksheet, 2, 3, 4, { font: { bold: true } });
-  styleRange(worksheet, 3, 3, 4, { font: { bold: true } });
-  styleRange(worksheet, 4, 3, 4, { font: { bold: true } });
+  worksheet.mergeCells("G2:H3");
+  styleRange(worksheet, 2, 7, 8, { font: { bold: true } });
+  styleRange(worksheet, 3, 7, 8, { font: { bold: true } });
   const logoPath = path.join(process.cwd(), "public", "company-logo.png");
   if (existsSync(logoPath)) {
     const logoId = workbook.addImage({
@@ -182,8 +197,8 @@ export async function GET() {
       extension: "png",
     });
     worksheet.addImage(logoId, {
-      tl: { col: 2.2, row: 1.2 },
-      ext: { width: 140, height: 70 },
+      tl: { col: 6.15, row: 1.2 },
+      ext: { width: 70, height: 35 },
     });
   }
 
@@ -194,55 +209,43 @@ export async function GET() {
     (meal) => meal.mealType === "LUNCH",
   ) as MealReport;
 
-  let nextRow = addMealSection(worksheet, 6, breakfastMeal);
-  nextRow = addMealSection(worksheet, nextRow, lunchMeal);
+  const nextRow = addCompactMealTable(worksheet, 5, breakfastMeal, lunchMeal);
 
-  const totalsHeaderRow = nextRow;
-  const totalsValueRow = nextRow + 1;
-  const totals = [
-    "جمع کل صبحانه",
-    "جمع کل ناهار",
-    "جمع کل وعده‌ها",
-    "",
-  ];
-  worksheet.getRow(totalsHeaderRow).values = totals;
-  styleRange(worksheet, totalsHeaderRow, 1, 3, {
-    font: { bold: true },
-    fill: {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: COLORS.header },
-    },
-  });
-  worksheet.getRow(totalsValueRow).values = [
-    formatDisplayNumber(breakfastMeal.totalCount),
-    formatDisplayNumber(lunchMeal.totalCount),
-    formatDisplayNumber(report.totals.allMeals),
-  ];
-  styleRange(worksheet, totalsValueRow, 1, 3, { font: { bold: true } });
-
-  const noteRow = totalsValueRow + 2;
-  worksheet.mergeCells(noteRow, 1, noteRow, 4);
-  worksheet.getCell(noteRow, 1).value = formalNote;
-  styleRange(worksheet, noteRow, 1, 4, {
-    font: { bold: true },
-    alignment: { horizontal: "right" },
+  const totalsRow = nextRow + 1;
+  worksheet.mergeCells(totalsRow, 1, totalsRow, 2);
+  worksheet.mergeCells(totalsRow, 3, totalsRow, 5);
+  worksheet.mergeCells(totalsRow, 6, totalsRow, 8);
+  worksheet.getCell(totalsRow, 1).value = `جمع صبحانه: ${formatDisplayNumber(breakfastMeal.totalCount)}`;
+  worksheet.getCell(totalsRow, 3).value = `جمع ناهار: ${formatDisplayNumber(lunchMeal.totalCount)}`;
+  worksheet.getCell(totalsRow, 6).value = `جمع کل: ${formatDisplayNumber(report.totals.allMeals)}`;
+  styleRange(worksheet, totalsRow, 1, 8, {
+    font: { bold: true, size: 8 },
     fill: {
       type: "pattern",
       pattern: "solid",
       fgColor: { argb: COLORS.light },
     },
   });
-  worksheet.getRow(noteRow).height = 44;
+  worksheet.getRow(totalsRow).height = 14;
 
-  const signatureRow = noteRow + 2;
-  worksheet.getRow(signatureRow).values = [
-    "تحویل‌دهنده",
-    "تحویل‌گیرنده",
-    "تاریخ و امضا",
-  ];
-  styleRange(worksheet, signatureRow, 1, 3, { font: { bold: true } });
-  worksheet.getRow(signatureRow).height = 58;
+  const noteRow = totalsRow + 1;
+  worksheet.mergeCells(noteRow, 1, noteRow, 8);
+  worksheet.getCell(noteRow, 1).value = formalNote;
+  styleRange(worksheet, noteRow, 1, 8, {
+    font: { bold: true, size: 8 },
+    alignment: { horizontal: "right" },
+  });
+  worksheet.getRow(noteRow).height = 18;
+
+  const signatureRow = noteRow + 1;
+  worksheet.mergeCells(signatureRow, 1, signatureRow, 2);
+  worksheet.mergeCells(signatureRow, 3, signatureRow, 5);
+  worksheet.mergeCells(signatureRow, 6, signatureRow, 8);
+  worksheet.getCell(signatureRow, 1).value = "تحویل‌دهنده";
+  worksheet.getCell(signatureRow, 3).value = "تحویل‌گیرنده";
+  worksheet.getCell(signatureRow, 6).value = "تاریخ و امضا";
+  styleRange(worksheet, signatureRow, 1, 8, { font: { bold: true, size: 8 } });
+  worksheet.getRow(signatureRow).height = 28;
 
   const buffer = await workbook.xlsx.writeBuffer();
 
