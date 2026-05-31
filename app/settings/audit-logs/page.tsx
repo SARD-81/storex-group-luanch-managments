@@ -6,6 +6,7 @@ import {
   AuditTargetType,
   type Prisma,
 } from "@/app/generated/prisma/client";
+import AuditLogFilterPanel from "@/components/audit/audit-log-filter-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -312,98 +313,14 @@ export default async function AuditLogsPage({
           </div>
         </section>
 
-        <section className="dashboard-glass-card space-y-4">
-          <h2 className="text-lg font-semibold">فیلتر لاگ‌ها</h2>
-          <form
-            method="get"
-            className="grid gap-3 md:grid-cols-3 xl:grid-cols-6"
-          >
-            <label className="flex flex-col gap-2 text-sm">
-              عملیات
-              <select
-                name="action"
-                defaultValue={params.action ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-              >
-                <option value="">همه</option>
-                {Object.values(AuditAction).map((action) => (
-                  <option key={action} value={action}>
-                    {action}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              نوع هدف
-              <select
-                name="targetType"
-                defaultValue={params.targetType ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-              >
-                <option value="">همه</option>
-                {Object.values(AuditTargetType).map((targetType) => (
-                  <option key={targetType} value={targetType}>
-                    {targetType}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              وضعیت
-              <select
-                name="status"
-                defaultValue={params.status ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-              >
-                <option value="">همه</option>
-                {Object.values(AuditStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              کاربر
-              <input
-                name="actor"
-                type="text"
-                defaultValue={params.actor ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-                placeholder="نام یا نام کاربری"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              از تاریخ
-              <input
-                name="from"
-                type="date"
-                defaultValue={params.from ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm">
-              تا تاریخ
-              <input
-                name="to"
-                type="date"
-                defaultValue={params.to ?? ""}
-                className="dashboard-muted-panel p-3 text-sm"
-              />
-            </label>
-            <div className="flex flex-wrap items-end gap-3 md:col-span-3 xl:col-span-6">
-              <button type="submit" className="dashboard-primary-button">
-                اعمال فیلتر
-              </button>
-              <Link
-                href="/settings/audit-logs"
-                className="dashboard-action-button"
-              >
-                پاک‌کردن فیلترها
-              </Link>
-            </div>
-          </form>
-        </section>
+        <AuditLogFilterPanel
+          action={params.action}
+          targetType={params.targetType}
+          status={params.status}
+          actor={params.actor}
+          from={params.from}
+          to={params.to}
+        />
 
         <section className="dashboard-glass-card space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
