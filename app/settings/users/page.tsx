@@ -177,7 +177,7 @@ export default async function UsersManagementPage({
                     </td>
                     <td className="border-b border-border/60 p-3">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.role === UserRole.ADMIN ? "bg-amber-400/20 text-amber-700 dark:text-amber-200" : "bg-sky-400/20 text-sky-700 dark:text-sky-200"}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.role === UserRole.ADMIN ? "bg-amber-400/20 text-amber-700 dark:text-amber-200" : user.role === UserRole.REPORTER ? "bg-violet-400/20 text-violet-700 dark:text-violet-200" : "bg-sky-400/20 text-sky-700 dark:text-sky-200"}`}
                       >
                         {ROLE_LABELS[user.role]}
                       </span>

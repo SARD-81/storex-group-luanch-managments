@@ -6,6 +6,7 @@ import {
   AuditAction,
   AuditStatus,
   AuditTargetType,
+  UserRole,
 } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/session";
@@ -31,6 +32,7 @@ export async function updateWeeklyPreferencesAction(formData: FormData) {
   const users = await prisma.user.findMany({
     where: {
       isActive: true,
+      role: { not: UserRole.REPORTER },
     },
     select: {
       id: true,

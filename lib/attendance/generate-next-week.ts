@@ -1,4 +1,4 @@
-import { AttendanceStatus } from "@/app/generated/prisma/client";
+import { AttendanceStatus, UserRole } from "@/app/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   addDays,
@@ -18,6 +18,7 @@ export async function generateNextWeekAttendance() {
       },
       user: {
         isActive: true,
+        role: { not: UserRole.REPORTER },
       },
     },
     select: {
