@@ -233,6 +233,12 @@ export default async function Home({
                   >
                     مدیریت Override تقویم
                   </Link>
+                  <Link
+                    href="/settings/audit-logs"
+                    className="dashboard-action-button"
+                  >
+                    لاگ ممیزی
+                  </Link>
                   <Link href="/reports" className="dashboard-action-button">
                     گزارش‌ها
                   </Link>
