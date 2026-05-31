@@ -3,12 +3,20 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { UserRole } from "@/app/generated/prisma/client";
+import {
+  AuditAction,
+  AuditStatus,
+  AuditTargetType,
+  UserRole,
+} from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
+import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
+import { getAuditRequestContext } from "@/lib/audit/request-context";
 import { prisma } from "@/lib/prisma";
 
 export async function createUserAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const username = formData.get("username")?.toString().trim().toLowerCase();
   const name = formData.get("name")?.toString().trim();
@@ -28,7 +36,7 @@ export async function createUserAction(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
+  const createdUser = await prisma.user.create({
     data: {
       username,
       name,
@@ -38,12 +46,34 @@ export async function createUserAction(formData: FormData) {
     },
   });
 
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.USER_CREATED,
+    targetType: AuditTargetType.USER,
+    targetId: createdUser.id,
+    targetLabel: createdUser.username,
+    status: AuditStatus.SUCCESS,
+    before: null,
+    after: {
+      id: createdUser.id,
+      username: createdUser.username,
+      name: createdUser.name,
+      role: createdUser.role,
+      isActive: createdUser.isActive,
+    },
+    metadata: {
+      createdByAdminId: admin.id,
+    },
+    ...auditContext,
+  });
+
   revalidatePath("/settings/users");
   redirect("/settings/users?saved=created");
 }
 
 export async function updateUserStatusAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const userId = formData.get("userId")?.toString();
   const nextActive = formData.get("isActive")?.toString() === "true";
@@ -54,7 +84,7 @@ export async function updateUserStatusAction(formData: FormData) {
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isActive: true },
+    select: { id: true, username: true, name: true, role: true, isActive: true },
   });
 
   if (!targetUser) {
@@ -71,9 +101,28 @@ export async function updateUserStatusAction(formData: FormData) {
     }
   }
 
-  await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { isActive: nextActive },
+  });
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.USER_STATUS_CHANGED,
+    targetType: AuditTargetType.USER,
+    targetId: updatedUser.id,
+    targetLabel: updatedUser.username,
+    status: AuditStatus.SUCCESS,
+    before: {
+      isActive: targetUser.isActive,
+    },
+    after: {
+      isActive: updatedUser.isActive,
+    },
+    metadata: {
+      targetUserName: updatedUser.name,
+    },
+    ...auditContext,
   });
 
   revalidatePath("/settings/users");
@@ -81,7 +130,8 @@ export async function updateUserStatusAction(formData: FormData) {
 }
 
 export async function resetUserPasswordAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const userId = formData.get("userId")?.toString();
   const password = formData.get("password")?.toString();
@@ -90,11 +140,33 @@ export async function resetUserPasswordAction(formData: FormData) {
     redirect("/settings/users?error=missing");
   }
 
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, username: true, name: true },
+  });
+
+  if (!targetUser) {
+    redirect("/settings/users?error=user-not-found");
+  }
+
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.update({
     where: { id: userId },
     data: { passwordHash },
+  });
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.USER_PASSWORD_RESET,
+    targetType: AuditTargetType.USER,
+    targetId: targetUser.id,
+    targetLabel: targetUser.username,
+    status: AuditStatus.SUCCESS,
+    metadata: {
+      targetUserName: targetUser.name,
+    },
+    ...auditContext,
   });
 
   revalidatePath("/settings/users");
