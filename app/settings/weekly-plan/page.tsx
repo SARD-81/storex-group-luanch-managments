@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { AttendanceStatus } from "@/app/generated/prisma/client";
+import { AttendanceStatus, UserRole } from "@/app/generated/prisma/client";
 import { updateWeeklyPreferencesAction } from "@/actions/weekly-preferences";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -48,7 +48,7 @@ export default async function WeeklyPlanPage({
   const [users, weeklyAttendances, calendarWeeklyPlanWindow] =
     await Promise.all([
       prisma.user.findMany({
-        where: { isActive: true },
+        where: { isActive: true, role: { not: UserRole.REPORTER } },
         include: { weeklyPreferences: true },
         orderBy: { createdAt: "asc" },
       }),

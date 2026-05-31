@@ -9,6 +9,7 @@ import {
   AuditTargetType,
   UserRole,
 } from "@/app/generated/prisma/client";
+import { USER_ROLE_OPTIONS } from "@/lib/auth/roles";
 import { requireAdmin } from "@/lib/auth/session";
 import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
 import { getAuditRequestContext } from "@/lib/audit/request-context";
@@ -22,7 +23,10 @@ export async function createUserAction(formData: FormData) {
   const name = formData.get("name")?.toString().trim();
   const password = formData.get("password")?.toString();
   const roleValue = formData.get("role")?.toString();
-  const role = roleValue === UserRole.ADMIN ? UserRole.ADMIN : UserRole.USER;
+  const allowedRoleValues = USER_ROLE_OPTIONS.map((option) => option.value);
+  const role = allowedRoleValues.includes(roleValue as UserRole)
+    ? (roleValue as UserRole)
+    : UserRole.USER;
 
   if (!username || !name || !password) {
     redirect("/settings/users?error=missing");

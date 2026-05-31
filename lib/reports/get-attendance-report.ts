@@ -1,4 +1,4 @@
-import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
+import { AttendanceStatus, MealType, UserRole } from "@/app/generated/prisma/client";
 import { getAttendanceDatePoliciesByDateRange } from "@/lib/attendance/calendar-attendance-policy";
 import { getDateKey } from "@/lib/date/date-key";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
@@ -23,13 +23,14 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
           gte: fromDate,
           lte: toDate,
         },
+        user: { role: { not: UserRole.REPORTER } },
       },
       include: {
         user: true,
       },
     }),
     prisma.user.findMany({
-      where: { isActive: true },
+      where: { isActive: true, role: { not: UserRole.REPORTER } },
       select: { id: true, name: true, username: true },
       orderBy: { createdAt: "asc" },
     }),

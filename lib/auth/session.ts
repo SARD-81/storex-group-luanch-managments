@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/app/generated/prisma/client";
+import { canAccessReporterPage } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE_NAME = "meal_dashboard_session";
@@ -95,6 +96,16 @@ export async function requireAdmin() {
   const user = await requireUser();
 
   if (user.role !== UserRole.ADMIN) {
+    redirect("/");
+  }
+
+  return user;
+}
+
+export async function requireReporterAccess() {
+  const user = await requireUser();
+
+  if (!canAccessReporterPage(user.role)) {
     redirect("/");
   }
 

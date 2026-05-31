@@ -25,6 +25,7 @@ enum AttendanceStatus {
 enum UserRole {
   USER
   ADMIN
+  REPORTER
 }
 
 enum CalendarDateSystem {
@@ -86,6 +87,9 @@ enum AuditAction {
   CALENDAR_OVERRIDE_CLEARED
 
   REPORT_EXPORTED
+
+  GUEST_MEAL_CREATED
+  GUEST_MEAL_DELETED
 }
 
 enum AuditTargetType {
@@ -99,6 +103,7 @@ enum AuditTargetType {
   CALENDAR_OVERRIDE
   CALENDAR_DAY
   REPORT
+  GUEST_MEAL_ORDER
   SYSTEM
 }
 
@@ -128,6 +133,7 @@ model User {
   calendarOverrides     CalendarOverride[]     @relation("CalendarOverrideCreatedBy")
   calendarImportBatches CalendarImportBatch[]  @relation("CalendarImportBatchCreatedBy")
   auditLogs             AuditLog[]             @relation("AuditLogActor")
+  guestMealOrders       GuestMealOrder[]       @relation("GuestMealOrderCreatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -220,6 +226,28 @@ model MealAttendance {
   @@unique([userId, date, mealType])
   @@index([date, mealType])
   @@index([userId, date])
+}
+
+model GuestMealOrder {
+  id String @id @default(cuid())
+
+  date DateTime @db.Date
+  mealType MealType
+
+  title String
+  guestName String?
+  organization String?
+  count Int @default(1)
+  note String?
+
+  createdById String?
+  createdBy User? @relation("GuestMealOrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date, mealType])
+  @@index([createdById])
 }
 
 model CalendarImportBatch {

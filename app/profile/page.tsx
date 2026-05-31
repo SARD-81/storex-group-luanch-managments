@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
+import { redirect } from "next/navigation";
+import { UserRole } from "@/app/generated/prisma/client";
 import {
   deleteMyAvatarAction,
   updateMyAvatarAction,
@@ -30,6 +32,11 @@ export default async function ProfilePage({
   noStore();
   await searchParams;
   const currentUser = await requireUser();
+
+  if (currentUser.role === UserRole.REPORTER) {
+    redirect("/reporter/next-day");
+  }
+
   const fallbackName = splitDisplayName(currentUser.name);
   const firstName = currentUser.firstName ?? fallbackName.firstName;
   const lastName = currentUser.lastName ?? fallbackName.lastName;
