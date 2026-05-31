@@ -33,50 +33,51 @@ function formatDisplayNumber(value: number) {
   return new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(value);
 }
 
-function renderMealSection(meal: MealReport) {
-  const rowCount = Math.max(meal.employeeNames.length, meal.guestLabels.length, 1);
+function renderCompactA5MealTable(breakfastMeal: MealReport, lunchMeal: MealReport) {
+  const rowCount = Math.max(
+    breakfastMeal.employeeNames.length,
+    breakfastMeal.guestLabels.length,
+    lunchMeal.employeeNames.length,
+    lunchMeal.guestLabels.length,
+    1,
+  );
 
   return (
-    <section key={meal.mealType} className="reporter-form-paper-meal mt-6">
-      <h3 className="rounded-t-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-lg font-bold text-slate-950">
-        {meal.mealLabel}
-      </h3>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm text-slate-950">
-          <thead>
-            <tr className="bg-slate-50">
-              <th className="border border-slate-300 p-2 text-center">ردیف</th>
-              <th className="border border-slate-300 p-2 text-center">
-                نام و نام خانوادگی پرسنل
-              </th>
-              <th className="border border-slate-300 p-2 text-center">ردیف مهمان</th>
-              <th className="border border-slate-300 p-2 text-center">مهمان</th>
+    <table className="reporter-a5-grid-table">
+      <thead>
+        <tr>
+          <th>ردیف</th>
+          <th>پرسنل صبحانه</th>
+          <th>ردیف مهمان</th>
+          <th>مهمان صبحانه</th>
+          <th>ردیف</th>
+          <th>پرسنل ناهار</th>
+          <th>ردیف مهمان</th>
+          <th>مهمان ناهار</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: rowCount }, (_, index) => {
+          const breakfastEmployee = breakfastMeal.employeeNames[index];
+          const breakfastGuest = breakfastMeal.guestLabels[index];
+          const lunchEmployee = lunchMeal.employeeNames[index];
+          const lunchGuest = lunchMeal.guestLabels[index];
+
+          return (
+            <tr key={`compact-a5-meal-row-${index}`}>
+              <td>{breakfastEmployee ? formatDisplayNumber(index + 1) : ""}</td>
+              <td>{breakfastEmployee ?? ""}</td>
+              <td>{breakfastGuest ? formatDisplayNumber(index + 1) : ""}</td>
+              <td>{breakfastGuest ?? ""}</td>
+              <td>{lunchEmployee ? formatDisplayNumber(index + 1) : ""}</td>
+              <td>{lunchEmployee ?? ""}</td>
+              <td>{lunchGuest ? formatDisplayNumber(index + 1) : ""}</td>
+              <td>{lunchGuest ?? ""}</td>
             </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: rowCount }, (_, index) => (
-              <tr key={`${meal.mealType}-${index}`}>
-                <td className="w-20 border border-slate-300 p-2 text-center">
-                  {meal.employeeNames[index] ? formatDisplayNumber(index + 1) : ""}
-                </td>
-                <td className="border border-slate-300 p-2">
-                  {meal.employeeNames[index] ?? ""}
-                </td>
-                <td className="w-24 border border-slate-300 p-2 text-center">
-                  {meal.guestLabels[index] ? formatDisplayNumber(index + 1) : ""}
-                </td>
-                <td className="border border-slate-300 p-2">
-                  {meal.guestLabels[index] ?? ""}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="rounded-b-2xl border-x border-b border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950">
-        جمع کل {meal.mealLabel} = {formatDisplayNumber(meal.totalCount)}
-      </p>
-    </section>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
@@ -237,54 +238,36 @@ export default async function NextDayReporterPage({
         ) : null}
 
         <section className="reporter-print-area dashboard-glass-card">
-          <div className="reporter-form-paper">
-            <div className="grid gap-4 border-b border-slate-300 pb-5 text-slate-950 md:grid-cols-3 md:items-center">
-              <div className="flex justify-start md:justify-start">
+          <div className="reporter-form-paper reporter-form-paper-a5">
+            <div>
+              <div>
                 {companyLogoExists ? (
                   <img
                     src="/company-logo.png"
                     alt="لوگوی شرکت"
-                    className="h-20 max-w-36 object-contain"
                   />
                 ) : (
-                  <div className="flex h-20 w-36 items-center justify-center rounded-xl border border-slate-400 text-sm font-semibold">
-                    لوگوی شرکت
-                  </div>
+                  <div>لوگوی شرکت</div>
                 )}
               </div>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold">
-                  فرم تحویل آمار وعده‌های غذایی
-                </h2>
-              </div>
-              <div className="text-left text-sm font-semibold md:text-left">
-                تاریخ: {report.reportDateLabel}
-              </div>
+              <h2>فرم تحویل آمار وعده‌های غذایی</h2>
+              <div>تاریخ: {report.reportDateLabel}</div>
             </div>
 
-            {renderMealSection(breakfastMeal)}
-            {renderMealSection(lunchMeal)}
+            {renderCompactA5MealTable(breakfastMeal, lunchMeal)}
 
-            <div className="mt-6 grid gap-3 text-center text-sm font-bold text-slate-950 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
-                جمع کل صبحانه: {formatDisplayNumber(breakfastMeal.totalCount)}
-              </div>
-              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
-                جمع کل ناهار: {formatDisplayNumber(lunchMeal.totalCount)}
-              </div>
-              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
-                جمع کل وعده‌ها: {formatDisplayNumber(report.totals.allMeals)}
-              </div>
+            <div className="reporter-a5-totals">
+              <span>جمع صبحانه: {formatDisplayNumber(breakfastMeal.totalCount)}</span>
+              <span>جمع ناهار: {formatDisplayNumber(lunchMeal.totalCount)}</span>
+              <span>جمع کل: {formatDisplayNumber(report.totals.allMeals)}</span>
             </div>
 
-            <p className="mt-6 rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm font-semibold leading-8 text-slate-950">
-              {formalNote}
-            </p>
+            <p className="reporter-a5-note">{formalNote}</p>
 
-            <div className="mt-8 grid grid-cols-3 gap-4 text-center text-sm font-semibold text-slate-950">
-              <div className="rounded-2xl border border-slate-300 p-8">تحویل‌دهنده</div>
-              <div className="rounded-2xl border border-slate-300 p-8">تحویل‌گیرنده</div>
-              <div className="rounded-2xl border border-slate-300 p-8">تاریخ و امضا</div>
+            <div className="reporter-a5-signatures">
+              <div>تحویل‌دهنده</div>
+              <div>تحویل‌گیرنده</div>
+              <div>تاریخ و امضا</div>
             </div>
           </div>
         </section>
