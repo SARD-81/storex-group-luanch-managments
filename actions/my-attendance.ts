@@ -5,6 +5,7 @@ import {
   AuditAction,
   AuditStatus,
   AuditTargetType,
+  UserRole,
 } from "@/app/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -29,6 +30,9 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export async function updateMyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
+  if (currentUser.role === UserRole.REPORTER) {
+    redirect("/reporter/next-day");
+  }
   const auditContext = await getAuditRequestContext();
   const parsedDateKey = dateSchema.safeParse(formData.get("date"));
 
@@ -118,6 +122,9 @@ export async function updateMyAttendanceAction(formData: FormData) {
 
 export async function updateMyMonthlyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
+  if (currentUser.role === UserRole.REPORTER) {
+    redirect("/reporter/next-day");
+  }
   const auditContext = await getAuditRequestContext();
   const targetDateValue = formData.get("targetDate");
 

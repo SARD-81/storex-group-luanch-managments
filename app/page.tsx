@@ -248,6 +248,12 @@ export default async function Home({
                   <Link href="/reports" className="dashboard-action-button">
                     گزارش‌ها
                   </Link>
+                  <Link
+                    href="/reporter/next-day"
+                    className="dashboard-action-button"
+                  >
+                    گزارش روز بعد
+                  </Link>
                 </div>
               </div>
               <div className="overflow-x-auto rounded-xl border border-border/60">
