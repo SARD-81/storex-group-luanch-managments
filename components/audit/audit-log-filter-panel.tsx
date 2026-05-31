@@ -203,7 +203,7 @@ function FilterDropdown({
   const selectedLabel = selectedOption?.label ?? (value ? value : "همه");
 
   return (
-    <div className="relative flex flex-col gap-2 text-sm">
+    <div className="relative z-50 flex flex-col gap-2 text-sm">
       <span>{title}</span>
       <button
         type="button"
@@ -228,7 +228,7 @@ function FilterDropdown({
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-full z-[10020] mt-2 max-h-72 w-full min-w-56 overflow-y-auto rounded-2xl border border-border/60 bg-card/95 p-2 shadow-xl backdrop-blur-xl">
+        <div className="absolute right-0 top-full z-[10080] mt-2 max-h-72 w-full min-w-64 overflow-y-auto rounded-2xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl">
           <button
             type="button"
             onClick={() => {
@@ -312,7 +312,7 @@ export default function AuditLogFilterPanel({
   };
 
   return (
-    <section className="dashboard-glass-card space-y-4">
+    <section className="dashboard-glass-card relative z-40 overflow-visible space-y-4">
       <h2 className="text-lg font-semibold">فیلتر لاگ‌ها</h2>
       <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
         <FilterDropdown
