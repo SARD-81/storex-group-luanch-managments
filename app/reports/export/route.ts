@@ -1,8 +1,16 @@
 import ExcelJS from "exceljs";
+import {
+  AuditAction,
+  AuditStatus,
+  AuditTargetType,
+} from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
+import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
+import { getAuditRequestContext } from "@/lib/audit/request-context";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { getAttendanceReport } from "@/lib/reports/get-attendance-report";
 import { resolveReportDateRange } from "@/lib/reports/report-date-range";
+import { prisma } from "@/lib/prisma";
 
 const STATUS_LABELS = {
   PRESENT: "حاضر",
@@ -143,7 +151,8 @@ function styleStatusCell(cell: ExcelJS.Cell, status: string) {
 }
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const { searchParams } = new URL(request.url);
   const { fromDate, toDate } = resolveReportDateRange({
@@ -375,6 +384,26 @@ export async function GET(request: Request) {
   };
 
   const buffer = await workbook.xlsx.writeBuffer();
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.REPORT_EXPORTED,
+    targetType: AuditTargetType.REPORT,
+    targetId: null,
+    targetLabel: "attendance-report.xlsx",
+    status: AuditStatus.SUCCESS,
+    metadata: {
+      fromDate,
+      toDate,
+      dailySummaryCount: dailySummary.length,
+      userRowsCount: userRows.length,
+      totalBreakfast,
+      totalLunch,
+      totalMeals,
+      filename: "attendance-report.xlsx",
+    },
+    ...auditContext,
+  });
 
   return new Response(buffer as BodyInit, {
     headers: {

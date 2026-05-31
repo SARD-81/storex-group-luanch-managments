@@ -3,11 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  AuditAction,
+  AuditStatus,
+  AuditTargetType,
+} from "@/app/generated/prisma/client";
+import {
   clearCalendarDayOverride,
   forceCalendarDayHoliday,
   forceCalendarDayWorkday,
 } from "@/lib/calendar/calendar-override-service";
 import { requireAdmin } from "@/lib/auth/session";
+import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
+import { getAuditRequestContext } from "@/lib/audit/request-context";
 import { prisma } from "@/lib/prisma";
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,6 +39,7 @@ export async function applyManualHolidayOverrideAction(
   formData: FormData,
 ): Promise<void> {
   const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const dateKey = getStringValue(formData, "dateKey");
   const title = getStringValue(formData, "title").trim();
@@ -42,11 +50,33 @@ export async function applyManualHolidayOverrideAction(
     redirect(getInvalidInputRedirect(dateKey));
   }
 
-  await forceCalendarDayHoliday(prisma, dateKey, {
+  const result = await forceCalendarDayHoliday(prisma, dateKey, {
     title,
     description,
     createdById: admin.id,
   });
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.CALENDAR_OVERRIDE_FORCE_HOLIDAY,
+    targetType: AuditTargetType.CALENDAR_OVERRIDE,
+    targetId: result.calendarDayId,
+    targetLabel: result.dateKey,
+    status: AuditStatus.SUCCESS,
+    metadata: {
+      dateKey: result.dateKey,
+      jalaliDateKey: result.jalaliDateKey,
+      overrideType: result.overrideType,
+      isManualHoliday: result.isManualHoliday,
+      isForcedWorkday: result.isForcedWorkday,
+      isWorkday: result.isWorkday,
+      holidayTitle: result.holidayTitle,
+      inputTitle: title,
+      inputDescription: description,
+    },
+    ...auditContext,
+  });
+
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=manual-holiday`);
 }
@@ -55,6 +85,7 @@ export async function applyForcedWorkdayOverrideAction(
   formData: FormData,
 ): Promise<void> {
   const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const dateKey = getStringValue(formData, "dateKey");
   const title = getStringValue(formData, "title").trim();
@@ -65,11 +96,33 @@ export async function applyForcedWorkdayOverrideAction(
     redirect(getInvalidInputRedirect(dateKey));
   }
 
-  await forceCalendarDayWorkday(prisma, dateKey, {
+  const result = await forceCalendarDayWorkday(prisma, dateKey, {
     title,
     description,
     createdById: admin.id,
   });
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.CALENDAR_OVERRIDE_FORCE_WORKDAY,
+    targetType: AuditTargetType.CALENDAR_OVERRIDE,
+    targetId: result.calendarDayId,
+    targetLabel: result.dateKey,
+    status: AuditStatus.SUCCESS,
+    metadata: {
+      dateKey: result.dateKey,
+      jalaliDateKey: result.jalaliDateKey,
+      overrideType: result.overrideType,
+      isManualHoliday: result.isManualHoliday,
+      isForcedWorkday: result.isForcedWorkday,
+      isWorkday: result.isWorkday,
+      holidayTitle: result.holidayTitle,
+      inputTitle: title,
+      inputDescription: description,
+    },
+    ...auditContext,
+  });
+
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=forced-workday`);
 }
@@ -77,7 +130,8 @@ export async function applyForcedWorkdayOverrideAction(
 export async function clearCalendarOverrideAction(
   formData: FormData,
 ): Promise<void> {
-  await requireAdmin();
+  const admin = await requireAdmin();
+  const auditContext = await getAuditRequestContext();
 
   const dateKey = getStringValue(formData, "dateKey");
 
@@ -85,7 +139,27 @@ export async function clearCalendarOverrideAction(
     redirect(`${CALENDAR_OVERRIDES_PATH}?error=invalid-input`);
   }
 
-  await clearCalendarDayOverride(prisma, dateKey);
+  const result = await clearCalendarDayOverride(prisma, dateKey);
+
+  await writeAuditLog(prisma, {
+    ...getAuditActorFromUser(admin),
+    action: AuditAction.CALENDAR_OVERRIDE_CLEARED,
+    targetType: AuditTargetType.CALENDAR_OVERRIDE,
+    targetId: result.calendarDayId,
+    targetLabel: result.dateKey,
+    status: AuditStatus.SUCCESS,
+    metadata: {
+      dateKey: result.dateKey,
+      jalaliDateKey: result.jalaliDateKey,
+      overrideType: result.overrideType,
+      isManualHoliday: result.isManualHoliday,
+      isForcedWorkday: result.isForcedWorkday,
+      isWorkday: result.isWorkday,
+      holidayTitle: result.holidayTitle,
+    },
+    ...auditContext,
+  });
+
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=cleared`);
 }
