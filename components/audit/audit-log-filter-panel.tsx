@@ -228,14 +228,14 @@ function FilterDropdown({
       </button>
 
       {isOpen ? (
-        <div className="absolute right-0 top-full z-[10080] mt-2 max-h-72 w-full min-w-64 overflow-y-auto rounded-2xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl">
+        <div className="absolute right-0 top-full z-[10080] mt-2 max-h-72 w-full min-w-56 max-w-[calc(100vw-2rem)] overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-card/95 p-2 shadow-2xl backdrop-blur-xl">
           <button
             type="button"
             onClick={() => {
               onChange("");
               onOpenChange(null);
             }}
-            className="w-full rounded-xl px-3 py-2 text-right text-sm transition hover:bg-muted/70"
+            className="w-full min-w-0 rounded-xl px-3 py-2 text-right text-sm transition hover:bg-muted/70"
           >
             همه
           </button>
@@ -247,12 +247,15 @@ function FilterDropdown({
                 onChange(option.value);
                 onOpenChange(null);
               }}
-              className="w-full rounded-xl px-3 py-2 text-right text-sm transition hover:bg-muted/70"
+              className="w-full min-w-0 rounded-xl px-3 py-2 text-right text-sm transition hover:bg-muted/70"
             >
-              <span className="block font-medium text-foreground">
+              <span className="block max-w-full truncate font-medium text-foreground">
                 {option.label}
               </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
+              <span
+                dir="ltr"
+                className="mt-1 block max-w-full truncate text-left text-xs text-muted-foreground"
+              >
                 {option.value}
               </span>
             </button>
