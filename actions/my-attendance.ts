@@ -1,6 +1,11 @@
 "use server";
 
-import { AttendanceStatus } from "@/app/generated/prisma/client";
+import {
+  AttendanceStatus,
+  AuditAction,
+  AuditStatus,
+  AuditTargetType,
+} from "@/app/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -8,13 +13,23 @@ import { requireUser } from "@/lib/auth/session";
 import { MEAL_TYPES } from "@/lib/attendance/meals";
 import { canSelectAttendanceDateByDateKey } from "@/lib/attendance/calendar-attendance-policy";
 import { canEditAttendance } from "@/lib/attendance/rules";
+import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
+import { getAuditRequestContext } from "@/lib/audit/request-context";
 import { parseDateKey, getDateKey } from "@/lib/date/date-key";
 import { prisma } from "@/lib/prisma";
+
+type AttendanceAuditChange = {
+  dateKey: string;
+  mealType: (typeof MEAL_TYPES)[number];
+  beforeStatus: AttendanceStatus | null;
+  afterStatus: AttendanceStatus;
+};
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 export async function updateMyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
+  const auditContext = await getAuditRequestContext();
   const parsedDateKey = dateSchema.safeParse(formData.get("date"));
 
   if (!parsedDateKey.success) redirect("/?error=invalid-date");
@@ -39,6 +54,7 @@ export async function updateMyAttendanceAction(formData: FormData) {
   }
 
   const mutations = [];
+  const auditChanges: AttendanceAuditChange[] = [];
   for (const mealType of MEAL_TYPES) {
     const checked = formData.get(`meal:${mealType}`) === "on";
     const newStatus = checked ? AttendanceStatus.PRESENT : AttendanceStatus.ABSENT;
@@ -46,6 +62,12 @@ export async function updateMyAttendanceAction(formData: FormData) {
 
     // Validation: فقط در صورتی رکورد آپدیت می‌شود که تغییر وضعیتی وجود داشته باشد
     if (existingStatus !== newStatus) {
+      auditChanges.push({
+        dateKey,
+        mealType,
+        beforeStatus: existingStatus ?? null,
+        afterStatus: newStatus,
+      });
       mutations.push(
         prisma.mealAttendance.upsert({
           where: { userId_date_mealType: { userId: currentUser.id, date, mealType } },
@@ -72,12 +94,31 @@ export async function updateMyAttendanceAction(formData: FormData) {
     await prisma.$transaction(mutations);
   }
 
+  if (auditChanges.length > 0) {
+    await writeAuditLog(prisma, {
+      ...getAuditActorFromUser(currentUser),
+      action: AuditAction.ATTENDANCE_UPDATED,
+      targetType: AuditTargetType.MEAL_ATTENDANCE,
+      targetId: currentUser.id,
+      targetLabel: currentUser.username,
+      status: AuditStatus.SUCCESS,
+      metadata: {
+        mode: "DAILY",
+        dateKey,
+        changedCount: auditChanges.length,
+        changes: auditChanges,
+      },
+      ...auditContext,
+    });
+  }
+
   revalidatePath("/");
   redirect(`/?date=${dateKey}&saved=1`);
 }
 
 export async function updateMyMonthlyAttendanceAction(formData: FormData) {
   const currentUser = await requireUser();
+  const auditContext = await getAuditRequestContext();
   const targetDateValue = formData.get("targetDate");
 
   const dateEntries = formData.getAll("date");
@@ -135,6 +176,7 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
 
   // ۲. پیدا کردن رکوردهایی که کاربر در فرم تغییر داده است
   const mutations = [];
+  const auditChanges: AttendanceAuditChange[] = [];
 
   for (const { dateKey, date } of processDates) {
     for (const mealType of MEAL_TYPES) {
@@ -144,6 +186,12 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
 
       // Validation: در صورت تکراری بودن تغییری انجام نمی‌شود
       if (existingStatus !== newStatus) {
+        auditChanges.push({
+          dateKey,
+          mealType,
+          beforeStatus: existingStatus ?? null,
+          afterStatus: newStatus,
+        });
         mutations.push(
           prisma.mealAttendance.upsert({
             where: {
@@ -171,6 +219,28 @@ export async function updateMyMonthlyAttendanceAction(formData: FormData) {
   // ۳. ثبت تراکنش در دیتابیس (فقط اگر تغییری صورت گرفته باشد)
   if (mutations.length > 0) {
     await prisma.$transaction(mutations);
+  }
+
+  if (auditChanges.length > 0) {
+    await writeAuditLog(prisma, {
+      ...getAuditActorFromUser(currentUser),
+      action: AuditAction.MONTHLY_ATTENDANCE_UPDATED,
+      targetType: AuditTargetType.MEAL_ATTENDANCE,
+      targetId: currentUser.id,
+      targetLabel: currentUser.username,
+      status: AuditStatus.SUCCESS,
+      metadata: {
+        mode:
+          targetDateValue !== null
+            ? "SINGLE_DAY_FROM_MONTHLY_BOARD"
+            : "MONTHLY_BULK",
+        processedDateCount: processDates.length,
+        changedCount: auditChanges.length,
+        dateKeys: processDates.map((entry) => entry.dateKey),
+        changes: auditChanges,
+      },
+      ...auditContext,
+    });
   }
 
   revalidatePath("/");
