@@ -8,7 +8,18 @@ import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { getTodayIranDateKey } from "@/lib/calendar/calendar-service";
 import { getDateKey, parseDateKey } from "@/lib/date/date-key";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
+
 import { prisma } from "@/lib/prisma";
+
+function formatPersianNumber(value: number) {
+  return new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(value);
+}
+
+function createGuestLabels(count: number) {
+  return Array.from({ length: count }, (_, index) =>
+    `مهمان ${formatPersianNumber(index + 1)}`,
+  );
+}
 
 export function addOneUtcCalendarDayToDateKey(dateKey: string) {
   const date = parseDateKey(dateKey);
@@ -91,7 +102,7 @@ export async function getNextDayMealReport() {
       guestCount,
       totalCount: employeeCount + guestCount,
       employeeNames,
-      guestOrders: mealGuestOrders,
+      guestLabels: createGuestLabels(guestCount),
     };
   });
 

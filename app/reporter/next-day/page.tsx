@@ -1,34 +1,84 @@
+import { existsSync } from "fs";
+import path from "path";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { UserRole } from "@/app/generated/prisma/client";
+import { UserRole, MealType } from "@/app/generated/prisma/client";
 import { logoutAction } from "@/actions/auth";
-import {
-  createGuestMealOrderAction,
-  deleteGuestMealOrderAction,
-} from "@/actions/guest-meal-orders";
+import { updateGuestMealCountsAction } from "@/actions/guest-meal-orders";
 import { PrintReportButton } from "@/components/reporter/print-report-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { requireReporterAccess } from "@/lib/auth/session";
-import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { getNextDayMealReport } from "@/lib/reporter/next-day-report";
 
 type SearchParams = Promise<{ error?: string; saved?: string }>;
+type MealReport = Awaited<ReturnType<typeof getNextDayMealReport>>["meals"][number];
 
 const savedMessages: Record<string, string> = {
-  "guest-created": "سفارش مهمان ثبت شد.",
-  "guest-deleted": "سفارش مهمان حذف شد.",
+  "guest-counts": "تعداد مهمان‌ها ذخیره شد.",
 };
 
 const errorMessages: Record<string, string> = {
   "non-workday": "برای روز غیرکاری امکان ثبت مهمان وجود ندارد.",
   "invalid-date": "تاریخ فرم با گزارش روز بعد مطابقت ندارد.",
-  "invalid-meal": "وعده انتخاب‌شده معتبر نیست.",
-  "invalid-guest": "اطلاعات مهمان معتبر نیست.",
-  "guest-not-found": "سفارش مهمان پیدا نشد.",
+  "invalid-guest-count": "تعداد مهمان‌ها معتبر نیست.",
 };
 
+const formalNote =
+  "غذای مهمان با ثبت تعداد در سامانه قابل قبول است. هر کارمند و مهمان فقط غذای ثبت‌شده خود را دریافت می‌کند و امکان اضافه کردن غذا در همان روز وجود ندارد.";
+
 export const dynamic = "force-dynamic";
+
+function formatDisplayNumber(value: number) {
+  return new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(value);
+}
+
+function renderMealSection(meal: MealReport) {
+  const rowCount = Math.max(meal.employeeNames.length, meal.guestLabels.length, 1);
+
+  return (
+    <section key={meal.mealType} className="reporter-form-paper-meal mt-6">
+      <h3 className="rounded-t-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-lg font-bold text-slate-950">
+        {meal.mealLabel}
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm text-slate-950">
+          <thead>
+            <tr className="bg-slate-50">
+              <th className="border border-slate-300 p-2 text-center">ردیف</th>
+              <th className="border border-slate-300 p-2 text-center">
+                نام و نام خانوادگی پرسنل
+              </th>
+              <th className="border border-slate-300 p-2 text-center">ردیف مهمان</th>
+              <th className="border border-slate-300 p-2 text-center">مهمان</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: rowCount }, (_, index) => (
+              <tr key={`${meal.mealType}-${index}`}>
+                <td className="w-20 border border-slate-300 p-2 text-center">
+                  {meal.employeeNames[index] ? formatDisplayNumber(index + 1) : ""}
+                </td>
+                <td className="border border-slate-300 p-2">
+                  {meal.employeeNames[index] ?? ""}
+                </td>
+                <td className="w-24 border border-slate-300 p-2 text-center">
+                  {meal.guestLabels[index] ? formatDisplayNumber(index + 1) : ""}
+                </td>
+                <td className="border border-slate-300 p-2">
+                  {meal.guestLabels[index] ?? ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="rounded-b-2xl border-x border-b border-slate-300 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-950">
+        جمع کل {meal.mealLabel} = {formatDisplayNumber(meal.totalCount)}
+      </p>
+    </section>
+  );
+}
 
 export default async function NextDayReporterPage({
   searchParams,
@@ -39,9 +89,15 @@ export default async function NextDayReporterPage({
   const currentUser = await requireReporterAccess();
   const params = await searchParams;
   const report = await getNextDayMealReport();
-  const allGuestOrders = report.meals.flatMap((meal) =>
-    meal.guestOrders.map((order) => ({ ...order, mealLabel: meal.mealLabel })),
+  const companyLogoExists = existsSync(
+    path.join(process.cwd(), "public", "company-logo.png"),
   );
+  const breakfastMeal = report.meals.find(
+    (meal) => meal.mealType === MealType.BREAKFAST,
+  ) as MealReport;
+  const lunchMeal = report.meals.find(
+    (meal) => meal.mealType === MealType.LUNCH,
+  ) as MealReport;
 
   return (
     <main
@@ -87,7 +143,7 @@ export default async function NextDayReporterPage({
             ) : null}
             <PrintReportButton />
             <Link href="/reporter/next-day/export" className="dashboard-primary-button">
-              دانلود Excel
+              دانلود فرم Excel
             </Link>
           </div>
         </header>
@@ -139,176 +195,97 @@ export default async function NextDayReporterPage({
 
         {report.policy.isWorkday === true ? (
           <section className="dashboard-glass-card reporter-no-print">
-            <h2 className="mb-4 text-lg font-semibold">ثبت سفارش مهمان</h2>
-            <form action={createGuestMealOrderAction} className="grid gap-3 md:grid-cols-2">
+            <h2 className="mb-2 text-lg font-semibold">ثبت تعداد مهمان‌ها</h2>
+            <p className="mb-4 text-sm leading-7 text-muted-foreground">
+              فقط تعداد مهمان‌های هر وعده را وارد کنید؛ اسامی مهمان‌ها به‌صورت خودکار در فرم چاپی با عنوان مهمان ۱، مهمان ۲ و ... نمایش داده می‌شود.
+            </p>
+            <form action={updateGuestMealCountsAction} className="grid gap-3 md:grid-cols-2">
               <input type="hidden" name="date" value={report.reportDateKey} />
-              <select name="mealType" className="dashboard-muted-panel p-3 text-sm" required>
-                {MEAL_TYPES.map((mealType) => (
-                  <option key={mealType} value={mealType}>
-                    {MEAL_LABELS[mealType]}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="title"
-                placeholder="عنوان سفارش"
-                maxLength={120}
-                className="dashboard-muted-panel p-3 text-sm"
-                required
-              />
-              <input
-                name="guestName"
-                placeholder="نام مهمان (اختیاری)"
-                maxLength={120}
-                className="dashboard-muted-panel p-3 text-sm"
-              />
-              <input
-                name="organization"
-                placeholder="سازمان (اختیاری)"
-                maxLength={120}
-                className="dashboard-muted-panel p-3 text-sm"
-              />
-              <input
-                name="count"
-                type="number"
-                min={1}
-                max={500}
-                defaultValue={1}
-                className="dashboard-muted-panel p-3 text-sm"
-                required
-              />
-              <textarea
-                name="note"
-                placeholder="یادداشت (اختیاری)"
-                maxLength={500}
-                className="dashboard-muted-panel min-h-24 p-3 text-sm md:col-span-2"
-              />
+              <label className="space-y-2 text-sm font-semibold">
+                <span>تعداد مهمان‌های صبحانه</span>
+                <input
+                  name="breakfastGuestCount"
+                  type="number"
+                  min={0}
+                  max={500}
+                  defaultValue={breakfastMeal.guestCount}
+                  className="dashboard-muted-panel w-full p-3 text-sm"
+                  required
+                />
+              </label>
+              <label className="space-y-2 text-sm font-semibold">
+                <span>تعداد مهمان‌های ناهار</span>
+                <input
+                  name="lunchGuestCount"
+                  type="number"
+                  min={0}
+                  max={500}
+                  defaultValue={lunchMeal.guestCount}
+                  className="dashboard-muted-panel w-full p-3 text-sm"
+                  required
+                />
+              </label>
               <PendingSubmitButton
                 type="submit"
-                pendingText="در حال ثبت..."
+                pendingText="در حال ذخیره..."
                 className="dashboard-primary-button md:col-span-2"
               >
-                ثبت سفارش مهمان
+                ذخیره تعداد مهمان‌ها
               </PendingSubmitButton>
             </form>
           </section>
         ) : null}
 
-        <section className="dashboard-glass-card reporter-no-print">
-          <h2 className="mb-4 text-lg font-semibold">سفارش‌های مهمان ثبت‌شده</h2>
-          {allGuestOrders.length > 0 ? (
-            <div className="grid gap-3">
-              {allGuestOrders.map((order) => (
-                <div key={order.id} className="dashboard-muted-panel flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1 text-sm">
-                    <p className="font-semibold">{order.mealLabel}: {order.title}</p>
-                    <p className="text-muted-foreground">
-                      تعداد: {order.count}
-                      {order.guestName ? ` | مهمان: ${order.guestName}` : ""}
-                      {order.organization ? ` | سازمان: ${order.organization}` : ""}
-                    </p>
-                    {order.note ? <p className="text-muted-foreground">{order.note}</p> : null}
-                  </div>
-                  <form action={deleteGuestMealOrderAction}>
-                    <input type="hidden" name="guestOrderId" value={order.id} />
-                    <PendingSubmitButton
-                      pendingText="در حال حذف..."
-                      className="rounded-xl bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-500/30 dark:text-rose-200"
-                    >
-                      حذف
-                    </PendingSubmitButton>
-                  </form>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">سفارش مهمانی ثبت نشده است.</p>
-          )}
-        </section>
-
         <section className="reporter-print-area dashboard-glass-card">
-          <h2 className="text-2xl font-bold">فرم تحویل آمار وعده‌های غذایی روز بعد</h2>
-          <p className="mt-2 text-sm">تاریخ گزارش: {report.reportDateLabel}</p>
-
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="border p-2">وعده</th>
-                  <th className="border p-2">پرسنل</th>
-                  <th className="border p-2">مهمان</th>
-                  <th className="border p-2">جمع</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.meals.map((meal) => (
-                  <tr key={meal.mealType}>
-                    <td className="border p-2">{meal.mealLabel}</td>
-                    <td className="border p-2 text-center">{meal.employeeCount}</td>
-                    <td className="border p-2 text-center">{meal.guestCount}</td>
-                    <td className="border p-2 text-center">{meal.totalCount}</td>
-                  </tr>
-                ))}
-                <tr>
-                  <td className="border p-2 font-semibold">جمع کل</td>
-                  <td className="border p-2 text-center font-semibold">{report.totals.employeeMeals}</td>
-                  <td className="border p-2 text-center font-semibold">{report.totals.guestMeals}</td>
-                  <td className="border p-2 text-center font-semibold">{report.totals.allMeals}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {report.meals.map((meal) => (
-              <div key={meal.mealType}>
-                <h3 className="font-semibold">پرسنل {meal.mealLabel}</h3>
-                <p className="mt-2 text-sm leading-7">
-                  {meal.employeeNames.length > 0 ? meal.employeeNames.join("، ") : "—"}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr>
-                  <th className="border p-2">وعده</th>
-                  <th className="border p-2">عنوان</th>
-                  <th className="border p-2">نام مهمان</th>
-                  <th className="border p-2">سازمان</th>
-                  <th className="border p-2">تعداد</th>
-                  <th className="border p-2">یادداشت</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allGuestOrders.length > 0 ? (
-                  allGuestOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="border p-2">{order.mealLabel}</td>
-                      <td className="border p-2">{order.title}</td>
-                      <td className="border p-2">{order.guestName ?? "—"}</td>
-                      <td className="border p-2">{order.organization ?? "—"}</td>
-                      <td className="border p-2 text-center">{order.count}</td>
-                      <td className="border p-2">{order.note ?? "—"}</td>
-                    </tr>
-                  ))
+          <div className="reporter-form-paper">
+            <div className="grid gap-4 border-b border-slate-300 pb-5 text-slate-950 md:grid-cols-3 md:items-center">
+              <div className="flex justify-start md:justify-start">
+                {companyLogoExists ? (
+                  <img
+                    src="/company-logo.png"
+                    alt="لوگوی شرکت"
+                    className="h-20 max-w-36 object-contain"
+                  />
                 ) : (
-                  <tr>
-                    <td className="border p-2 text-center" colSpan={6}>
-                      سفارش مهمانی ثبت نشده است.
-                    </td>
-                  </tr>
+                  <div className="flex h-20 w-36 items-center justify-center rounded-xl border border-slate-400 text-sm font-semibold">
+                    لوگوی شرکت
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </div>
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">
+                  فرم تحویل آمار وعده‌های غذایی
+                </h2>
+              </div>
+              <div className="text-left text-sm font-semibold md:text-left">
+                تاریخ: {report.reportDateLabel}
+              </div>
+            </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-4 text-center text-sm">
-            <div className="border p-6">تحویل‌دهنده</div>
-            <div className="border p-6">تحویل‌گیرنده</div>
-            <div className="border p-6">تاریخ و امضا</div>
+            {renderMealSection(breakfastMeal)}
+            {renderMealSection(lunchMeal)}
+
+            <div className="mt-6 grid gap-3 text-center text-sm font-bold text-slate-950 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
+                جمع کل صبحانه: {formatDisplayNumber(breakfastMeal.totalCount)}
+              </div>
+              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
+                جمع کل ناهار: {formatDisplayNumber(lunchMeal.totalCount)}
+              </div>
+              <div className="rounded-2xl border border-slate-300 bg-slate-50 p-4">
+                جمع کل وعده‌ها: {formatDisplayNumber(report.totals.allMeals)}
+              </div>
+            </div>
+
+            <p className="mt-6 rounded-2xl border border-slate-300 bg-slate-50 p-4 text-sm font-semibold leading-8 text-slate-950">
+              {formalNote}
+            </p>
+
+            <div className="mt-8 grid grid-cols-3 gap-4 text-center text-sm font-semibold text-slate-950">
+              <div className="rounded-2xl border border-slate-300 p-8">تحویل‌دهنده</div>
+              <div className="rounded-2xl border border-slate-300 p-8">تحویل‌گیرنده</div>
+              <div className="rounded-2xl border border-slate-300 p-8">تاریخ و امضا</div>
+            </div>
           </div>
         </section>
       </div>

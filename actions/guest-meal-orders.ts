@@ -11,131 +11,91 @@ import {
 import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
 import { getAuditRequestContext } from "@/lib/audit/request-context";
 import { requireReporterAccess } from "@/lib/auth/session";
-import { getDateKey } from "@/lib/date/date-key";
 import { prisma } from "@/lib/prisma";
 import { getNextDayMealReport } from "@/lib/reporter/next-day-report";
 
-function readOptionalText(formData: FormData, key: string, maxLength: number) {
-  const value = formData.get(key)?.toString().trim() ?? "";
+function readGuestCount(formData: FormData, key: string) {
+  const value = formData.get(key)?.toString().trim();
 
-  return {
-    value: value || null,
-    isValid: value.length <= maxLength,
-  };
+  if (!value || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const count = Number(value);
+
+  if (!Number.isInteger(count) || count < 0 || count > 500) {
+    return null;
+  }
+
+  return count;
 }
 
-export async function createGuestMealOrderAction(formData: FormData) {
+export async function updateGuestMealCountsAction(formData: FormData) {
   const currentUser = await requireReporterAccess();
   const auditContext = await getAuditRequestContext();
   const report = await getNextDayMealReport();
 
   const date = formData.get("date")?.toString();
-  const mealType = formData.get("mealType")?.toString();
-  const title = formData.get("title")?.toString().trim() ?? "";
-  const guestName = readOptionalText(formData, "guestName", 120);
-  const organization = readOptionalText(formData, "organization", 120);
-  const note = readOptionalText(formData, "note", 500);
-  const countText = formData.get("count")?.toString() ?? "";
-  const count = Number(countText);
-
-  if (date !== report.reportDateKey) {
-    redirect("/reporter/next-day?error=invalid-date");
-  }
+  const breakfastGuestCount = readGuestCount(formData, "breakfastGuestCount");
+  const lunchGuestCount = readGuestCount(formData, "lunchGuestCount");
 
   if (report.policy.isWorkday !== true) {
     redirect("/reporter/next-day?error=non-workday");
   }
 
-  if (mealType !== MealType.BREAKFAST && mealType !== MealType.LUNCH) {
-    redirect("/reporter/next-day?error=invalid-meal");
+  if (date !== report.reportDateKey) {
+    redirect("/reporter/next-day?error=invalid-guest-count");
   }
 
-  if (
-    title.length === 0 ||
-    title.length > 120 ||
-    !guestName.isValid ||
-    !organization.isValid ||
-    !note.isValid ||
-    !Number.isInteger(count) ||
-    count < 1 ||
-    count > 500
-  ) {
-    redirect("/reporter/next-day?error=invalid-guest");
+  if (breakfastGuestCount === null || lunchGuestCount === null) {
+    redirect("/reporter/next-day?error=invalid-guest-count");
   }
 
-  const guestOrder = await prisma.guestMealOrder.create({
-    data: {
-      date: report.reportDate,
-      mealType,
-      title,
-      guestName: guestName.value,
-      organization: organization.value,
-      count,
-      note: note.value,
-      createdById: currentUser.id,
-    },
-  });
+  await prisma.$transaction(async (tx) => {
+    await tx.guestMealOrder.deleteMany({
+      where: { date: report.reportDate },
+    });
 
-  await writeAuditLog(prisma, {
-    ...getAuditActorFromUser(currentUser),
-    action: AuditAction.GUEST_MEAL_CREATED,
-    targetType: AuditTargetType.GUEST_MEAL_ORDER,
-    targetId: guestOrder.id,
-    targetLabel: guestOrder.title,
-    status: AuditStatus.SUCCESS,
-    after: guestOrder,
-    metadata: {
-      reportDateKey: report.reportDateKey,
-      mealType,
-      count,
-    },
-    ...auditContext,
-  });
+    if (breakfastGuestCount > 0) {
+      await tx.guestMealOrder.create({
+        data: {
+          date: report.reportDate,
+          mealType: MealType.BREAKFAST,
+          title: "مهمان‌های صبحانه",
+          count: breakfastGuestCount,
+          createdById: currentUser.id,
+        },
+      });
+    }
 
-  revalidatePath("/reporter/next-day");
-  redirect("/reporter/next-day?saved=guest-created");
-}
+    if (lunchGuestCount > 0) {
+      await tx.guestMealOrder.create({
+        data: {
+          date: report.reportDate,
+          mealType: MealType.LUNCH,
+          title: "مهمان‌های ناهار",
+          count: lunchGuestCount,
+          createdById: currentUser.id,
+        },
+      });
+    }
 
-export async function deleteGuestMealOrderAction(formData: FormData) {
-  const currentUser = await requireReporterAccess();
-  const auditContext = await getAuditRequestContext();
-  const report = await getNextDayMealReport();
-  const guestOrderId = formData.get("guestOrderId")?.toString();
-
-  if (!guestOrderId) {
-    redirect("/reporter/next-day?error=guest-not-found");
-  }
-
-  const guestOrder = await prisma.guestMealOrder.findUnique({
-    where: { id: guestOrderId },
-  });
-
-  if (!guestOrder) {
-    redirect("/reporter/next-day?error=guest-not-found");
-  }
-
-  if (getDateKey(guestOrder.date) !== report.reportDateKey) {
-    redirect("/reporter/next-day?error=invalid-date");
-  }
-
-  await prisma.guestMealOrder.delete({ where: { id: guestOrder.id } });
-
-  await writeAuditLog(prisma, {
-    ...getAuditActorFromUser(currentUser),
-    action: AuditAction.GUEST_MEAL_DELETED,
-    targetType: AuditTargetType.GUEST_MEAL_ORDER,
-    targetId: guestOrder.id,
-    targetLabel: guestOrder.title,
-    status: AuditStatus.SUCCESS,
-    before: guestOrder,
-    metadata: {
-      reportDateKey: report.reportDateKey,
-      mealType: guestOrder.mealType,
-      count: guestOrder.count,
-    },
-    ...auditContext,
+    await writeAuditLog(tx, {
+      ...getAuditActorFromUser(currentUser),
+      action: AuditAction.GUEST_MEAL_CREATED,
+      targetType: AuditTargetType.GUEST_MEAL_ORDER,
+      targetId: null,
+      targetLabel: "guest-meal-counts",
+      status: AuditStatus.SUCCESS,
+      metadata: {
+        reportDateKey: report.reportDateKey,
+        breakfastGuestCount,
+        lunchGuestCount,
+      },
+      ...auditContext,
+    });
   });
 
   revalidatePath("/reporter/next-day");
-  redirect("/reporter/next-day?saved=guest-deleted");
+  redirect("/reporter/next-day?saved=guest-counts");
 }
