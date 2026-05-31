@@ -4,11 +4,57 @@ import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-const messages: Record<string, { error?: Record<string, string>; saved?: Record<string, string> }> = {
-  "/login": { error: { missing: "نام کاربری و رمز عبور را وارد کنید.", invalid: "اطلاعات ورود نامعتبر است یا حساب شما فعال نیست." } },
-  "/": { error: { deadline: "مهلت ثبت یا تغییر حضور برای این تاریخ گذشته است.", "invalid-date": "تاریخ انتخاب‌شده معتبر نیست." }, saved: { "1": "وضعیت حضور شما ذخیره شد." } },
-  "/settings/users": { error: { "duplicate-username": "این نام کاربری قبلاً ثبت شده است.", "last-admin": "غیرفعال کردن آخرین مدیر فعال مجاز نیست.", missing: "لطفاً تمام فیلدهای ضروری را کامل کنید.", "user-not-found": "کاربر مورد نظر یافت نشد.", "invalid-user": "کاربر مورد نظر یافت نشد." }, saved: { created: "کاربر جدید با موفقیت ایجاد شد.", status: "وضعیت کاربر با موفقیت به‌روزرسانی شد.", password: "رمز عبور کاربر با موفقیت بازنشانی شد." } },
-  "/settings/weekly-plan": { saved: { "1": "برنامه هفتگی با موفقیت ذخیره شد و اطلاعات از دیتابیس به‌روزرسانی شد." } },
+const messages: Record<
+  string,
+  { error?: Record<string, string>; saved?: Record<string, string> }
+> = {
+  "/login": {
+    error: {
+      missing: "نام کاربری و رمز عبور را وارد کنید.",
+      invalid: "اطلاعات ورود نامعتبر است یا حساب شما فعال نیست.",
+    },
+  },
+  "/": {
+    error: {
+      deadline: "مهلت ثبت یا تغییر حضور برای این تاریخ گذشته است.",
+      "invalid-date": "تاریخ انتخاب‌شده معتبر نیست.",
+    },
+    saved: { "1": "وضعیت حضور شما ذخیره شد." },
+  },
+  "/profile": {
+    error: {
+      "invalid-name": "نام و نام خانوادگی باید بین ۲ تا ۶۴ کاراکتر باشند.",
+      "invalid-password": "رمز جدید باید حداقل ۸ کاراکتر باشد.",
+      "avatar-required": "لطفاً یک تصویر انتخاب کنید.",
+      "avatar-type": "فرمت تصویر مجاز نیست. فقط PNG، JPG و WEBP پذیرفته می‌شود.",
+      "avatar-size": "حجم تصویر نباید بیشتر از ۵۱۲ کیلوبایت باشد.",
+    },
+    saved: {
+      profile: "اطلاعات حساب کاربری با موفقیت ذخیره شد.",
+      password: "رمز عبور با موفقیت تغییر کرد.",
+      avatar: "تصویر پروفایل با موفقیت ذخیره شد.",
+      "avatar-deleted": "تصویر پروفایل حذف شد.",
+    },
+  },
+  "/settings/users": {
+    error: {
+      "duplicate-username": "این نام کاربری قبلاً ثبت شده است.",
+      "last-admin": "غیرفعال کردن آخرین مدیر فعال مجاز نیست.",
+      missing: "لطفاً تمام فیلدهای ضروری را کامل کنید.",
+      "user-not-found": "کاربر مورد نظر یافت نشد.",
+      "invalid-user": "کاربر مورد نظر یافت نشد.",
+    },
+    saved: {
+      created: "کاربر جدید با موفقیت ایجاد شد.",
+      status: "وضعیت کاربر با موفقیت به‌روزرسانی شد.",
+      password: "رمز عبور کاربر با موفقیت بازنشانی شد.",
+    },
+  },
+  "/settings/weekly-plan": {
+    saved: {
+      "1": "برنامه هفتگی با موفقیت ذخیره شد و اطلاعات از دیتابیس به‌روزرسانی شد.",
+    },
+  },
 } as const;
 
 export default function ToastQueryMessages() {
@@ -26,8 +72,16 @@ export default function ToastQueryMessages() {
     shownRef.current = key;
 
     const pathMessages = messages[pathname];
-    if (error) toast.error(pathMessages?.error?.[error] ?? "عملیات با خطا مواجه شد.");
-    if (saved) toast.success(pathMessages?.saved?.[saved] ?? "عملیات با موفقیت انجام شد.");
+    if (error) {
+      toast.error(
+        pathMessages?.error?.[error] ?? "عملیات با خطا مواجه شد.",
+      );
+    }
+    if (saved) {
+      toast.success(
+        pathMessages?.saved?.[saved] ?? "عملیات با موفقیت انجام شد.",
+      );
+    }
 
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.delete("error");
