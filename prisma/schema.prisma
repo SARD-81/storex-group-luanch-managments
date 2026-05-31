@@ -62,14 +62,60 @@ enum CalendarImportStatus {
   REJECTED
 }
 
+enum AuditAction {
+  LOGIN_SUCCESS
+  LOGIN_FAILURE
+  LOGOUT
+
+  USER_CREATED
+  USER_STATUS_CHANGED
+  USER_PASSWORD_RESET
+
+  PROFILE_UPDATED
+  MY_PASSWORD_CHANGED
+  AVATAR_UPDATED
+  AVATAR_DELETED
+
+  ATTENDANCE_UPDATED
+  MONTHLY_ATTENDANCE_UPDATED
+  WEEKLY_ATTENDANCE_GENERATED
+  WEEKLY_PREFERENCES_UPDATED
+
+  CALENDAR_OVERRIDE_FORCE_HOLIDAY
+  CALENDAR_OVERRIDE_FORCE_WORKDAY
+  CALENDAR_OVERRIDE_CLEARED
+
+  REPORT_EXPORTED
+}
+
+enum AuditTargetType {
+  AUTH
+  SESSION
+  USER
+  PROFILE
+  AVATAR
+  MEAL_ATTENDANCE
+  WEEKLY_MEAL_PREFERENCE
+  CALENDAR_OVERRIDE
+  CALENDAR_DAY
+  REPORT
+  SYSTEM
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  DENIED
+}
+
 model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
-  name         String
+  id              String    @id @default(cuid())
+  username        String    @unique
+  name            String
   email           String?   @unique
   passwordHash    String?
-  role            UserRole @default(USER)
-  isActive        Boolean  @default(true)
+  role            UserRole  @default(USER)
+  isActive        Boolean   @default(true)
   firstName       String?
   lastName        String?
   avatarImage     Bytes?
@@ -77,13 +123,51 @@ model User {
   avatarUpdatedAt DateTime?
 
   weeklyPreferences     WeeklyMealPreference[]
-  attendances          MealAttendance[]
-  sessions             Session[]
-  calendarOverrides     CalendarOverride[]    @relation("CalendarOverrideCreatedBy")
-  calendarImportBatches CalendarImportBatch[] @relation("CalendarImportBatchCreatedBy")
+  attendances           MealAttendance[]
+  sessions              Session[]
+  calendarOverrides     CalendarOverride[]     @relation("CalendarOverrideCreatedBy")
+  calendarImportBatches CalendarImportBatch[]  @relation("CalendarImportBatchCreatedBy")
+  auditLogs             AuditLog[]             @relation("AuditLogActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  occurredAt DateTime @default(now())
+
+  actorUserId String?
+  actorUser   User?   @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  actorUsername String?
+  actorName     String?
+  actorRole     UserRole?
+
+  action      AuditAction
+  targetType  AuditTargetType
+  targetId    String?
+  targetLabel String?
+
+  status AuditStatus @default(SUCCESS)
+
+  requestMethod String?
+  requestPath   String?
+  ipAddress     String?
+  userAgent     String?
+
+  before   Json?
+  after    Json?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([occurredAt])
+  @@index([actorUserId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([status])
 }
 
 model Session {
@@ -154,7 +238,7 @@ model CalendarImportBatch {
   verifiedAt DateTime?
 
   createdById String?
-  createdBy   User? @relation("CalendarImportBatchCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?   @relation("CalendarImportBatchCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   calendarDays   CalendarDay[]
   calendarEvents CalendarEvent[]
@@ -235,7 +319,7 @@ model CalendarEvent {
   calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
 
   title        String
-  displayOrder Int @default(0)
+  displayOrder Int                @default(0)
   type         CalendarEventType
   calendarType CalendarDateSystem
 
@@ -270,7 +354,7 @@ model CalendarEvent {
 model CalendarOverride {
   id String @id @default(cuid())
 
-  calendarDayId String @unique
+  calendarDayId String      @unique
   calendarDay   CalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
 
   date    DateTime @db.Date
@@ -281,7 +365,7 @@ model CalendarOverride {
   description String?
 
   createdById String?
-  createdBy   User? @relation("CalendarOverrideCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?   @relation("CalendarOverrideCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
