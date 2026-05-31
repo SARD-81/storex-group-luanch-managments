@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   AttendanceStatus,
   MealType,
@@ -8,6 +9,7 @@ import { logoutAction } from "@/actions/auth";
 import { AttendanceDatePicker } from "@/components/attendance/attendance-date-picker";
 import { MonthlyAttendanceBoard } from "@/components/attendance/monthly-attendance-board";
 import { TehranClock } from "@/components/attendance/tehran-clock";
+import { isReporterRole, ROLE_LABELS } from "@/lib/auth/roles";
 import { requireUser } from "@/lib/auth/session";
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
@@ -21,7 +23,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { UserAvatar } from "@/components/user/user-avatar";
 
-const roleLabels = { [UserRole.ADMIN]: "مدیر", [UserRole.USER]: "کاربر" };
 type SearchParams = Promise<{ date?: string; error?: string; saved?: string }>;
 
 export default async function Home({
@@ -31,6 +32,11 @@ export default async function Home({
 }) {
   const params = await searchParams;
   const currentUser = await requireUser();
+
+  if (isReporterRole(currentUser.role)) {
+    redirect("/reporter/next-day");
+  }
+
   const isAdmin = currentUser.role === UserRole.ADMIN;
   const { selectedDate: requestedDate } = await resolveSelectedDate(
     params.date,
@@ -110,7 +116,7 @@ export default async function Home({
                   کاربر جاری:{" "}
                   <span className="font-semibold">{currentUser.name}</span>
                 </p>
-                <p>نقش: {roleLabels[currentUser.role]}</p>
+                <p>نقش: {ROLE_LABELS[currentUser.role]}</p>
                 <a
                   href="/profile"
                   className="text-xs font-semibold text-sky-600 transition hover:text-sky-500 dark:text-sky-300 dark:hover:text-sky-200"
@@ -259,7 +265,7 @@ export default async function Home({
                       <tr key={user.id} className="border-b border-border/60">
                         <td className="p-4">{user.name}</td>
                         <td className="p-4">{user.username}</td>
-                        <td className="p-4">{roleLabels[user.role]}</td>
+                        <td className="p-4">{ROLE_LABELS[user.role]}</td>
                         <td className="p-4">
                           {formatUserAdminWeeklyPlan({
                             weeklyAttendances:

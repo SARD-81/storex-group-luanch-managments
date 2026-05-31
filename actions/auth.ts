@@ -6,6 +6,7 @@ import {
   AuditAction,
   AuditStatus,
   AuditTargetType,
+  UserRole,
 } from "@/app/generated/prisma/client";
 import {
   createSession,
@@ -93,6 +94,10 @@ export async function loginAction(formData: FormData) {
     },
     ...auditContext,
   });
+
+  if (user.role === UserRole.REPORTER) {
+    redirect("/reporter/next-day");
+  }
 
   redirect("/");
 }

@@ -1,4 +1,4 @@
-import { AttendanceStatus } from "@/app/generated/prisma/client";
+import { AttendanceStatus, UserRole } from "@/app/generated/prisma/client";
 import type { CalendarAttendanceDatePolicy } from "@/lib/attendance/calendar-attendance-policy";
 import { getAdminPlanWeekRange } from "@/lib/attendance/admin-weekly-summary";
 import type { AdminWeeklyPlanCalendarDay } from "@/lib/attendance/admin-weekly-summary";
@@ -123,7 +123,7 @@ export async function getAdminDashboardData(selectedDate: Date) {
     calendarWeeklyPlanWindow,
   ] = await Promise.all([
     prisma.user.findMany({
-      where: { isActive: true },
+      where: { isActive: true, role: { not: UserRole.REPORTER } },
       include: {
         weeklyPreferences: {
           where: {
@@ -135,7 +135,10 @@ export async function getAdminDashboardData(selectedDate: Date) {
       orderBy: { createdAt: "asc" },
     }),
     prisma.mealAttendance.findMany({
-      where: { date: selectedDate },
+      where: {
+        date: selectedDate,
+        user: { role: { not: UserRole.REPORTER } },
+      },
       include: { user: true },
       orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
     }),
@@ -143,6 +146,7 @@ export async function getAdminDashboardData(selectedDate: Date) {
       where: {
         date: { gte: weekStart, lt: weekEndExclusive },
         status: AttendanceStatus.PRESENT,
+        user: { role: { not: UserRole.REPORTER } },
       },
       select: {
         userId: true,

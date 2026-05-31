@@ -8,15 +8,12 @@ import {
 } from "@/actions/users";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { ROLE_LABELS, USER_ROLE_OPTIONS } from "@/lib/auth/roles";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const roleLabels = {
-  [UserRole.ADMIN]: "مدیر",
-  [UserRole.USER]: "کاربر",
-};
 
 type SearchParams = Promise<{ error?: string; saved?: string }>;
 
@@ -40,6 +37,9 @@ export default async function UsersManagementPage({
   const activeUsers = users.filter((user) => user.isActive).length;
   const activeAdmins = users.filter(
     (user) => user.isActive && user.role === UserRole.ADMIN,
+  ).length;
+  const activeReporters = users.filter(
+    (user) => user.isActive && user.role === UserRole.REPORTER,
   ).length;
 
   return (
@@ -75,7 +75,7 @@ export default async function UsersManagementPage({
 
         <section className="dashboard-glass-card">
           <h2 className="text-lg font-semibold">نمای کلی کاربران</h2>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="mt-3 grid gap-3 md:grid-cols-4">
             <div className="dashboard-muted-panel">
               <p className="text-xs text-muted-foreground">کل کاربران</p>
               <p className="mt-1 text-2xl font-bold text-foreground">
@@ -92,6 +92,12 @@ export default async function UsersManagementPage({
               <p className="text-xs text-muted-foreground">مدیران فعال</p>
               <p className="mt-1 text-2xl font-bold text-amber-200">
                 {activeAdmins}
+              </p>
+            </div>
+            <div className="dashboard-muted-panel">
+              <p className="text-xs text-muted-foreground">گزارش‌گیران فعال</p>
+              <p className="mt-1 text-2xl font-bold text-violet-200">
+                {activeReporters}
               </p>
             </div>
           </div>
@@ -124,8 +130,11 @@ export default async function UsersManagementPage({
               defaultValue={UserRole.USER}
               className="dashboard-muted-panel p-3 text-sm"
             >
-              <option value={UserRole.USER}>کاربر</option>
-              <option value={UserRole.ADMIN}>مدیر</option>
+              {USER_ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             <PendingSubmitButton
               type="submit"
@@ -170,7 +179,7 @@ export default async function UsersManagementPage({
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.role === UserRole.ADMIN ? "bg-amber-400/20 text-amber-700 dark:text-amber-200" : "bg-sky-400/20 text-sky-700 dark:text-sky-200"}`}
                       >
-                        {roleLabels[user.role]}
+                        {ROLE_LABELS[user.role]}
                       </span>
                     </td>
                     <td className="border-b border-border/60 p-3">
