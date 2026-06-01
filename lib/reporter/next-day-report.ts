@@ -7,7 +7,7 @@ import { getAttendanceDatePolicyByDateKey } from "@/lib/attendance/calendar-atte
 import { MEAL_LABELS, MEAL_TYPES } from "@/lib/attendance/meals";
 import { getTodayIranDateKey } from "@/lib/calendar/calendar-service";
 import { getDateKey, parseDateKey } from "@/lib/date/date-key";
-import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
+import { formatPersianDate } from "@/lib/date/persian-format";
 
 import { prisma } from "@/lib/prisma";
 
@@ -78,9 +78,7 @@ export async function getNextDayMealReport() {
     }),
   ]);
 
-  const reportDateLabel = policy.jalaliDateKey
-    ? `${policy.dayNameFa ?? ""} ${policy.jalaliDateKey}`.trim()
-    : formatPersianWeekdayDate(reportDate);
+  const reportDateLabel = formatPersianDate(reportDate);
 
   const meals = MEAL_TYPES.map((mealType) => {
     const employeeNames = attendances
