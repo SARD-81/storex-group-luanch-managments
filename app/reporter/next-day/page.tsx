@@ -2,7 +2,6 @@ import { existsSync } from "fs";
 import path from "path";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { UserRole, MealType } from "@/app/generated/prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { updateGuestMealCountsAction } from "@/actions/guest-meal-orders";
 import { PrintReportButton } from "@/components/reporter/print-report-button";
@@ -12,7 +11,8 @@ import { requireReporterAccess } from "@/lib/auth/session";
 import { getNextDayMealReport } from "@/lib/reporter/next-day-report";
 
 type SearchParams = Promise<{ error?: string; saved?: string }>;
-type MealReport = Awaited<ReturnType<typeof getNextDayMealReport>>["meals"][number];
+
+type NextDayReport = Awaited<ReturnType<typeof getNextDayMealReport>>;
 
 const savedMessages: Record<string, string> = {
   "guest-counts": "تعداد مهمان‌ها ذخیره شد.",
@@ -24,60 +24,130 @@ const errorMessages: Record<string, string> = {
   "invalid-guest-count": "تعداد مهمان‌ها معتبر نیست.",
 };
 
-const formalNote =
-  "غذای مهمان با ثبت تعداد در سامانه قابل قبول است. هر کارمند و مهمان فقط غذای ثبت‌شده خود را دریافت می‌کند و امکان اضافه کردن غذا در همان روز وجود ندارد.";
-
 export const dynamic = "force-dynamic";
 
 function formatDisplayNumber(value: number) {
   return new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(value);
 }
 
-function renderCompactA5MealTable(breakfastMeal: MealReport, lunchMeal: MealReport) {
-  const rowCount = Math.max(
-    breakfastMeal.employeeNames.length,
-    breakfastMeal.guestLabels.length,
-    lunchMeal.employeeNames.length,
-    lunchMeal.guestLabels.length,
-    1,
+function renderCheckMark(present: boolean) {
+  return present ? "✓" : "";
+}
+
+function renderPrintableRows(report: NextDayReport) {
+  const manualRowCount = 4;
+  const userRows = report.peopleRows.map((row, index) => ({
+    key: row.userId,
+    rowNumber: index + 1,
+    name: row.name,
+    breakfast: renderCheckMark(row.breakfastPresent),
+    lunch: renderCheckMark(row.lunchPresent),
+    notes: "",
+    variant: "user" as const,
+  }));
+
+  const manualRows = Array.from({ length: manualRowCount }, (_, index) => ({
+    key: `manual-${index}`,
+    rowNumber: userRows.length + index + 1,
+    name: "",
+    breakfast: "",
+    lunch: "",
+    notes: "",
+    variant: "manual" as const,
+  }));
+
+  const guestRowNumber = userRows.length + manualRowCount + 1;
+  const guestRow = {
+    key: "guest-row",
+    rowNumber: guestRowNumber,
+    name: "مهمان",
+    breakfast: formatDisplayNumber(report.guestCounts.breakfast),
+    lunch: formatDisplayNumber(report.guestCounts.lunch),
+    notes: "",
+    variant: "guest" as const,
+  };
+
+  const totalRow = {
+    key: "total-row",
+    rowNumber: guestRowNumber + 1,
+    name: "جمع کل",
+    breakfast: formatDisplayNumber(report.totals.breakfastAll),
+    lunch: formatDisplayNumber(report.totals.lunchAll),
+    notes: "",
+    variant: "total" as const,
+  };
+
+  return [...userRows, ...manualRows, guestRow, totalRow];
+}
+
+function printReportHeader(report: NextDayReport, companyLogoExists: boolean) {
+  return (
+    <div className="reporter-next-day-header">
+      <div className="reporter-next-day-header__logo">
+        {companyLogoExists ? (
+          <img src="/company-logo.png" alt="لوگوی بهاران" />
+        ) : (
+          <div className="reporter-next-day-logo-placeholder">لوگوی بهاران</div>
+        )}
+      </div>
+
+      <div className="reporter-next-day-header__title">
+        <h2>آمار صبحانه، ناهار بهاران</h2>
+      </div>
+
+      <div className="reporter-next-day-header__date">
+        <span>تاریخ گزارش</span>
+        <strong>{report.reportDateLabel}</strong>
+      </div>
+    </div>
   );
+}
+
+function renderPrintableTable(report: NextDayReport) {
+  const rows = renderPrintableRows(report);
 
   return (
-    <table className="reporter-a5-grid-table">
+    <table className="reporter-next-day-table">
+      <colgroup>
+        <col style={{ width: "9mm" }} />
+        <col style={{ width: "80mm" }} />
+        <col style={{ width: "15mm" }} />
+        <col style={{ width: "15mm" }} />
+        <col style={{ width: "66mm" }} />
+      </colgroup>
       <thead>
         <tr>
           <th>ردیف</th>
-          <th>پرسنل صبحانه</th>
-          <th>ردیف مهمان</th>
-          <th>مهمان صبحانه</th>
-          <th>ردیف</th>
-          <th>پرسنل ناهار</th>
-          <th>ردیف مهمان</th>
-          <th>مهمان ناهار</th>
+          <th>نام و نام خانوادگی</th>
+          <th>صبحانه</th>
+          <th>ناهار</th>
+          <th>توضیحات</th>
         </tr>
       </thead>
       <tbody>
-        {Array.from({ length: rowCount }, (_, index) => {
-          const breakfastEmployee = breakfastMeal.employeeNames[index];
-          const breakfastGuest = breakfastMeal.guestLabels[index];
-          const lunchEmployee = lunchMeal.employeeNames[index];
-          const lunchGuest = lunchMeal.guestLabels[index];
-
-          return (
-            <tr key={`compact-a5-meal-row-${index}`}>
-              <td>{breakfastEmployee ? formatDisplayNumber(index + 1) : ""}</td>
-              <td>{breakfastEmployee ?? ""}</td>
-              <td>{breakfastGuest ? formatDisplayNumber(index + 1) : ""}</td>
-              <td>{breakfastGuest ?? ""}</td>
-              <td>{lunchEmployee ? formatDisplayNumber(index + 1) : ""}</td>
-              <td>{lunchEmployee ?? ""}</td>
-              <td>{lunchGuest ? formatDisplayNumber(index + 1) : ""}</td>
-              <td>{lunchGuest ?? ""}</td>
-            </tr>
-          );
-        })}
+        {rows.map((row) => (
+          <tr
+            key={row.key}
+            className={row.variant === "total" ? "reporter-next-day-table__total-row" : undefined}
+          >
+            <td>{formatDisplayNumber(row.rowNumber)}</td>
+            <td className="reporter-next-day-table__name-cell">{row.name}</td>
+            <td className="reporter-next-day-table__meal-cell">{row.breakfast}</td>
+            <td className="reporter-next-day-table__meal-cell">{row.lunch}</td>
+            <td className="reporter-next-day-table__notes-cell">{row.notes}</td>
+          </tr>
+        ))}
       </tbody>
     </table>
+  );
+}
+
+function renderPrintableFooter() {
+  return (
+    <div className="reporter-next-day-footer">
+      <span>نام و نام خانوادگی مسئول مربوطه :</span>
+      <span className="reporter-next-day-footer__line" aria-hidden="true" />
+    </div>
   );
 }
 
@@ -87,18 +157,12 @@ export default async function NextDayReporterPage({
   searchParams: SearchParams;
 }) {
   noStore();
-  const currentUser = await requireReporterAccess();
+  await requireReporterAccess();
   const params = await searchParams;
   const report = await getNextDayMealReport();
   const companyLogoExists = existsSync(
     path.join(process.cwd(), "public", "company-logo.png"),
   );
-  const breakfastMeal = report.meals.find(
-    (meal) => meal.mealType === MealType.BREAKFAST,
-  ) as MealReport;
-  const lunchMeal = report.meals.find(
-    (meal) => meal.mealType === MealType.LUNCH,
-  ) as MealReport;
 
   return (
     <main
@@ -116,55 +180,43 @@ export default async function NextDayReporterPage({
               <p className="text-sm text-muted-foreground">
                 آمار پرسنل و مهمان‌ها برای تحویل وعده‌های روز بعد
               </p>
-              <h1 className="mt-1 text-3xl font-bold">
-                گزارش وعده‌های غذایی روز بعد
-              </h1>
+              <h1 className="mt-1 text-3xl font-bold">گزارش وعده‌های غذایی روز بعد</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 تاریخ گزارش: {report.reportDateLabel}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
+
+            <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
+              <PrintReportButton />
+              <Link href="/reporter/next-day/export" className="dashboard-primary-button">
+                دریافت فایل Excel
+              </Link>
               <ThemeToggle />
-              <form action={logoutAction}>
-                <PendingSubmitButton
-                  className="dashboard-action-button"
-                  pendingText="در حال خروج..."
-                >
-                  خروج از حساب
-                </PendingSubmitButton>
-              </form>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            {currentUser.role === UserRole.ADMIN ? (
-              <Link href="/" className="dashboard-action-button">
-                بازگشت به داشبورد
-              </Link>
-            ) : null}
-            <PrintReportButton />
-            <Link href="/reporter/next-day/export" className="dashboard-primary-button">
-              دانلود فرم Excel
-            </Link>
-          </div>
+          <form action={logoutAction} className="self-start reporter-no-print">
+            <PendingSubmitButton type="submit" pendingText="در حال خروج...">
+              خروج
+            </PendingSubmitButton>
+          </form>
         </header>
 
-        {params.saved && savedMessages[params.saved] ? (
+        {params.saved ? (
           <div className="dashboard-muted-panel reporter-no-print border border-emerald-400/40 text-sm text-emerald-200">
-            {savedMessages[params.saved]}
+            {savedMessages[params.saved] ?? params.saved}
           </div>
         ) : null}
-        {params.error && errorMessages[params.error] ? (
+
+        {params.error ? (
           <div className="dashboard-muted-panel reporter-no-print border border-rose-400/40 text-sm text-rose-200">
-            {errorMessages[params.error]}
+            {errorMessages[params.error] ?? params.error}
           </div>
         ) : null}
 
         {report.policy.isWorkday !== true ? (
           <section className="dashboard-glass-card reporter-no-print border border-amber-400/40">
-            <h2 className="text-lg font-semibold text-amber-200">
-              هشدار تقویم
-            </h2>
+            <h2 className="text-lg font-semibold text-amber-200">هشدار تقویم</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               تاریخ {report.reportDateLabel} طبق تقویم سامانه روز کاری نیست؛ ثبت
               سفارش مهمان غیرفعال است.
@@ -198,7 +250,8 @@ export default async function NextDayReporterPage({
           <section className="dashboard-glass-card reporter-no-print">
             <h2 className="mb-2 text-lg font-semibold">ثبت تعداد مهمان‌ها</h2>
             <p className="mb-4 text-sm leading-7 text-muted-foreground">
-              فقط تعداد مهمان‌های هر وعده را وارد کنید؛ اسامی مهمان‌ها به‌صورت خودکار در فرم چاپی با عنوان مهمان ۱، مهمان ۲ و ... نمایش داده می‌شود.
+              فقط تعداد مهمان‌های هر وعده را وارد کنید؛ اسامی مهمان‌ها به‌صورت خودکار
+              در فرم چاپی با عنوان مهمان ۱، مهمان ۲ و ... نمایش داده می‌شود.
             </p>
             <form action={updateGuestMealCountsAction} className="grid gap-3 md:grid-cols-2">
               <input type="hidden" name="date" value={report.reportDateKey} />
@@ -209,7 +262,7 @@ export default async function NextDayReporterPage({
                   type="number"
                   min={0}
                   max={500}
-                  defaultValue={breakfastMeal.guestCount}
+                  defaultValue={report.guestCounts.breakfast}
                   className="dashboard-muted-panel w-full p-3 text-sm"
                   required
                 />
@@ -221,7 +274,7 @@ export default async function NextDayReporterPage({
                   type="number"
                   min={0}
                   max={500}
-                  defaultValue={lunchMeal.guestCount}
+                  defaultValue={report.guestCounts.lunch}
                   className="dashboard-muted-panel w-full p-3 text-sm"
                   required
                 />
@@ -238,37 +291,12 @@ export default async function NextDayReporterPage({
         ) : null}
 
         <section className="reporter-print-area dashboard-glass-card">
-          <div className="reporter-form-paper reporter-form-paper-a5">
-            <div>
-              <div>
-                {companyLogoExists ? (
-                  <img
-                    src="/company-logo.png"
-                    alt="لوگوی شرکت"
-                  />
-                ) : (
-                  <div>لوگوی شرکت</div>
-                )}
-              </div>
-              <h2>فرم تحویل آمار وعده‌های غذایی</h2>
-              <div>تاریخ: {report.reportDateLabel}</div>
-            </div>
+          <div className="reporter-form-paper reporter-next-day-paper">
+            {printReportHeader(report, companyLogoExists)}
 
-            {renderCompactA5MealTable(breakfastMeal, lunchMeal)}
+            {renderPrintableTable(report)}
 
-            <div className="reporter-a5-totals">
-              <span>جمع صبحانه: {formatDisplayNumber(breakfastMeal.totalCount)}</span>
-              <span>جمع ناهار: {formatDisplayNumber(lunchMeal.totalCount)}</span>
-              <span>جمع کل: {formatDisplayNumber(report.totals.allMeals)}</span>
-            </div>
-
-            <p className="reporter-a5-note">{formalNote}</p>
-
-            <div className="reporter-a5-signatures">
-              <div>تحویل‌دهنده</div>
-              <div>تحویل‌گیرنده</div>
-              <div>تاریخ و امضا</div>
-            </div>
+            {renderPrintableFooter()}
           </div>
         </section>
       </div>
