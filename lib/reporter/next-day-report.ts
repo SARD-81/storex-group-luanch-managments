@@ -11,6 +11,54 @@ import { formatPersianDate } from "@/lib/date/persian-format";
 
 import { prisma } from "@/lib/prisma";
 
+type ReportMealType = (typeof MealType)[keyof typeof MealType];
+
+export type NextDayReportPeopleRow = {
+  userId: string;
+  name: string;
+  username: string;
+  breakfastPresent: boolean;
+  lunchPresent: boolean;
+};
+
+export type NextDayReportMealSummary = {
+  mealType: ReportMealType;
+  mealLabel: string;
+  employeeCount: number;
+  guestCount: number;
+  totalCount: number;
+  employeeNames: string[];
+  guestLabels: string[];
+};
+
+export type NextDayReportGuestCounts = {
+  breakfast: number;
+  lunch: number;
+};
+
+export type NextDayReportTotals = {
+  breakfastEmployees: number;
+  lunchEmployees: number;
+  breakfastGuests: number;
+  lunchGuests: number;
+  breakfastAll: number;
+  lunchAll: number;
+  allMeals: number;
+  employeeMeals: number;
+  guestMeals: number;
+};
+
+export type NextDayMealReport = {
+  reportDate: Date;
+  reportDateKey: string;
+  reportDateLabel: string;
+  policy: Awaited<ReturnType<typeof getAttendanceDatePolicyByDateKey>>;
+  peopleRows: NextDayReportPeopleRow[];
+  guestCounts: NextDayReportGuestCounts;
+  totals: NextDayReportTotals;
+  meals: NextDayReportMealSummary[];
+};
+
 function formatPersianNumber(value: number) {
   return new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(value);
 }
@@ -19,6 +67,28 @@ function createGuestLabels(count: number) {
   return Array.from({ length: count }, (_, index) =>
     `مهمان ${formatPersianNumber(index + 1)}`,
   );
+}
+
+function buildMealSummary(
+  mealType: ReportMealType,
+  peopleRows: NextDayReportPeopleRow[],
+  guestCount: number,
+) {
+  const employeeNames = peopleRows
+    .filter((row) =>
+      mealType === MealType.BREAKFAST ? row.breakfastPresent : row.lunchPresent,
+    )
+    .map((row) => row.name);
+
+  return {
+    mealType,
+    mealLabel: MEAL_LABELS[mealType],
+    employeeCount: employeeNames.length,
+    guestCount,
+    totalCount: employeeNames.length + guestCount,
+    employeeNames,
+    guestLabels: createGuestLabels(guestCount),
+  } satisfies NextDayReportMealSummary;
 }
 
 export function addOneUtcCalendarDayToDateKey(dateKey: string) {
@@ -32,7 +102,7 @@ export function addOneUtcCalendarDayToDateKey(dateKey: string) {
   return getDateKey(date);
 }
 
-export async function getNextDayMealReport() {
+export async function getNextDayMealReport(): Promise<NextDayMealReport> {
   const todayIranDateKey = getTodayIranDateKey();
   const reportDateKey = addOneUtcCalendarDayToDateKey(todayIranDateKey);
   const reportDate = parseDateKey(reportDateKey);
@@ -41,8 +111,20 @@ export async function getNextDayMealReport() {
     throw new Error("Unable to resolve next-day report date.");
   }
 
-  const [policy, attendances, guestOrders] = await Promise.all([
+  const [policy, users, attendances, guestOrders] = await Promise.all([
     getAttendanceDatePolicyByDateKey(prisma, reportDateKey),
+    prisma.user.findMany({
+      where: {
+        isActive: true,
+        role: { not: UserRole.REPORTER },
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+      },
+      orderBy: [{ createdAt: "asc" }, { name: "asc" }],
+    }),
     prisma.mealAttendance.findMany({
       where: {
         date: reportDate,
@@ -52,27 +134,16 @@ export async function getNextDayMealReport() {
           role: { not: UserRole.REPORTER },
         },
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          },
-        },
+      select: {
+        userId: true,
+        mealType: true,
       },
-      orderBy: [{ mealType: "asc" }, { user: { name: "asc" } }],
     }),
     prisma.guestMealOrder.findMany({
       where: { date: reportDate },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-          },
-        },
+      select: {
+        mealType: true,
+        count: true,
       },
       orderBy: [{ mealType: "asc" }, { createdAt: "asc" }],
     }),
@@ -80,37 +151,75 @@ export async function getNextDayMealReport() {
 
   const reportDateLabel = formatPersianDate(reportDate);
 
-  const meals = MEAL_TYPES.map((mealType) => {
-    const employeeNames = attendances
-      .filter((attendance) => attendance.mealType === mealType)
-      .map((attendance) => attendance.user.name);
-    const mealGuestOrders = guestOrders.filter(
-      (order) => order.mealType === mealType,
-    );
-    const guestCount = mealGuestOrders.reduce(
-      (sum, order) => sum + order.count,
-      0,
-    );
-    const employeeCount = employeeNames.length;
+  const attendanceByUserId = new Map<
+    string,
+    { breakfastPresent: boolean; lunchPresent: boolean }
+  >();
+
+  for (const attendance of attendances) {
+    const existing = attendanceByUserId.get(attendance.userId) ?? {
+      breakfastPresent: false,
+      lunchPresent: false,
+    };
+
+    if (attendance.mealType === MealType.BREAKFAST) {
+      existing.breakfastPresent = true;
+    }
+
+    if (attendance.mealType === MealType.LUNCH) {
+      existing.lunchPresent = true;
+    }
+
+    attendanceByUserId.set(attendance.userId, existing);
+  }
+
+  const peopleRows: NextDayReportPeopleRow[] = users.map((user) => {
+    const attendance = attendanceByUserId.get(user.id) ?? {
+      breakfastPresent: false,
+      lunchPresent: false,
+    };
 
     return {
-      mealType,
-      mealLabel: MEAL_LABELS[mealType],
-      employeeCount,
-      guestCount,
-      totalCount: employeeCount + guestCount,
-      employeeNames,
-      guestLabels: createGuestLabels(guestCount),
+      userId: user.id,
+      name: user.name,
+      username: user.username,
+      breakfastPresent: attendance.breakfastPresent,
+      lunchPresent: attendance.lunchPresent,
     };
   });
 
-  const totals = meals.reduce(
-    (acc, meal) => ({
-      employeeMeals: acc.employeeMeals + meal.employeeCount,
-      guestMeals: acc.guestMeals + meal.guestCount,
-      allMeals: acc.allMeals + meal.totalCount,
-    }),
-    { employeeMeals: 0, guestMeals: 0, allMeals: 0 },
+  const guestCounts = {
+    breakfast: guestOrders
+      .filter((order) => order.mealType === MealType.BREAKFAST)
+      .reduce((sum, order) => sum + order.count, 0),
+    lunch: guestOrders
+      .filter((order) => order.mealType === MealType.LUNCH)
+      .reduce((sum, order) => sum + order.count, 0),
+  } satisfies NextDayReportGuestCounts;
+
+  const breakfastEmployees = peopleRows.filter((row) => row.breakfastPresent).length;
+  const lunchEmployees = peopleRows.filter((row) => row.lunchPresent).length;
+  const guestMeals = guestCounts.breakfast + guestCounts.lunch;
+  const employeeMeals = breakfastEmployees + lunchEmployees;
+
+  const totals = {
+    breakfastEmployees,
+    lunchEmployees,
+    breakfastGuests: guestCounts.breakfast,
+    lunchGuests: guestCounts.lunch,
+    breakfastAll: breakfastEmployees + guestCounts.breakfast,
+    lunchAll: lunchEmployees + guestCounts.lunch,
+    allMeals: employeeMeals + guestMeals,
+    employeeMeals,
+    guestMeals,
+  } satisfies NextDayReportTotals;
+
+  const meals = MEAL_TYPES.map((mealType) =>
+    buildMealSummary(
+      mealType,
+      peopleRows,
+      mealType === MealType.BREAKFAST ? guestCounts.breakfast : guestCounts.lunch,
+    ),
   );
 
   return {
@@ -118,8 +227,10 @@ export async function getNextDayMealReport() {
     reportDateKey,
     reportDateLabel,
     policy,
-    meals,
+    peopleRows,
+    guestCounts,
     totals,
+    meals,
   };
 }
 
