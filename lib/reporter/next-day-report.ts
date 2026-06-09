@@ -13,6 +13,9 @@ import { prisma } from "@/lib/prisma";
 
 type ReportMealType = (typeof MealType)[keyof typeof MealType];
 
+const SYSTEM_ADMIN_USERNAME = "admin";
+const SYSTEM_ADMIN_NAME = "مدیر سیستم";
+
 export type NextDayReportPeopleRow = {
   userId: string;
   name: string;
@@ -117,6 +120,7 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
       where: {
         isActive: true,
         role: { not: UserRole.REPORTER },
+        NOT: [{ username: SYSTEM_ADMIN_USERNAME }, { name: SYSTEM_ADMIN_NAME }],
       },
       select: {
         id: true,
@@ -132,6 +136,7 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
         user: {
           isActive: true,
           role: { not: UserRole.REPORTER },
+          NOT: [{ username: SYSTEM_ADMIN_USERNAME }, { name: SYSTEM_ADMIN_NAME }],
         },
       },
       select: {

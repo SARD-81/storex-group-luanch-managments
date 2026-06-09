@@ -7,6 +7,7 @@ import { updateGuestMealCountsAction } from "@/actions/guest-meal-orders";
 import { PrintReportButton } from "@/components/reporter/print-report-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { UserRole } from "@/app/generated/prisma/client";
 import { requireReporterAccess } from "@/lib/auth/session";
 import { getNextDayMealReport } from "@/lib/reporter/next-day-report";
 
@@ -31,7 +32,7 @@ function formatDisplayNumber(value: number) {
 }
 
 function renderCheckMark(present: boolean) {
-  return present ? "✓" : "";
+  return present ? "✓" : "×";
 }
 
 function renderPrintableRows(report: NextDayReport) {
@@ -82,22 +83,22 @@ function renderPrintableRows(report: NextDayReport) {
 
 function printReportHeader(report: NextDayReport, companyLogoExists: boolean) {
   return (
-    <div className="reporter-next-day-header">
-      <div className="reporter-next-day-header__logo">
+    <div className="reporter-print-header reporter-next-day-header">
+      <div className="reporter-print-date reporter-next-day-header__date">
+        <span>تاریخ گزارش</span>
+        <strong>{report.reportDateLabel}</strong>
+      </div>
+
+      <div className="reporter-print-title reporter-next-day-header__title">
+        <h2>آمار صبحانه، ناهار بهاران</h2>
+      </div>
+
+      <div className="reporter-print-logo reporter-next-day-header__logo">
         {companyLogoExists ? (
           <img src="/company-logo.png" alt="لوگوی بهاران" />
         ) : (
           <div className="reporter-next-day-logo-placeholder">لوگوی بهاران</div>
         )}
-      </div>
-
-      <div className="reporter-next-day-header__title">
-        <h2>آمار صبحانه، ناهار بهاران</h2>
-      </div>
-
-      <div className="reporter-next-day-header__date">
-        <span>تاریخ گزارش</span>
-        <strong>{report.reportDateLabel}</strong>
       </div>
     </div>
   );
@@ -107,7 +108,7 @@ function renderPrintableTable(report: NextDayReport) {
   const rows = renderPrintableRows(report);
 
   return (
-    <table className="reporter-next-day-table">
+    <table className="reporter-print-table reporter-next-day-table">
       <colgroup>
         <col style={{ width: "9mm" }} />
         <col style={{ width: "80mm" }} />
@@ -128,12 +129,12 @@ function renderPrintableTable(report: NextDayReport) {
         {rows.map((row) => (
           <tr
             key={row.key}
-            className={row.variant === "total" ? "reporter-next-day-table__total-row" : undefined}
+            className={row.variant === "total" ? "reporter-print-table__total-row reporter-next-day-table__total-row" : undefined}
           >
             <td>{formatDisplayNumber(row.rowNumber)}</td>
             <td className="reporter-next-day-table__name-cell">{row.name}</td>
-            <td className="reporter-next-day-table__meal-cell">{row.breakfast}</td>
-            <td className="reporter-next-day-table__meal-cell">{row.lunch}</td>
+            <td className="reporter-print-table__meal-cell reporter-next-day-table__meal-cell">{row.breakfast}</td>
+            <td className="reporter-print-table__meal-cell reporter-next-day-table__meal-cell">{row.lunch}</td>
             <td className="reporter-next-day-table__notes-cell">{row.notes}</td>
           </tr>
         ))}
@@ -144,7 +145,7 @@ function renderPrintableTable(report: NextDayReport) {
 
 function renderPrintableFooter() {
   return (
-    <div className="reporter-next-day-footer">
+    <div className="reporter-print-footer reporter-next-day-footer">
       <span>نام و نام خانوادگی مسئول مربوطه :</span>
       <span className="reporter-next-day-footer__line" aria-hidden="true" />
     </div>
@@ -157,7 +158,7 @@ export default async function NextDayReporterPage({
   searchParams: SearchParams;
 }) {
   noStore();
-  await requireReporterAccess();
+  const currentUser = await requireReporterAccess();
   const params = await searchParams;
   const report = await getNextDayMealReport();
   const companyLogoExists = existsSync(
@@ -187,19 +188,26 @@ export default async function NextDayReporterPage({
             </div>
 
             <div className="flex flex-wrap items-center gap-3 self-start md:self-auto">
-              <PrintReportButton />
-              <Link href="/reporter/next-day/export" className="dashboard-primary-button">
-                دریافت فایل Excel
-              </Link>
               <ThemeToggle />
+              <form action={logoutAction}>
+                <PendingSubmitButton className="dashboard-action-button" pendingText="در حال خروج...">
+                  خروج
+                </PendingSubmitButton>
+              </form>
             </div>
           </div>
 
-          <form action={logoutAction} className="self-start reporter-no-print">
-            <PendingSubmitButton type="submit" pendingText="در حال خروج...">
-              خروج
-            </PendingSubmitButton>
-          </form>
+          <div className="flex flex-wrap gap-3">
+            {currentUser.role === UserRole.ADMIN ? (
+              <Link href="/" className="dashboard-action-button">
+                بازگشت به داشبورد
+              </Link>
+            ) : null}
+            <PrintReportButton />
+            <Link href="/reporter/next-day/export" className="dashboard-primary-button">
+              دریافت فایل Excel
+            </Link>
+          </div>
         </header>
 
         {params.saved ? (
@@ -291,7 +299,7 @@ export default async function NextDayReporterPage({
         ) : null}
 
         <section className="reporter-print-area dashboard-glass-card">
-          <div className="reporter-form-paper reporter-next-day-paper">
+          <div className="reporter-form-paper reporter-print-paper reporter-next-day-paper">
             {printReportHeader(report, companyLogoExists)}
 
             {renderPrintableTable(report)}
