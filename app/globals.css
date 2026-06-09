@@ -442,33 +442,55 @@ select:disabled {
   margin: 8mm;
 }
 
-.reporter-form-paper {
+.reporter-form-paper,
+.reporter-print-paper {
   background: #ffffff;
   color: #000000;
 }
 
-.reporter-next-day-paper {
+.reporter-next-day-paper,
+.reporter-print-paper {
   box-sizing: border-box;
   width: min(100%, 194mm);
   margin: 0 auto;
   padding: 4.5mm;
   border: 1px solid #000000;
-  background: #ffffff;
-  color: #000000;
 }
 
-.reporter-next-day-header {
+.reporter-next-day-header,
+.reporter-print-header {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4mm;
+  justify-content: center;
+  min-height: 20mm;
+  padding: 2mm 32mm 2mm 30mm;
   direction: rtl;
-  padding-bottom: 2.5mm;
   border-bottom: 1px solid #000000;
   background: #ffffff;
   color: #000000;
 }
 
-.reporter-next-day-header__logo {
+.reporter-print-date {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 2mm;
+  width: 32mm;
+}
+
+.reporter-print-title {
+  width: 100%;
+}
+
+.reporter-print-logo {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 2mm;
+  width: 28mm;
+}
+
+.reporter-next-day-header__logo,
+.reporter-print-logo {
   flex: 0 0 28mm;
   width: 28mm;
   display: flex;
@@ -476,7 +498,8 @@ select:disabled {
   justify-content: center;
 }
 
-.reporter-next-day-header__logo img {
+.reporter-next-day-header__logo img,
+.reporter-print-logo img {
   display: block;
   max-width: 100%;
   max-height: 18mm;
@@ -496,35 +519,40 @@ select:disabled {
   text-align: center;
 }
 
-.reporter-next-day-header__title {
+.reporter-next-day-header__title,
+.reporter-print-title {
   flex: 1 1 auto;
   text-align: center;
 }
 
-.reporter-next-day-header__title h2 {
+.reporter-next-day-header__title h2,
+.reporter-print-title h2 {
   margin: 0;
   font-size: 13pt;
   font-weight: 800;
   line-height: 1.35;
 }
 
-.reporter-next-day-header__date {
+.reporter-next-day-header__date,
+.reporter-print-date {
   flex: 0 0 34mm;
   width: 34mm;
   display: flex;
   flex-direction: column;
   gap: 1mm;
-  text-align: left;
+  text-align: right;
   font-size: 8.5pt;
   line-height: 1.35;
 }
 
-.reporter-next-day-header__date strong {
+.reporter-next-day-header__date strong,
+.reporter-print-date strong {
   font-size: 9pt;
   font-weight: 700;
 }
 
-.reporter-next-day-table {
+.reporter-next-day-table,
+.reporter-print-table {
   width: 100%;
   margin-top: 3mm;
   border-collapse: collapse;
@@ -536,19 +564,23 @@ select:disabled {
 }
 
 .reporter-next-day-table th,
-.reporter-next-day-table td {
+.reporter-next-day-table td,
+.reporter-print-table th,
+.reporter-print-table td {
   border: 1px solid #000000;
   padding: 1.4mm 1mm;
   vertical-align: middle;
 }
 
-.reporter-next-day-table th {
+.reporter-next-day-table th,
+.reporter-print-table th {
   background: #e8e8e8;
   font-weight: 700;
   text-align: center;
 }
 
-.reporter-next-day-table td {
+.reporter-next-day-table td,
+.reporter-print-table td {
   min-height: 8mm;
   text-align: center;
 }
@@ -558,21 +590,25 @@ select:disabled {
   text-align: right;
 }
 
-.reporter-next-day-table__meal-cell {
+.reporter-next-day-table__meal-cell,
+.reporter-print-table__meal-cell {
   font-size: 9pt;
   font-weight: 700;
 }
 
-.reporter-next-day-table tbody tr {
+.reporter-next-day-table tbody tr,
+.reporter-print-table tbody tr {
   height: 8mm;
 }
 
-.reporter-next-day-table__total-row td {
+.reporter-next-day-table__total-row td,
+.reporter-print-table__total-row td {
   background: #f1f1f1;
   font-weight: 800;
 }
 
-.reporter-next-day-footer {
+.reporter-next-day-footer,
+.reporter-print-footer {
   display: flex;
   align-items: flex-end;
   gap: 2mm;
@@ -627,7 +663,8 @@ select:disabled {
 
   .reporter-next-day-paper {
     width: 194mm !important;
-    min-height: 281mm !important;
+    min-height: 0 !important;
+    height: auto !important;
     margin: 0 auto !important;
     padding: 4mm !important;
     border: 1px solid #000000 !important;
@@ -635,11 +672,12 @@ select:disabled {
     background: #ffffff !important;
     color: #000000 !important;
     box-shadow: none !important;
-    page-break-inside: avoid;
+    overflow: visible !important;
   }
 
   .reporter-next-day-header {
-    padding-bottom: 2mm !important;
+    min-height: 18mm !important;
+    padding: 1.5mm 32mm 1.5mm 30mm !important;
     border-bottom: 1px solid #000000 !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -650,7 +688,17 @@ select:disabled {
     width: 30mm !important;
   }
 
+  .reporter-print-logo {
+    width: 30mm !important;
+    inset-inline-end: 0 !important;
+    top: 1.5mm !important;
+  }
+
   .reporter-next-day-header__logo img {
+    max-height: 18mm !important;
+  }
+
+  .reporter-print-logo img {
     max-height: 18mm !important;
   }
 
@@ -668,6 +716,11 @@ select:disabled {
     color: #000000 !important;
   }
 
+  .reporter-print-title h2 {
+    font-size: 14pt !important;
+    color: #000000 !important;
+  }
+
   .reporter-next-day-header__date {
     flex-basis: 34mm !important;
     width: 34mm !important;
@@ -675,7 +728,21 @@ select:disabled {
     font-size: 8pt !important;
   }
 
+  .reporter-print-date {
+    inset-inline-start: 0 !important;
+    top: 1.5mm !important;
+    width: 34mm !important;
+    color: #000000 !important;
+    font-size: 8pt !important;
+  }
+
   .reporter-next-day-table {
+    margin-top: 2.5mm !important;
+    font-size: 8pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .reporter-print-table {
     margin-top: 2.5mm !important;
     font-size: 8pt !important;
     line-height: 1.1 !important;
@@ -694,7 +761,24 @@ select:disabled {
     font-size: 8pt !important;
   }
 
+  .reporter-print-table th,
+  .reporter-print-table td {
+    border: 1px solid #000000 !important;
+    padding: 1mm 0.8mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .reporter-print-table th {
+    background: #efefef !important;
+    font-size: 8pt !important;
+  }
+
   .reporter-next-day-table tbody tr {
+    height: 7.5mm !important;
+  }
+
+  .reporter-print-table tbody tr {
     height: 7.5mm !important;
   }
 
@@ -703,7 +787,18 @@ select:disabled {
     font-weight: 800 !important;
   }
 
+  .reporter-print-table__total-row td {
+    background: #efefef !important;
+    font-weight: 800 !important;
+  }
+
   .reporter-next-day-footer {
+    margin-top: 3.5mm !important;
+    font-size: 8.5pt !important;
+    color: #000000 !important;
+  }
+
+  .reporter-print-footer {
     margin-top: 3.5mm !important;
     font-size: 8.5pt !important;
     color: #000000 !important;
