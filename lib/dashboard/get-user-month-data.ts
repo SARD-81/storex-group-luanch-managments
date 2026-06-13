@@ -1,7 +1,11 @@
 import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
 import { getAttendanceDatePoliciesByDateRange } from "@/lib/attendance/calendar-attendance-policy";
-import { getCurrentJalaliMonthRange } from "@/lib/attendance/month";
-import { canEditAttendance, getAttendanceDeadline } from "@/lib/attendance/rules";
+import { getAttendanceReservationWindow } from "@/lib/attendance/month";
+import {
+  canEditAttendance,
+  getAppDayOfWeekFromDate,
+  getAttendanceDeadline,
+} from "@/lib/attendance/rules";
 import { getDateKey } from "@/lib/date/date-key";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
 import { prisma } from "@/lib/prisma";
@@ -24,11 +28,11 @@ function parseDateKeyToUtcDate(dateKey: string) {
 
 export async function getUserCurrentMonthAttendanceData(userId: string) {
   const now = new Date();
-  const { monthStart, nextMonthStart } = getCurrentJalaliMonthRange(now);
+  const reservationWindow = getAttendanceReservationWindow(now);
+  const monthStart = reservationWindow.monthStart;
+  const monthEndExclusive = reservationWindow.monthEndExclusive;
   const monthStartKey = getDateKey(monthStart);
-  const monthEndDate = new Date(nextMonthStart);
-  monthEndDate.setUTCDate(monthEndDate.getUTCDate() - 1);
-  const monthEndKey = getDateKey(monthEndDate);
+  const monthEndKey = reservationWindow.maxDateKey;
 
   const policies = await getAttendanceDatePoliciesByDateRange(
     prisma,
@@ -42,7 +46,7 @@ export async function getUserCurrentMonthAttendanceData(userId: string) {
       userId,
       date: {
         gte: monthStart,
-        lt: nextMonthStart,
+        lt: monthEndExclusive,
       },
     },
     select: {
@@ -70,6 +74,7 @@ export async function getUserCurrentMonthAttendanceData(userId: string) {
     return {
       date,
       dateKey: policy.dateKey,
+      dayOfWeek: policy.calendarDay?.dayOfWeek ?? getAppDayOfWeekFromDate(date),
       dayNameFa: policy.dayNameFa ?? "",
       persianDateLabel: dateLabelFormatter.format(date),
       canEdit: policy.isSelectable && canEditAttendance(date, now),
