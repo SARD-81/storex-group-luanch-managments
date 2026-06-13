@@ -1,11 +1,11 @@
 import type { PrismaClient } from "../../app/generated/prisma/client";
 import {
   type CalendarDayView,
-  getTodayIranDateKey,
   getCalendarDayByDateKey,
   getCalendarDayByJalaliDateKey,
   getCalendarDaysByDateRange,
 } from "../calendar/calendar-service";
+import { getAttendanceReservationWindow } from "@/lib/attendance/month";
 
 export type AttendanceDatePolicyReason =
   | "AVAILABLE"
@@ -38,11 +38,11 @@ export type CalendarAttendanceDatePolicy = {
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function getAttendanceSelectableDateRange(now?: Date): AttendanceSelectableDateRange {
-  const todayDateKey = getTodayIranDateKey(now);
+  const window = getAttendanceReservationWindow(now);
 
   return {
-    todayDateKey,
-    maxDateKey: addOneCalendarMonthToDateKey(todayDateKey),
+    todayDateKey: window.todayDateKey,
+    maxDateKey: window.maxDateKey,
   };
 }
 
@@ -107,7 +107,12 @@ export async function getAttendanceDatePoliciesByDateRange(
   }
 
   const days = await getCalendarDaysByDateRange(prisma, startDateKey, endDateKey);
-  return days.map((day) => buildPolicyFromCalendarDay(day, now));
+  const daysByDateKey = new Map(days.map((day) => [day.dateKey, day]));
+
+  return getDateKeysInRange(startDateKey, endDateKey).map((dateKey) => {
+    const day = daysByDateKey.get(dateKey);
+    return day ? buildPolicyFromCalendarDay(day, now) : buildMissingCalendarDayPolicy(dateKey, now);
+  });
 }
 
 function assertDateKey(value: string, label: string): void {
@@ -148,11 +153,18 @@ function formatUtcDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function addOneCalendarMonthToDateKey(dateKey: string): string {
-  const date = parseDateKeyToUtcDate(dateKey);
-  date.setUTCMonth(date.getUTCMonth() + 1);
+function getDateKeysInRange(startDateKey: string, endDateKey: string): string[] {
+  const dateKeys: string[] = [];
 
-  return formatUtcDateKey(date);
+  for (
+    let cursor = parseDateKeyToUtcDate(startDateKey);
+    formatUtcDateKey(cursor) <= endDateKey;
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  ) {
+    dateKeys.push(formatUtcDateKey(cursor));
+  }
+
+  return dateKeys;
 }
 
 function buildPolicyFromCalendarDay(day: CalendarDayView, now?: Date): CalendarAttendanceDatePolicy {
