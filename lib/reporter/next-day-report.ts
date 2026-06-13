@@ -15,6 +15,7 @@ type ReportMealType = (typeof MealType)[keyof typeof MealType];
 
 const SYSTEM_ADMIN_USERNAME = "admin";
 const SYSTEM_ADMIN_NAME = "مدیر سیستم";
+const MAX_NEXT_WORKDAY_LOOKAHEAD_DAYS = 31;
 
 export type NextDayReportPeopleRow = {
   userId: string;
@@ -105,17 +106,45 @@ export function addOneUtcCalendarDayToDateKey(dateKey: string) {
   return getDateKey(date);
 }
 
+async function resolveNextWorkdayReportDate() {
+  const tomorrowDateKey = addOneUtcCalendarDayToDateKey(getTodayIranDateKey());
+  let candidateDateKey = tomorrowDateKey;
+  let fallbackPolicy: Awaited<ReturnType<typeof getAttendanceDatePolicyByDateKey>> | null = null;
+
+  for (let index = 0; index < MAX_NEXT_WORKDAY_LOOKAHEAD_DAYS; index += 1) {
+    const policy = await getAttendanceDatePolicyByDateKey(prisma, candidateDateKey);
+
+    if (index === 0) {
+      fallbackPolicy = policy;
+    }
+
+    if (policy.isWorkday === true) {
+      return {
+        reportDateKey: candidateDateKey,
+        policy,
+      };
+    }
+
+    candidateDateKey = addOneUtcCalendarDayToDateKey(candidateDateKey);
+  }
+
+  return {
+    reportDateKey: tomorrowDateKey,
+    policy:
+      fallbackPolicy ??
+      (await getAttendanceDatePolicyByDateKey(prisma, tomorrowDateKey)),
+  };
+}
+
 export async function getNextDayMealReport(): Promise<NextDayMealReport> {
-  const todayIranDateKey = getTodayIranDateKey();
-  const reportDateKey = addOneUtcCalendarDayToDateKey(todayIranDateKey);
+  const { reportDateKey, policy } = await resolveNextWorkdayReportDate();
   const reportDate = parseDateKey(reportDateKey);
 
   if (!reportDate) {
     throw new Error("Unable to resolve next-day report date.");
   }
 
-  const [policy, users, attendances, guestOrders] = await Promise.all([
-    getAttendanceDatePolicyByDateKey(prisma, reportDateKey),
+  const [users, attendances, guestOrders] = await Promise.all([
     prisma.user.findMany({
       where: {
         isActive: true,
