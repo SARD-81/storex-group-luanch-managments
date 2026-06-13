@@ -73,8 +73,8 @@ export async function MonthlyAttendanceBoard({
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-[2rem] border border-border/50 bg-muted/15 p-3 shadow-inner">
-          <div className="min-w-[940px] space-y-2 xl:min-w-0">
+        <div className="overflow-x-auto rounded-[2rem] border border-border/50 bg-muted/15 p-3 shadow-inner [&_.dashboard-soft-card]:min-h-[172px] [&_.dashboard-soft-card]:p-3 [&_.dashboard-soft-card]:shadow-sm [&_.dashboard-soft-card_details]:rounded-lg [&_.dashboard-soft-card_details]:px-2 [&_.dashboard-soft-card_details]:py-1 [&_.dashboard-soft-card_details]:text-[10px] [&_.dashboard-soft-card_h3]:text-xs [&_.dashboard-soft-card_label]:py-1.5 [&_.dashboard-soft-card_label]:text-xs [&_.dashboard-soft-card_p]:leading-5">
+          <div className="min-w-[960px] space-y-2 xl:min-w-0">
             <div className="grid grid-cols-7 gap-2 px-1 text-center text-[11px] font-bold text-muted-foreground">
               {WEEK_DAYS.map((dayLabel) => (
                 <div
@@ -95,7 +95,7 @@ export async function MonthlyAttendanceBoard({
                     <div
                       key={`empty-${weekIndex}-${dayOfWeek}`}
                       aria-hidden="true"
-                      className="min-h-[154px] rounded-2xl border border-dashed border-border/30 bg-background/15"
+                      className="min-h-[172px] rounded-2xl border border-dashed border-border/30 bg-background/15"
                     />
                   ),
                 )}
