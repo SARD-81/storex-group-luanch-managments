@@ -7,8 +7,10 @@ import {
   isSelectableAttendanceDate,
 } from "@/lib/attendance/rules";
 import { isWorkDay } from "@/lib/attendance/week";
-import { getDateKey } from "@/lib/date/date-key";
+import { getDateKey, parseDateKey } from "@/lib/date/date-key";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const dayNameFormatter = new Intl.DateTimeFormat("fa-IR", {
   weekday: "long",
@@ -28,6 +30,12 @@ function dateObjectToUtcDateOnly(value: DateObject) {
   return new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
   );
+}
+
+function addUtcDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setUTCDate(result.getUTCDate() + days);
+  return result;
 }
 
 export function getCurrentJalaliMonthRange(now = new Date()) {
@@ -51,6 +59,50 @@ export function getCurrentJalaliMonthRange(now = new Date()) {
   return {
     monthStart: dateObjectToUtcDateOnly(monthStartInPersian),
     nextMonthStart: dateObjectToUtcDateOnly(nextMonthStartInPersian),
+  };
+}
+
+export function getNextJalaliMonthRange(now = new Date()) {
+  const { nextMonthStart } = getCurrentJalaliMonthRange(now);
+  const nextMonthStartInPersian = new DateObject({
+    date: nextMonthStart,
+    calendar: persian,
+  });
+  const followingMonthStartInPersian = new DateObject(
+    nextMonthStartInPersian,
+  ).add(1, "month");
+
+  return {
+    monthStart: nextMonthStart,
+    nextMonthStart: dateObjectToUtcDateOnly(followingMonthStartInPersian),
+  };
+}
+
+export function isInLastJalaliMonthWeek(now = new Date()) {
+  const todayKey = getTehranDateKey(now);
+  const today = parseDateKey(todayKey) ?? new Date();
+  const { nextMonthStart } = getCurrentJalaliMonthRange(now);
+  const daysUntilNextMonth = Math.ceil(
+    (nextMonthStart.getTime() - today.getTime()) / ONE_DAY_MS,
+  );
+
+  return daysUntilNextMonth > 0 && daysUntilNextMonth <= 7;
+}
+
+export function getAttendanceReservationWindow(now = new Date()) {
+  const currentMonthRange = getCurrentJalaliMonthRange(now);
+  const includeNextMonth = isInLastJalaliMonthWeek(now);
+  const monthEndExclusive = includeNextMonth
+    ? getNextJalaliMonthRange(now).nextMonthStart
+    : currentMonthRange.nextMonthStart;
+  const maxDate = addUtcDays(monthEndExclusive, -1);
+
+  return {
+    monthStart: currentMonthRange.monthStart,
+    monthEndExclusive,
+    todayDateKey: getTehranDateKey(now),
+    maxDateKey: getDateKey(maxDate),
+    includeNextMonth,
   };
 }
 
