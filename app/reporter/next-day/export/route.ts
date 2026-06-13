@@ -149,12 +149,12 @@ export async function GET() {
       orientation: "landscape",
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 1,
+      fitToHeight: 0,
       margins: {
-        left: 0.15,
-        right: 0.15,
-        top: 0.15,
-        bottom: 0.15,
+        left: 0.08,
+        right: 0.08,
+        top: 0.08,
+        bottom: 0.08,
         header: 0,
         footer: 0,
       },
@@ -246,6 +246,7 @@ export async function GET() {
   worksheet.getCell(signatureRow, 6).value = "تاریخ و امضا";
   styleRange(worksheet, signatureRow, 1, 8, { font: { bold: true, size: 8 } });
   worksheet.getRow(signatureRow).height = 28;
+  worksheet.pageSetup.printArea = `A1:H${signatureRow}`;
 
   const buffer = await workbook.xlsx.writeBuffer();
 
