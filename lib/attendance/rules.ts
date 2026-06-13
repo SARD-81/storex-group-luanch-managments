@@ -31,7 +31,7 @@ export function getAttendanceDeadline(targetDate: Date) {
   const targetDateKey = getDateKey(targetDate);
   const previousDateKey = addDaysToDateKey(targetDateKey, -1);
 
-  return createTehranDateTimeInstant(previousDateKey, 10, 0);
+  return createTehranDateTimeInstant(previousDateKey, 12, 0);
 }
 
 export function canEditAttendance(targetDate: Date, now = new Date()) {
