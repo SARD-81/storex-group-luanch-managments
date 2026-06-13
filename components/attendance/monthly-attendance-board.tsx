@@ -51,14 +51,14 @@ export async function MonthlyAttendanceBoard({
   const weeks = groupDaysByWeek(days);
 
   return (
-    <section className="dashboard-glass-card p-6">
+    <section className="dashboard-glass-card p-5 md:p-6">
       <form action={updateMyMonthlyAttendanceAction} className="space-y-5">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">نمای ماهانه</p>
+            <p className="text-sm text-muted-foreground">تقویم رزرو</p>
             <h2 className="text-2xl font-bold">برنامه حضور قابل رزرو من</h2>
             <p className="text-xs leading-6 text-muted-foreground">
-              هر ردیف نماینده یک هفته کامل از شنبه تا جمعه است.
+              چیدمان ماهانه فشرده؛ هر ردیف یک هفته از شنبه تا جمعه است.
             </p>
           </div>
 
@@ -68,21 +68,26 @@ export async function MonthlyAttendanceBoard({
               className="dashboard-primary-button w-full xl:w-auto"
               pendingText="در حال ذخیره..."
             >
-              ذخیره کل ماه
+              ذخیره تغییرات
             </PendingSubmitButton>
           </div>
         </div>
 
-        <div className="overflow-x-auto pb-2">
-          <div className="min-w-[1120px] space-y-3">
-            <div className="grid grid-cols-7 gap-3 px-1 text-center text-xs font-semibold text-muted-foreground">
+        <div className="overflow-x-auto rounded-[2rem] border border-border/50 bg-muted/15 p-3 shadow-inner">
+          <div className="min-w-[940px] space-y-2 xl:min-w-0">
+            <div className="grid grid-cols-7 gap-2 px-1 text-center text-[11px] font-bold text-muted-foreground">
               {WEEK_DAYS.map((dayLabel) => (
-                <div key={dayLabel}>{dayLabel}</div>
+                <div
+                  key={dayLabel}
+                  className="rounded-xl border border-border/40 bg-background/35 py-2"
+                >
+                  {dayLabel}
+                </div>
               ))}
             </div>
 
             {weeks.map((week, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-7 items-stretch gap-3">
+              <div key={weekIndex} className="grid grid-cols-7 items-stretch gap-2">
                 {week.map((day, dayOfWeek) =>
                   day ? (
                     <MonthDayCard key={day.dateKey} day={day} />
@@ -90,7 +95,7 @@ export async function MonthlyAttendanceBoard({
                     <div
                       key={`empty-${weekIndex}-${dayOfWeek}`}
                       aria-hidden="true"
-                      className="min-h-32 rounded-2xl border border-dashed border-border/40 bg-muted/10"
+                      className="min-h-[154px] rounded-2xl border border-dashed border-border/30 bg-background/15"
                     />
                   ),
                 )}
