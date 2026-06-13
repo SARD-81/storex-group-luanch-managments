@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { logoutAction } from "@/actions/auth";
 import { updateGuestMealCountsAction } from "@/actions/guest-meal-orders";
 import { PrintReportButton } from "@/components/reporter/print-report-button";
+import { ReporterPrintPageStyle } from "@/components/reporter/reporter-print-page-style";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { UserRole } from "@/app/generated/prisma/client";
@@ -170,6 +171,7 @@ export default async function NextDayReporterPage({
       dir="rtl"
       className="dashboard-aurora-shell min-h-screen p-6 text-right text-foreground md:p-8"
     >
+      <ReporterPrintPageStyle />
       <div className="dashboard-aurora dashboard-aurora-one reporter-no-print" />
       <div className="dashboard-aurora dashboard-aurora-two reporter-no-print" />
       <div className="dashboard-aurora dashboard-aurora-three reporter-no-print" />
