@@ -8,10 +8,47 @@ type MonthlyAttendanceBoardProps = {
   userId: string;
 };
 
+type MonthlyAttendanceDay = Awaited<
+  ReturnType<typeof getUserCurrentMonthAttendanceData>
+>[number];
+
+type AttendanceWeekRow = Array<MonthlyAttendanceDay | null>;
+
+const WEEK_DAYS = [
+  "شنبه",
+  "یکشنبه",
+  "دوشنبه",
+  "سه‌شنبه",
+  "چهارشنبه",
+  "پنجشنبه",
+  "جمعه",
+] as const;
+
+function groupDaysByWeek(days: MonthlyAttendanceDay[]): AttendanceWeekRow[] {
+  const weeks: AttendanceWeekRow[] = [];
+  let currentWeek: AttendanceWeekRow = Array.from({ length: 7 }, () => null);
+
+  for (const day of days) {
+    if (day.dayOfWeek === 0 && currentWeek.some(Boolean)) {
+      weeks.push(currentWeek);
+      currentWeek = Array.from({ length: 7 }, () => null);
+    }
+
+    currentWeek[day.dayOfWeek] = day;
+  }
+
+  if (currentWeek.some(Boolean)) {
+    weeks.push(currentWeek);
+  }
+
+  return weeks;
+}
+
 export async function MonthlyAttendanceBoard({
   userId,
 }: MonthlyAttendanceBoardProps) {
   const days = await getUserCurrentMonthAttendanceData(userId);
+  const weeks = groupDaysByWeek(days);
 
   return (
     <section className="dashboard-glass-card p-6">
@@ -19,7 +56,10 @@ export async function MonthlyAttendanceBoard({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">نمای ماهانه</p>
-            <h2 className="text-2xl font-bold">برنامه حضور ماه جاری من</h2>
+            <h2 className="text-2xl font-bold">برنامه حضور قابل رزرو من</h2>
+            <p className="text-xs leading-6 text-muted-foreground">
+              هر ردیف نماینده یک هفته کامل از شنبه تا جمعه است.
+            </p>
           </div>
 
           <div className="dashboard-muted-panel sticky top-4 z-20 flex flex-col gap-3 p-3 backdrop-blur-xl xl:items-end">
@@ -33,10 +73,30 @@ export async function MonthlyAttendanceBoard({
           </div>
         </div>
 
-        <div className="grid items-stretch gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-5">
-          {days.map((day) => (
-            <MonthDayCard key={day.dateKey} day={day} />
-          ))}
+        <div className="overflow-x-auto pb-2">
+          <div className="min-w-[1120px] space-y-3">
+            <div className="grid grid-cols-7 gap-3 px-1 text-center text-xs font-semibold text-muted-foreground">
+              {WEEK_DAYS.map((dayLabel) => (
+                <div key={dayLabel}>{dayLabel}</div>
+              ))}
+            </div>
+
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="grid grid-cols-7 items-stretch gap-3">
+                {week.map((day, dayOfWeek) =>
+                  day ? (
+                    <MonthDayCard key={day.dateKey} day={day} />
+                  ) : (
+                    <div
+                      key={`empty-${weekIndex}-${dayOfWeek}`}
+                      aria-hidden="true"
+                      className="min-h-32 rounded-2xl border border-dashed border-border/40 bg-muted/10"
+                    />
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </form>
     </section>
