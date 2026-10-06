@@ -7,6 +7,7 @@ import { generateReportPdf } from "@/lib/reporter/generate-pdf";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
 import { AutomationError } from "./http";
 import { BaleClient, NextcloudClient } from "./integrations";
+import { cleanupProbeFile, PROBE_CLEANUP_PENDING } from "./capability-probe";
 import {
   checkPublicCapability,
   cleanError,
@@ -49,25 +50,29 @@ export async function deliverReport(
     const jalali = current.policy.jalaliDateKey!;
     const [year, month] = jalali.split("-");
     const bytes = await pdf(current);
-    const artifact = await storeArtifact(db, {
+    const artifactInput = {
       artifactKey: `report:${dateKey}`,
       type: "REPORT_PDF",
       target: dateKey,
       extension: "pdf",
       bytes,
       nextcloudPath: `${config.reportsDirectory}/${year}/${month}/next-workday-${jalali}.pdf`,
-    });
-    delivery = await db.reportDelivery.update({
-      where: { id: delivery.id },
-      data: {
-        artifactId: artifact.id,
-        stage: "GENERATED",
-        snapshot: {
-          label: current.reportDateLabel,
-          totals: current.totals,
-          generatedAt: now.toISOString(),
+    };
+    const deliveryId = delivery.id;
+    delivery = await db.$transaction(async (tx) => {
+      const artifact = await storeArtifact(tx, artifactInput);
+      return tx.reportDelivery.update({
+        where: { id: deliveryId },
+        data: {
+          artifactId: artifact.id,
+          stage: "GENERATED",
+          snapshot: {
+            label: current.reportDateLabel,
+            totals: current.totals,
+            generatedAt: now.toISOString(),
+          },
         },
-      },
+      });
     });
   }
   await stage("UPLOADING");
@@ -102,44 +107,48 @@ export async function deliverReport(
     where: { id: delivery.id },
     data: { stage: "DELIVERING", status: "RUNNING" },
   });
+  let id: string;
   try {
-    const id = await bale.send(config.reportRecipient, text);
-    await db.reportDelivery.update({
-      where: { id: delivery.id },
-      data: {
-        status: "SUCCESS",
-        stage: "DELIVERED",
-        baleMessageId: id,
-        sentAt: now,
-        nextRetryAt: null,
-      },
-    });
-    const failures = await db.automationJobRun.count({
-      where: {
-        jobType: "REPORT_DELIVERY",
-        target: dateKey,
-        attempt: { gt: 1 },
-      },
-    });
-    if (failures)
-      await queueAlert(
-        db,
-        "REPORTER",
-        dateKey,
-        `reporter-recovered:${dateKey}`,
-        `RECOVERED: گزارش ${snapshot.label} با موفقیت ارسال شد.`,
-      );
+    id = await bale.send(config.reportRecipient, text);
   } catch (e) {
-    const safe = cleanError(e);
+    const uncertain = !(e instanceof AutomationError) || e.uncertain;
     await db.reportDelivery.update({
       where: { id: delivery.id },
       data: {
-        status: safe.uncertain ? "MANUAL_ACTION_REQUIRED" : "RETRYING",
-        stage: safe.uncertain ? "DELIVERING" : "PUBLIC_READY",
+        status: uncertain ? "MANUAL_ACTION_REQUIRED" : "RETRYING",
+        stage: uncertain ? "DELIVERING" : "PUBLIC_READY",
       },
     });
-    throw e;
+    throw uncertain && !(e instanceof AutomationError)
+      ? new AutomationError("AMBIGUOUS_DELIVERY", null, true)
+      : e;
   }
+  // If this acknowledgement write fails, persisted DELIVERING intent must remain held.
+  await db.reportDelivery.update({
+    where: { id: delivery.id },
+    data: {
+      status: "SUCCESS",
+      stage: "DELIVERED",
+      baleMessageId: id,
+      sentAt: now,
+      nextRetryAt: null,
+    },
+  });
+  const failures = await db.automationJobRun.count({
+    where: {
+      jobType: "REPORT_DELIVERY",
+      target: dateKey,
+      attempt: { gt: 1 },
+    },
+  });
+  if (failures)
+    await queueAlert(
+      db,
+      "REPORTER",
+      dateKey,
+      `reporter-recovered:${dateKey}`,
+      `RECOVERED: گزارش ${snapshot.label} با موفقیت ارسال شد.`,
+    );
 }
 export async function sendGuestReminder(
   db: PrismaClient,
@@ -160,19 +169,23 @@ export async function sendGuestReminder(
   if (report.policy.isWorkday !== true)
     throw new AutomationError("REPORT_DATE_NOT_WORKDAY");
   await stage("REMINDER_SENDING");
+  let messageId: string;
   try {
-    const messageId = await bale.send(
+    messageId = await bale.send(
       config.reportRecipient,
       `یادآوری بررسی مهمان‌ها برای ${report.reportDateLabel}\nصبحانه: ${report.guestCounts.breakfast}\nناهار: ${report.guestCounts.lunch}\nدر صورت نیاز تعداد را در سامانه تغییر دهید. بدون تغییر، مقادیر فعلی پذیرفته می‌شود.`,
     );
-    await db.automationJobRun.update({
-      where: { id: jobId },
-      data: { metadata: { messageId }, stage: "REMINDER_SENT" },
-    });
   } catch (e) {
-    if (!cleanError(e).uncertain) await stage("REMINDER_REJECTED");
-    throw e;
+    if (e instanceof AutomationError && !e.uncertain) {
+      await stage("REMINDER_REJECTED");
+      throw e;
+    }
+    throw new AutomationError("AMBIGUOUS_DELIVERY", null, true);
   }
+  await db.automationJobRun.update({
+    where: { id: jobId },
+    data: { metadata: { messageId }, stage: "REMINDER_SENT" },
+  });
 }
 export async function revokeExpiredShares(
   db: PrismaClient,
@@ -180,19 +193,35 @@ export async function revokeExpiredShares(
   now = new Date(),
 ) {
   const probes = await db.automationShareLease.findMany({
-    where: { shareId: { not: null }, expiresAt: { lte: now }, revokedAt: null },
+    where: {
+      OR: [
+        { shareId: { not: null }, expiresAt: { lte: now }, revokedAt: null },
+        { revokedAt: { not: null }, cleanupError: PROBE_CLEANUP_PENDING },
+      ],
+    },
   });
   for (const p of probes) {
     try {
-      await cloud.revokeShare(p.shareId!);
-      await db.automationShareLease.update({
-        where: { id: p.id },
-        data: { revokedAt: now, cleanupError: null },
-      });
+      if (!p.revokedAt) {
+        await cloud.revokeShare(p.shareId!);
+        await db.automationShareLease.update({
+          where: { id: p.id },
+          data: { revokedAt: now, cleanupError: PROBE_CLEANUP_PENDING },
+        });
+      }
+      await cleanupProbeFile(db, cloud, p);
     } catch (e) {
       await db.automationShareLease.update({
         where: { id: p.id },
-        data: { cleanupError: cleanError(e).code },
+        data: {
+          cleanupError: (
+            await db.automationShareLease.findUniqueOrThrow({
+              where: { id: p.id },
+            })
+          ).revokedAt
+            ? PROBE_CLEANUP_PENDING
+            : cleanError(e).code,
+        },
       });
       throw e;
     }

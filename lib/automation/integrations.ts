@@ -40,6 +40,13 @@ export class NextcloudClient {
     const res = await this.transport(this.base + path, {
       ...init,
       headers: { ...this.headers, ...init.headers },
+    }).catch((error) => {
+      if (error instanceof AutomationError) throw error;
+      throw new AutomationError(
+        "NEXTCLOUD_REQUEST_FAILED",
+        null,
+        init.method === "POST",
+      );
     });
     if (!res.ok)
       throw new AutomationError(
@@ -49,7 +56,7 @@ export class NextcloudClient {
             ? "NEXTCLOUD_PERMISSION_DENIED"
             : "NEXTCLOUD_HTTP_ERROR",
         res.status,
-        init.method === "POST" && res.status >= 500,
+        init.method === "POST" && (res.status >= 500 || res.status === 408),
       );
     return res;
   }
@@ -68,10 +75,13 @@ export class NextcloudClient {
         init.method === "POST",
       );
     }
-    if (![100, 200].includes(Number(data.ocs?.meta?.statuscode)))
+    if (![100, 200, 201].includes(Number(data.ocs?.meta?.statuscode)))
       throw new AutomationError(
         "NEXTCLOUD_OCS_ERROR",
         Number(data.ocs?.meta?.statuscode) || null,
+        init.method === "POST" &&
+          (!Number.isFinite(Number(data.ocs?.meta?.statuscode)) ||
+            Number(data.ocs?.meta?.statuscode) >= 500),
       );
     return data.ocs.data;
   }
@@ -248,7 +258,12 @@ export class BaleClient {
     } catch (e) {
       if (method !== "sendMessage" && e instanceof AutomationError)
         throw new AutomationError(e.code, e.httpStatus, false);
-      throw e;
+      if (e instanceof AutomationError) throw e;
+      throw new AutomationError(
+        "BALE_REQUEST_FAILED",
+        null,
+        method === "sendMessage",
+      );
     }
     let data;
     try {

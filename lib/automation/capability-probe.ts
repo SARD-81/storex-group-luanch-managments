@@ -5,6 +5,23 @@ import type {
 } from "@/app/generated/prisma/client";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
 import { NextcloudClient } from "./integrations";
+export const PROBE_CLEANUP_PENDING = "PROBE_PRIVATE_CLEANUP_PENDING";
+export async function cleanupProbeFile(
+  db: PrismaClient,
+  cloud: NextcloudClient,
+  lease: { id: string; nextcloudPath: string },
+) {
+  // Persist intent before deleting: a crash or failed deletion must remain retryable.
+  await db.automationShareLease.update({
+    where: { id: lease.id },
+    data: { cleanupError: PROBE_CLEANUP_PENDING },
+  });
+  await cloud.deleteFile(lease.nextcloudPath);
+  await db.automationShareLease.update({
+    where: { id: lease.id },
+    data: { cleanupError: null },
+  });
+}
 // A valid, public-safe PDF containing no business data; no renderer/network dependency.
 export function probePdf() {
   const body =
@@ -44,7 +61,11 @@ export async function verifiedCapabilityProbe(
     },
     update: {},
   });
-  if (lease.revokedAt) return; // Today's anonymous probe was already verified and removed.
+  if (lease.revokedAt) {
+    if (lease.cleanupError === PROBE_CLEANUP_PENDING)
+      await cleanupProbeFile(db, cloud, lease);
+    return;
+  }
   const bytes = probePdf();
   await cloud.upload(lease.nextcloudPath, bytes, "application/pdf");
   if (!lease.shareId) {
@@ -66,8 +87,8 @@ export async function verifiedCapabilityProbe(
   await cloud.revokeShare(lease.shareId!);
   await db.automationShareLease.update({
     where: { id: lease.id },
-    data: { revokedAt: now, cleanupError: null },
+    data: { revokedAt: now, cleanupError: PROBE_CLEANUP_PENDING },
   });
   // Only the probe's private file is deleted. Report PDFs are retained.
-  await cloud.deleteFile(lease.nextcloudPath);
+  await cleanupProbeFile(db, cloud, lease);
 }

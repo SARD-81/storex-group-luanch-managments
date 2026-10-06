@@ -134,33 +134,38 @@ export async function flushAlerts(db: PrismaClient, cloud: NextcloudClient) {
     take: 10,
   });
   for (const a of alerts) {
-    await db.automationAlert.update({
-      where: { id: a.id },
+    const claimed = await db.automationAlert.updateMany({
+      where: { id: a.id, status: { in: ["PENDING", "RETRYING"] } },
       data: { status: "RUNNING" },
     });
+    if (!claimed.count) continue;
+    let id: string;
     try {
-      const id = await cloud.talk(
+      id = await cloud.talk(
         a.message,
         createHash("sha256").update(a.alertKey).digest("hex"),
       );
-      await db.automationAlert.update({
-        where: { id: a.id },
-        data: { status: "SUCCESS", remoteMessageId: id, sentAt: new Date() },
-      });
     } catch (e) {
       await db.automationAlert.update({
         where: { id: a.id },
         data: {
-          status: cleanError(e).uncertain
-            ? "MANUAL_ACTION_REQUIRED"
-            : "RETRYING",
+          status:
+            !(e instanceof AutomationError) || e.uncertain
+              ? "MANUAL_ACTION_REQUIRED"
+              : "RETRYING",
         },
       });
+      continue;
     }
+    // A failed receipt write leaves RUNNING intent; the next dispatcher holds it.
+    await db.automationAlert.update({
+      where: { id: a.id },
+      data: { status: "SUCCESS", remoteMessageId: id, sentAt: new Date() },
+    });
   }
 }
 export async function storeArtifact(
-  db: PrismaClient,
+  db: Pick<PrismaClient, "automationArtifact">,
   input: {
     artifactKey: string;
     type: string;

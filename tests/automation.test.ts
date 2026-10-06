@@ -26,7 +26,11 @@ import {
   flushAlerts,
   checkPublicCapability,
 } from "../lib/automation/jobs";
-import { probePdf } from "../lib/automation/capability-probe";
+import {
+  probePdf,
+  verifiedCapabilityProbe,
+  PROBE_CLEANUP_PENDING,
+} from "../lib/automation/capability-probe";
 import { deliverReport, revokeExpiredShares } from "../lib/automation/reporter";
 import {
   nextReportRetry,
@@ -70,6 +74,7 @@ class CloudFake {
   group = true;
   failShareResponse = false;
   failRevoke = false;
+  failDelete = false;
   files = new Map<string, Buffer>();
   shares = new Map<
     string,
@@ -115,7 +120,10 @@ class CloudFake {
         this.files.set(file, Buffer.from(init.body as Uint8Array));
         this.writes.push(file);
       }
-      if (method === "DELETE") this.files.delete(file);
+      if (method === "DELETE") {
+        if (this.failDelete) return new Response(null, { status: 503 });
+        this.files.delete(file);
+      }
       return new Response(null, { status: 204 });
     }
     if (p.endsWith("/cloud/capabilities"))
@@ -252,6 +260,132 @@ async function fixture(
   }
 }
 const dbTest = { skip: !process.env.TEST_DATABASE_URL };
+test(
+  "revoked capability probe resumes private-file cleanup without creating another share",
+  dbTest,
+  () =>
+    fixture(async (db, c, cloud, remote) => {
+      remote.failDelete = true;
+      await assert.rejects(
+        () => verifiedCapabilityProbe(db, c, cloud, now),
+        /WEBDAV_DELETE_FAILED/,
+      );
+      const lease = await db.automationShareLease.findFirstOrThrow();
+      assert.ok(lease.revokedAt);
+      assert.equal(lease.cleanupError, PROBE_CLEANUP_PENDING);
+      assert.equal(remote.shares.size, 0);
+      assert.ok(remote.files.has(lease.nextcloudPath));
+      remote.failDelete = false;
+      await revokeExpiredShares(db, cloud, new Date(now.getTime() + 60000));
+      assert.equal(remote.files.has(lease.nextcloudPath), false);
+      assert.equal(
+        (
+          await db.automationShareLease.findUniqueOrThrow({
+            where: { id: lease.id },
+          })
+        ).cleanupError,
+        null,
+      );
+      await verifiedCapabilityProbe(db, c, cloud, now);
+      assert.equal(remote.created, 1);
+      assert.equal(remote.files.size, 0);
+    }),
+);
+test(
+  "a lost receipt database write preserves send intent and prevents duplicate Bale delivery",
+  dbTest,
+  () =>
+    fixture(async (db, c, cloud, remote, bale, bot) => {
+      const failReceipt = db.$extends({
+        query: {
+          reportDelivery: {
+            update({ args, query }) {
+              if (args.data.stage === "DELIVERED")
+                throw new Error("simulated receipt storage failure");
+              return query(args);
+            },
+          },
+        },
+      }) as unknown as PrismaClient;
+      await assert.rejects(
+        () =>
+          deliverReport(
+            failReceipt,
+            c,
+            "2026-10-10",
+            async () => {},
+            now,
+            cloud,
+            bale,
+            async () => probePdf(),
+          ),
+        /simulated receipt storage failure/,
+      );
+      assert.equal(bot.messages.length, 1);
+      assert.equal(
+        (
+          await db.reportDelivery.findUniqueOrThrow({
+            where: { reportDateKey: "2026-10-10" },
+          })
+        ).stage,
+        "DELIVERING",
+      );
+      await assert.rejects(
+        () =>
+          deliverReport(
+            db,
+            c,
+            "2026-10-10",
+            async () => {},
+            now,
+            cloud,
+            bale,
+            async () => probePdf(),
+          ),
+        /AMBIGUOUS_DELIVERY/,
+      );
+      assert.equal(bot.messages.length, 1);
+    }),
+);
+test(
+  "a lost Talk receipt write is held on the next dispatcher instead of resent",
+  dbTest,
+  () =>
+    fixture(async (db, c, cloud, remote) => {
+      await queueAlert(
+        db,
+        "TEST",
+        "fixture",
+        "lost-talk-receipt",
+        "technical fixture",
+      );
+      const failReceipt = db.$extends({
+        query: {
+          automationAlert: {
+            update({ args, query }) {
+              if (args.data.status === "SUCCESS")
+                throw new Error("simulated Talk receipt storage failure");
+              return query(args);
+            },
+          },
+        },
+      }) as unknown as PrismaClient;
+      await assert.rejects(
+        () => flushAlerts(failReceipt, cloud),
+        /simulated Talk receipt storage failure/,
+      );
+      await flushAlerts(db, cloud);
+      assert.equal(remote.talkMessages.length, 1);
+      assert.equal(
+        (
+          await db.automationAlert.findUniqueOrThrow({
+            where: { alertKey: "lost-talk-receipt" },
+          })
+        ).status,
+        "MANUAL_ACTION_REQUIRED",
+      );
+    }),
+);
 test("Tehran slots and retry instants are explicit, including UTC date rollover", () => {
   assert.deepEqual(tehranClock(new Date("2026-10-05T20:31:00Z")), {
     dateKey: "2026-10-06",
