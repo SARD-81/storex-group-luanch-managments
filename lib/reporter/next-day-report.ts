@@ -15,7 +15,6 @@ type ReportMealType = (typeof MealType)[keyof typeof MealType];
 
 const SYSTEM_ADMIN_USERNAME = "admin";
 const SYSTEM_ADMIN_NAME = "مدیر سیستم";
-const MAX_NEXT_WORKDAY_LOOKAHEAD_DAYS = 31;
 
 export type NextDayReportPeopleRow = {
   userId: string;
@@ -68,8 +67,9 @@ function formatPersianNumber(value: number) {
 }
 
 function createGuestLabels(count: number) {
-  return Array.from({ length: count }, (_, index) =>
-    `مهمان ${formatPersianNumber(index + 1)}`,
+  return Array.from(
+    { length: count },
+    (_, index) => `مهمان ${formatPersianNumber(index + 1)}`,
   );
 }
 
@@ -106,38 +106,36 @@ export function addOneUtcCalendarDayToDateKey(dateKey: string) {
   return getDateKey(date);
 }
 
-async function resolveNextWorkdayReportDate() {
-  const tomorrowDateKey = addOneUtcCalendarDayToDateKey(getTodayIranDateKey());
-  let candidateDateKey = tomorrowDateKey;
-  let fallbackPolicy: Awaited<ReturnType<typeof getAttendanceDatePolicyByDateKey>> | null = null;
-
-  for (let index = 0; index < MAX_NEXT_WORKDAY_LOOKAHEAD_DAYS; index += 1) {
-    const policy = await getAttendanceDatePolicyByDateKey(prisma, candidateDateKey);
-
-    if (index === 0) {
-      fallbackPolicy = policy;
-    }
-
-    if (policy.isWorkday === true) {
-      return {
-        reportDateKey: candidateDateKey,
-        policy,
-      };
-    }
-
-    candidateDateKey = addOneUtcCalendarDayToDateKey(candidateDateKey);
-  }
-
+export async function resolveNextWorkdayReportDate(now = new Date()) {
+  const today = getTodayIranDateKey(now);
+  const day = await prisma.calendarDay.findFirst({
+    where: { dateKey: { gt: today }, isWorkday: true },
+    orderBy: { date: "asc" },
+    select: { dateKey: true },
+  });
+  const dateKey = day?.dateKey ?? addOneUtcCalendarDayToDateKey(today);
   return {
-    reportDateKey: tomorrowDateKey,
-    policy:
-      fallbackPolicy ??
-      (await getAttendanceDatePolicyByDateKey(prisma, tomorrowDateKey)),
+    reportDateKey: dateKey,
+    policy: await getAttendanceDatePolicyByDateKey(prisma, dateKey, now),
   };
 }
 
-export async function getNextDayMealReport(): Promise<NextDayMealReport> {
-  const { reportDateKey, policy } = await resolveNextWorkdayReportDate();
+export async function getNextDayMealReport(
+  now = new Date(),
+): Promise<NextDayMealReport> {
+  const { reportDateKey } = await resolveNextWorkdayReportDate(now);
+  return getMealReportForDate(reportDateKey, now);
+}
+
+export async function getMealReportForDate(
+  reportDateKey: string,
+  now = new Date(),
+): Promise<NextDayMealReport> {
+  const policy = await getAttendanceDatePolicyByDateKey(
+    prisma,
+    reportDateKey,
+    now,
+  );
   const reportDate = parseDateKey(reportDateKey);
 
   if (!reportDate) {
@@ -165,7 +163,10 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
         user: {
           isActive: true,
           role: { not: UserRole.REPORTER },
-          NOT: [{ username: SYSTEM_ADMIN_USERNAME }, { name: SYSTEM_ADMIN_NAME }],
+          NOT: [
+            { username: SYSTEM_ADMIN_USERNAME },
+            { name: SYSTEM_ADMIN_NAME },
+          ],
         },
       },
       select: {
@@ -231,7 +232,9 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
       .reduce((sum, order) => sum + order.count, 0),
   } satisfies NextDayReportGuestCounts;
 
-  const breakfastEmployees = peopleRows.filter((row) => row.breakfastPresent).length;
+  const breakfastEmployees = peopleRows.filter(
+    (row) => row.breakfastPresent,
+  ).length;
   const lunchEmployees = peopleRows.filter((row) => row.lunchPresent).length;
   const guestMeals = guestCounts.breakfast + guestCounts.lunch;
   const employeeMeals = breakfastEmployees + lunchEmployees;
@@ -252,7 +255,9 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
     buildMealSummary(
       mealType,
       peopleRows,
-      mealType === MealType.BREAKFAST ? guestCounts.breakfast : guestCounts.lunch,
+      mealType === MealType.BREAKFAST
+        ? guestCounts.breakfast
+        : guestCounts.lunch,
     ),
   );
 
@@ -268,4 +273,7 @@ export async function getNextDayMealReport(): Promise<NextDayMealReport> {
   };
 }
 
-export const REPORTER_MEAL_TYPES = [MealType.BREAKFAST, MealType.LUNCH] as const;
+export const REPORTER_MEAL_TYPES = [
+  MealType.BREAKFAST,
+  MealType.LUNCH,
+] as const;

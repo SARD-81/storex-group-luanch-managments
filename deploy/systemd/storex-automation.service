@@ -1,0 +1,21 @@
+[Unit]
+Description=StoreX durable automation worker
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=storex
+Group=storex
+WorkingDirectory=/opt/storex/current
+Environment=NODE_ENV=production
+Environment=TZ=Asia/Tehran
+EnvironmentFile=/etc/storex/automation.env
+ExecStart=/usr/bin/node --import tsx scripts/automation-worker.ts --once
+TimeoutStartSec=180
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/storex/automation

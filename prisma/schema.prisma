@@ -440,3 +440,140 @@ model CalendarOverride {
   @@index([type])
   @@index([createdById])
 }
+
+enum AutomationStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  RETRYING
+  BLOCKED
+  MANUAL_ACTION_REQUIRED
+  SKIPPED
+}
+
+model AutomationConfig {
+  id String @id @default("singleton")
+  reporterEnabled Boolean @default(false)
+  calendarEnabled Boolean @default(false)
+  nextcloudBaseUrl String @default("")
+  reportsDirectory String @default("/StoreX-Automation/Reports")
+  calendarDirectory String @default("/StoreX-Automation/Calendar")
+  reportRecipient String @default("")
+  technicalConversation String @default("")
+  reminder1 String @default("09:20")
+  reminder2 String @default("09:25")
+  deliveryTime String @default("09:30")
+  retry1 String @default("09:40")
+  retry2 String @default("09:50")
+  finalRetry String @default("10:00")
+  calendarSourceOverride String @default("")
+  publicSharingState String @default("UNKNOWN")
+  capabilityCheckedAt DateTime?
+  health Json?
+  updatedAt DateTime @updatedAt
+}
+
+model AutomationJobRun {
+  id String @id @default(cuid())
+  jobType String
+  executionKey String @unique
+  target String
+  attempt Int @default(0)
+  status AutomationStatus @default(PENDING)
+  stage String @default("PENDING")
+  startedAt DateTime?
+  finishedAt DateTime?
+  nextRetryAt DateTime?
+  errorCode String?
+  errorMessage String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, nextRetryAt])
+  @@index([jobType, target])
+}
+
+model AutomationArtifact {
+  id String @id @default(cuid())
+  artifactKey String @unique
+  type String
+  target String
+  sha256 String
+  spoolPath String
+  nextcloudPath String?
+  uploadState String @default("PENDING")
+  retainUntil DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deliveries ReportDelivery[]
+  @@index([uploadState])
+}
+
+model ReportDelivery {
+  id String @id @default(cuid())
+  reportDateKey String @unique
+  artifactId String?
+  artifact AutomationArtifact? @relation(fields:[artifactId],references:[id],onDelete:Restrict)
+  stage String @default("PENDING")
+  status AutomationStatus @default(PENDING)
+  shareId String?
+  publicUrl String?
+  shareCreatedAt DateTime?
+  expiresAt DateTime?
+  revokedAt DateTime?
+  sentAt DateTime?
+  baleMessageId String?
+  nextRetryAt DateTime?
+  cleanupError String?
+  snapshot Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([expiresAt, revokedAt])
+}
+
+model AutomationAlert {
+  id String @id @default(cuid())
+  alertKey String @unique
+  jobType String
+  target String
+  message String
+  status AutomationStatus @default(PENDING)
+  remoteMessageId String?
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+}
+
+model CalendarDataset {
+  id String @id @default(cuid())
+  year Int
+  sourceName String
+  sourceUrl String?
+  sourceHash String
+  parserVersion String
+  status String @default("STAGED")
+  payload Json
+  diff Json?
+  importBatchId String?
+  approvedById String?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([year, sourceName, sourceHash])
+  @@index([year, status])
+}
+
+/// Durable expiry tracking for non-report capability probes.
+model AutomationShareLease {
+  id String @id @default(cuid())
+  leaseKey String @unique
+  nextcloudPath String
+  shareId String?
+  publicUrl String?
+  shareCreatedAt DateTime?
+  expiresAt DateTime?
+  revokedAt DateTime?
+  cleanupError String?
+  createdAt DateTime @default(now())
+  @@index([expiresAt, revokedAt])
+}

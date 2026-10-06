@@ -1,0 +1,11 @@
+[Unit]
+Description=Run StoreX automation every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00 Asia/Tehran
+Persistent=true
+AccuracySec=1s
+Unit=storex-automation.service
+
+[Install]
+WantedBy=timers.target
