@@ -126,6 +126,10 @@ test(
         title: "manual override retained",
         createdById: admin.id,
       });
+      await db.calendarDay.update({
+        where: { id: day.id },
+        data: { holidayTitle: "company-specific title" },
+      });
       const replacement = await stageAnnualDataset(
         db,
         parseEmergencyCalendar(year, "1410-01-03 | replacement").dataset,
@@ -136,6 +140,7 @@ test(
         include: { override: true, events: true },
       });
       assert.equal(after.isManualHoliday, true);
+      assert.equal(after.holidayTitle, "company-specific title");
       assert.equal(after.isOfficialHoliday, true);
       assert.equal(after.isWorkday, false);
       assert.equal(after.override?.title, "manual override retained");

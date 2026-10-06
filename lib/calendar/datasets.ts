@@ -134,19 +134,17 @@ export function parseEmergencyCalendar(
       );
     }
   }
-  const events = [...entries]
-    .sort()
-    .map(([date, title], i) => ({
-      eventKey: `manual:${date}`,
-      jalaliDateKey: date,
-      title,
-      type: CalendarEventType.OFFICIAL,
-      calendarType: CalendarDateSystem.JALALI,
-      isHoliday: true,
-      displayOrder: i,
-      sourcePage: null,
-      sourceSection: CalendarEventSourceSection.MANUAL,
-    }));
+  const events = [...entries].sort().map(([date, title], i) => ({
+    eventKey: `manual:${date}`,
+    jalaliDateKey: date,
+    title,
+    type: CalendarEventType.OFFICIAL,
+    calendarType: CalendarDateSystem.JALALI,
+    isHoliday: true,
+    displayOrder: i,
+    sourcePage: null,
+    sourceSection: CalendarEventSourceSection.MANUAL,
+  }));
   const sourceHash = createHash("sha256")
     .update(JSON.stringify(events))
     .digest("hex");
@@ -399,7 +397,9 @@ export async function applyAnnualDataset(
         where: { id: d.id },
         data: {
           isOfficialHoliday,
-          holidayTitle: titles.get(d.id)?.join("، ") ?? null,
+          holidayTitle: d.isManualHoliday
+            ? d.holidayTitle
+            : (titles.get(d.id)?.join("، ") ?? null),
           isWorkday: resolveCalendarWorkday({ ...d, isOfficialHoliday }),
           sourceName: data.sourceName,
           sourceVersion: version,

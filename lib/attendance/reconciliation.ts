@@ -228,6 +228,24 @@ export async function reconcileAttendanceTx(
   return summary;
 }
 
+/** Calendar imports reconcile current coverage and all already projected future AUTO rows. */
+export async function reconcileCalendarAttendanceTx(tx: Tx, now = new Date()) {
+  const window = getAttendanceReservationWindow(now);
+  const lastAuto = await tx.mealAttendance.findFirst({
+    where: {
+      source: AttendanceSource.AUTO_RESERVATION,
+      date: { gte: parseDateKey(window.todayDateKey)! },
+    },
+    orderBy: { date: "desc" },
+    select: { date: true },
+  });
+  const to =
+    lastAuto && getDateKey(lastAuto.date) > window.maxDateKey
+      ? getDateKey(lastAuto.date)
+      : window.maxDateKey;
+  return reconcileAttendanceTx(tx, { from: window.todayDateKey, to, now });
+}
+
 export async function reconcileAttendance(
   db: PrismaClient,
   options: { from?: string; to?: string; userId?: string; now?: Date } = {},
