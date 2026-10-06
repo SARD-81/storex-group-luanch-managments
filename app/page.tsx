@@ -222,10 +222,10 @@ export default async function Home({
                 <h2 className="text-xl font-semibold">اعضای تیم</h2>
                 <div className="flex flex-wrap gap-3">
                   <Link
-                    href="/settings/weekly-plan"
+                    href="/settings/attendance"
                     className="dashboard-action-button"
                   >
-                    تنظیم برنامه هفتگی
+                    مدیریت حضور و رزرو روزانه
                   </Link>
                   <Link
                     href="/settings/users"
@@ -245,6 +245,7 @@ export default async function Home({
                   >
                     لاگ ممیزی
                   </Link>
+                  <Link href="/settings/automations" className="dashboard-action-button">مرکز مدیریت اتوماسیون</Link>
                   <Link href="/reports" className="dashboard-action-button">
                     گزارش‌ها
                   </Link>
@@ -276,7 +277,7 @@ export default async function Home({
                           {formatUserAdminWeeklyPlan({
                             weeklyAttendances:
                               weeklyPlanAttendancesByUserId.get(user.id) ?? [],
-                            weeklyPreferences: user.weeklyPreferences,
+                            weeklyPreferences: [],
                             weekStart: adminPlanWeekStart,
                             calendarPlanDays: adminCalendarPlanDays,
                           })}

@@ -124,14 +124,6 @@ export async function getAdminDashboardData(selectedDate: Date) {
   ] = await Promise.all([
     prisma.user.findMany({
       where: { isActive: true, role: { not: UserRole.REPORTER } },
-      include: {
-        weeklyPreferences: {
-          where: {
-            isEnabled: true,
-            dayOfWeek: { gte: 0, lte: 4 },
-          },
-        },
-      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.mealAttendance.findMany({
@@ -200,14 +192,6 @@ export async function getUserDashboardData(userId: string, selectedDate: Date) {
       where: {
         isActive: true,
         id: userId,
-      },
-      include: {
-        weeklyPreferences: {
-          where: {
-            isEnabled: true,
-            dayOfWeek: { gte: 0, lte: 4 },
-          },
-        },
       },
     }),
     prisma.mealAttendance.findMany({

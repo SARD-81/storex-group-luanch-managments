@@ -3,6 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { UserRole } from "@/app/generated/prisma/client";
 import {
   createUserAction,
+  updateAutomaticMealsAction,
   resetUserPasswordAction,
   updateUserStatusAction,
 } from "@/actions/users";
@@ -159,6 +160,7 @@ export default async function UsersManagementPage({
                   <th className="border-b border-border/60 p-3">نقش</th>
                   <th className="border-b border-border/60 p-3">وضعیت</th>
                   <th className="border-b border-border/60 p-3">تغییر وضعیت</th>
+                  <th className="p-3">رزرو خودکار</th>
                   <th className="border-b border-border/60 p-3">
                     بازنشانی رمز عبور
                   </th>
@@ -205,6 +207,12 @@ export default async function UsersManagementPage({
                         </PendingSubmitButton>
                       </form>
                     </td>
+                    <td className="p-3">{user.role !== UserRole.REPORTER ? <form action={updateAutomaticMealsAction} className="space-y-2">
+                      <input type="hidden" name="userId" value={user.id}/>
+                      <label className="block"><input name="autoBreakfast" type="checkbox" defaultChecked={user.autoBreakfast}/> رزرو خودکار صبحانه</label>
+                      <label className="block"><input name="autoLunch" type="checkbox" defaultChecked={user.autoLunch}/> رزرو خودکار ناهار</label>
+                      <PendingSubmitButton pendingText="ذخیره…" className="dashboard-action-button">ذخیره رزرو خودکار</PendingSubmitButton>
+                    </form> : "گزارش‌گیر در رزرو وعده شرکت نمی‌کند."}</td>
                     <td className="border-b border-border/60 p-3">
                       <form
                         action={resetUserPasswordAction}

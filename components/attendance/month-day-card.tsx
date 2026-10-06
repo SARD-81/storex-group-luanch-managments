@@ -11,6 +11,8 @@ type MonthDayCardProps = {
     isSelectable: boolean;
     deadline: Date;
     isToday: boolean;
+    breakfastLocked: boolean;
+    lunchLocked: boolean;
     breakfastStatus: AttendanceStatus;
     lunchStatus: AttendanceStatus;
     isWorkDay: boolean;
@@ -109,6 +111,7 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
 
       <div className="flex flex-1 flex-col gap-3">
         <DayIndicators day={day} />
+        {(day.breakfastLocked || day.lunchLocked) ? <p className="text-xs">{day.breakfastLocked ? "صبحانه: " : ""}{day.lunchLocked ? "ناهار: " : ""}این وضعیت توسط مدیر تنظیم شده است.</p> : null}
 
         {!day.isWorkDay ? (
           <div className="flex flex-1 flex-col gap-3 text-sm text-muted-foreground">
@@ -127,13 +130,16 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
           <div className="flex flex-1 flex-col gap-3">
             <input type="hidden" name="date" value={day.dateKey} />
             <EventAccordion titles={day.eventTitles} />
+            {day.breakfastLocked && day.breakfastStatus === AttendanceStatus.PRESENT ? <input type="hidden" name={`meal:${day.dateKey}:BREAKFAST`} value="on"/> : null}
+            {day.lunchLocked && day.lunchStatus === AttendanceStatus.PRESENT ? <input type="hidden" name={`meal:${day.dateKey}:LUNCH`} value="on"/> : null}
             <div className="space-y-2">
               <label className="dashboard-muted-panel flex items-center justify-between text-sm">
-                <span>صبحانه</span>
+                <span>صبحانه{day.breakfastLocked ? <small className="block">این وضعیت توسط مدیر تنظیم شده است.</small> : null}</span>
                 <input
                   className="dashboard-checkbox"
                   type="checkbox"
                   name={`meal:${day.dateKey}:BREAKFAST`}
+                  disabled={day.breakfastLocked}
                   data-monthly-meal="BREAKFAST"
                   defaultChecked={
                     day.breakfastStatus === AttendanceStatus.PRESENT
@@ -141,11 +147,12 @@ export function MonthDayCard({ day }: MonthDayCardProps) {
                 />
               </label>
               <label className="dashboard-muted-panel flex items-center justify-between text-sm">
-                <span>ناهار</span>
+                <span>ناهار{day.lunchLocked ? <small className="block">این وضعیت توسط مدیر تنظیم شده است.</small> : null}</span>
                 <input
                   className="dashboard-checkbox"
                   type="checkbox"
                   name={`meal:${day.dateKey}:LUNCH`}
+                  disabled={day.lunchLocked}
                   data-monthly-meal="LUNCH"
                   defaultChecked={day.lunchStatus === AttendanceStatus.PRESENT}
                 />

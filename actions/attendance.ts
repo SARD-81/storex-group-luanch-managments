@@ -1,37 +1,17 @@
 "use server";
-
-import { revalidatePath } from "next/cache";
-import {
-  AuditAction,
-  AuditStatus,
-  AuditTargetType,
-} from "@/app/generated/prisma/client";
-import { generateNextWeekAttendance } from "@/lib/attendance/generate-next-week";
+import { AttendanceStatus, MealType } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
-import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
-import { getAuditRequestContext } from "@/lib/audit/request-context";
+import { setAdminAttendance } from "@/lib/attendance/reconciliation";
 import { prisma } from "@/lib/prisma";
-
-export async function generateNextWeekAttendanceAction() {
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+export async function setAdminAttendanceAction(form: FormData) {
   const admin = await requireAdmin();
-  const auditContext = await getAuditRequestContext();
-  const result = await generateNextWeekAttendance();
-
-  await writeAuditLog(prisma, {
-    ...getAuditActorFromUser(admin),
-    action: AuditAction.WEEKLY_ATTENDANCE_GENERATED,
-    targetType: AuditTargetType.MEAL_ATTENDANCE,
-    targetId: null,
-    targetLabel: "next-week-attendance",
-    status: AuditStatus.SUCCESS,
-    metadata: {
-      attempted: result.attempted,
-      created: result.created,
-      weekStart: result.weekStart,
-      weekEndExclusive: result.weekEndExclusive,
-    },
-    ...auditContext,
-  });
-
-  revalidatePath("/");
+  const dateKey = String(form.get("date")), mealType = String(form.get("mealType")), status = String(form.get("status"));
+  if (!["BREAKFAST", "LUNCH"].includes(mealType) || !["PRESENT", "ABSENT", "CLEAR"].includes(status)) throw new Error("INVALID_INPUT");
+  await setAdminAttendance(prisma, admin, { userId: String(form.get("userId")), dateKey, mealType: mealType as MealType, status: status === "CLEAR" ? null : status as AttendanceStatus });
+  for (const p of ["/", "/settings/attendance", "/reports", "/reporter/next-day"]) revalidatePath(p);
+  redirect(`/settings/attendance?date=${encodeURIComponent(dateKey)}&saved=1`);
 }
+/** Retired bookmark/action compatibility: no recurring attendance generation. */
+export async function generateNextWeekAttendanceAction() { await requireAdmin();redirect("/settings/attendance"); }

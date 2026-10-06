@@ -15,6 +15,7 @@ import {
 import { requireAdmin } from "@/lib/auth/session";
 import { getAuditActorFromUser, writeAuditLog } from "@/lib/audit/audit-log";
 import { getAuditRequestContext } from "@/lib/audit/request-context";
+import { reconcileAttendance } from "@/lib/attendance/reconciliation";
 import { prisma } from "@/lib/prisma";
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -77,6 +78,9 @@ export async function applyManualHolidayOverrideAction(
     ...auditContext,
   });
 
+  await reconcileAttendance(prisma, { from: dateKey, to: dateKey });
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=manual-holiday`);
 }
@@ -123,6 +127,9 @@ export async function applyForcedWorkdayOverrideAction(
     ...auditContext,
   });
 
+  await reconcileAttendance(prisma, { from: dateKey, to: dateKey });
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=forced-workday`);
 }
@@ -160,6 +167,9 @@ export async function clearCalendarOverrideAction(
     ...auditContext,
   });
 
+  await reconcileAttendance(prisma, { from: dateKey, to: dateKey });
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=cleared`);
 }

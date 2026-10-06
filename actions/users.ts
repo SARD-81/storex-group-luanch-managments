@@ -1,6 +1,9 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { attendanceTransaction, reconcileAttendanceTx, configureAutomaticMeals } from "@/lib/attendance/reconciliation";
+import { getAttendanceReservationWindow } from "@/lib/attendance/month";
+import { getDateKey } from "@/lib/date/date-key";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -105,9 +108,12 @@ export async function updateUserStatusAction(formData: FormData) {
     }
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { isActive: nextActive },
+  const updatedUser = await attendanceTransaction(prisma, async tx => {
+    const updated = await tx.user.update({ where: { id: userId }, data: { isActive: nextActive } });
+    const window = getAttendanceReservationWindow();
+    const last = await tx.mealAttendance.findFirst({ where: { userId, source: "AUTO_RESERVATION" }, orderBy: { date: "desc" } });
+    await reconcileAttendanceTx(tx, { userId, from: window.todayDateKey, to: last && getDateKey(last.date) > window.maxDateKey ? getDateKey(last.date) : window.maxDateKey });
+    return updated;
   });
 
   await writeAuditLog(prisma, {
@@ -175,4 +181,11 @@ export async function resetUserPasswordAction(formData: FormData) {
 
   revalidatePath("/settings/users");
   redirect("/settings/users?saved=password");
+}
+
+export async function updateAutomaticMealsAction(formData: FormData) {
+  const admin = await requireAdmin();
+  await configureAutomaticMeals(prisma, admin, String(formData.get("userId")), formData.get("autoBreakfast") === "on", formData.get("autoLunch") === "on");
+  for (const p of ["/", "/settings/users", "/settings/attendance", "/reports", "/reporter/next-day"]) revalidatePath(p);
+  redirect("/settings/users?saved=auto");
 }
