@@ -155,9 +155,11 @@ export async function GET(request: Request) {
   const auditContext = await getAuditRequestContext();
 
   const { searchParams } = new URL(request.url);
+  const fromValues = searchParams.getAll("from"),
+    toValues = searchParams.getAll("to");
   const { fromDate, toDate, error } = resolveReportDateRange({
-    from: searchParams.get("from") ?? undefined,
-    to: searchParams.get("to") ?? undefined,
+    from: fromValues.length > 1 ? fromValues : fromValues[0],
+    to: toValues.length > 1 ? toValues : toValues[0],
   });
   if (error) return Response.json({ error }, { status: 400 });
 

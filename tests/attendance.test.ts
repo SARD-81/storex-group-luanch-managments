@@ -28,6 +28,8 @@ test("report range never clamps and rejects invalid/reversed/oversized requests"
     { from: "2026-02-30" },
     { from: "bad" },
     { to: "bad" },
+    { from: ["2026-10-10", "2026-10-11"] },
+    { to: ["2026-10-10", "2026-10-10"] },
     { from: "2026-10-10", to: "2026-10-01" },
     { from: "2026-01-01", to: "2027-01-02" },
   ])

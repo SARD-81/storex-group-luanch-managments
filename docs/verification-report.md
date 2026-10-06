@@ -10,6 +10,8 @@ Report filters now retain independent Jalali draft values across navigation, clo
 mutable picker values, apply explicitly, synchronize with applied URL changes, and
 use a normal download link for Excel. The browser test selects six distinct dates
 and checks pending completion, URL/export agreement, Back/Forward and reload.
+Repeated date query parameters are rejected consistently by the page and Excel,
+with both boundaries covered in the web regression checks.
 The earlier native CI failed in browser navigation. The combined component and
 test fixes passed; the original main-branch failure has not been independently
 reproduced, so this does not establish one exclusive root cause.
@@ -28,20 +30,20 @@ revocation followed by a failed private-file deletion, including across dates.
 ## Recorded evidence
 
 The complete native PostgreSQL 17 run for commit
-`5ed7d0b6251ca30bf1403670bbf76f840c12f2a1` passed:
-https://github.com/SARD-81/storex-group-luanch-managments/actions/runs/37504091893
+`3c258a9344cb282e78920da3eb718e5e7ca6c61d` passed:
+https://github.com/SARD-81/storex-group-luanch-managments/actions/runs/37505451428
 
 | Check | Recorded result |
 | --- | --- |
 | Prisma validation, generation, migrations, TypeScript, production build | PASS |
-| Native database tests, including separate-session worker locking | 18 passed; no skips |
+| Native database tests, including separate-session worker locking and real TLS pinning | 20 passed; no skips |
 | Browser report navigation | Six repeated changes; Back/Forward/reload passed |
 | SSR, login, role restrictions and UI/Excel ranges | PASS; 1/7/31/90/180/365 days |
 | Existing calendar smoke scripts | All six passed |
 | A5 print/server PDFs | Four scenarios; portrait approximately 420 × 595 pt |
 | Empty and normal reports | One page each; no unexpected blank pages |
 | Sixty long Persian employee names | Seven pages; text bounds passed; rendered sample inspected |
-| 100-person, 365-day web range fixture | 244 workdays; approximately 1.4 s in that CI run |
+| 100-person, 365-day web range fixture | 244 workdays; approximately 1.5 s in that CI run |
 
 The subsequent transport-hardening local suite has 20 tests: 19 passed, none failed, one deliberately
 skipped native session-lock test under disposable PGlite. It includes database

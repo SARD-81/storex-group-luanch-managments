@@ -8,8 +8,8 @@ import { getAttendanceReport } from "@/lib/reports/get-attendance-report";
 import { resolveReportDateRange } from "@/lib/reports/report-date-range";
 
 type ReportSearchParams = Promise<{
-  from?: string;
-  to?: string;
+  from?: string | string[];
+  to?: string | string[];
   page?: string;
 }>;
 

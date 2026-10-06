@@ -6,12 +6,21 @@ import { spawn } from "node:child_process";
 import bcrypt from "bcryptjs";
 import ExcelJS from "exceljs";
 import { checkBrowser } from "./check-browser-regression";
+import { resolveReportDateRange } from "../lib/reports/report-date-range";
 import { prisma } from "../lib/prisma";
 const base = "http://127.0.0.1:3100",
   prefix = "web-regression-";
-async function assertRedirect(response:Response,target:string) {
-  if([303,307,308].includes(response.status)){assert.equal(response.headers.get("location"),target);return;}
-  const body=await response.text();assert.equal(response.status,200);assert.ok(body.includes('http-equiv="refresh"')&&body.includes(`url=${target}"`),`expected streamed redirect to ${target}`);
+async function assertRedirect(response: Response, target: string) {
+  if ([303, 307, 308].includes(response.status)) {
+    assert.equal(response.headers.get("location"), target);
+    return;
+  }
+  const body = await response.text();
+  assert.equal(response.status, 200);
+  assert.ok(
+    body.includes('http-equiv="refresh"') && body.includes(`url=${target}"`),
+    `expected streamed redirect to ${target}`,
+  );
 }
 async function main() {
   assert.equal(process.env.TEST_DATABASE_URL, process.env.DATABASE_URL);
@@ -19,7 +28,8 @@ async function main() {
     new URL(process.env.DATABASE_URL!).hostname,
     /^(localhost|127\.0\.0\.1)$/,
   );
-  if(process.env.TEST_PGLITE!=="true") assert.match(new URL(process.env.TEST_DATABASE_URL!).pathname,/_test$/);
+  if (process.env.TEST_PGLITE !== "true")
+    assert.match(new URL(process.env.TEST_DATABASE_URL!).pathname, /_test$/);
   const cookies = new Map<string, string>();
   const server = spawn(
     process.execPath,
@@ -125,14 +135,31 @@ async function main() {
         "/settings/automations/calendar",
       ]) {
         const r = await request(route, role);
-        if(![303,307].includes(r.status)){const body=await r.text();console.log(JSON.stringify({redirectCheck:{role,route,status:r.status,meta:body.match(/<meta[^>]*http-equiv="refresh"[^>]*>/)?.[0]}}));assert.ok(r.status===200&&/http-equiv="refresh"[^>]*content="[01];url=\/"/.test(body),`${role} ${route} expected redirect`);}
-        if(r.status!==200) assert.equal(r.headers.get("location"), "/");
+        if (![303, 307].includes(r.status)) {
+          const body = await r.text();
+          console.log(
+            JSON.stringify({
+              redirectCheck: {
+                role,
+                route,
+                status: r.status,
+                meta: body.match(/<meta[^>]*http-equiv="refresh"[^>]*>/)?.[0],
+              },
+            }),
+          );
+          assert.ok(
+            r.status === 200 &&
+              /http-equiv="refresh"[^>]*content="[01];url=\/"/.test(body),
+            `${role} ${route} expected redirect`,
+          );
+        }
+        if (r.status !== 200) assert.equal(r.headers.get("location"), "/");
       }
     }
     const legacy = await request("/settings/weekly-plan");
-    await assertRedirect(legacy,"/settings/attendance");
+    await assertRedirect(legacy, "/settings/attendance");
     const anonymous = await request("/reports", "ANONYMOUS");
-    await assertRedirect(anonymous,"/login");
+    await assertRedirect(anonymous, "/login");
     const rows = [];
     for (const days of [1, 7, 31, 90, 180, 365]) {
       const from = "2026-03-21",
@@ -175,7 +202,22 @@ async function main() {
       "?from=2026-02-30",
       "?from=2026-10-10&to=2026-10-01",
       "?from=2026-01-01&to=2027-01-02",
+      "?from=2026-10-10&from=2026-10-11",
+      "?from=2026-10-10&to=2026-10-11&to=2026-10-11",
     ]) {
+      const params = new URLSearchParams(query);
+      const from = params.getAll("from"),
+        to = params.getAll("to");
+      const range = resolveReportDateRange({
+        from: from.length > 1 ? from : from[0],
+        to: to.length > 1 ? to : to[0],
+      });
+      assert.ok(range.error);
+      assert.ok(
+        (await (await request("/reports" + query)).text()).includes(
+          range.error,
+        ),
+      );
       assert.equal((await request("/reports/export" + query)).status, 400);
     }
     assert.equal(
