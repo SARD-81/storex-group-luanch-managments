@@ -28,25 +28,30 @@ revocation followed by a failed private-file deletion, including across dates.
 ## Recorded evidence
 
 The complete native PostgreSQL 17 run for commit
-`9df9e23412632c5f48aebee6791294882d8eca22` passed:
-https://github.com/SARD-81/storex-group-luanch-managments/actions/runs/37502383302
+`5ed7d0b6251ca30bf1403670bbf76f840c12f2a1` passed:
+https://github.com/SARD-81/storex-group-luanch-managments/actions/runs/37504091893
 
 | Check | Recorded result |
 | --- | --- |
 | Prisma validation, generation, migrations, TypeScript, production build | PASS |
-| Native database tests, including separate-session worker locking | 15 passed; no skips |
+| Native database tests, including separate-session worker locking | 18 passed; no skips |
 | Browser report navigation | Six repeated changes; Back/Forward/reload passed |
 | SSR, login, role restrictions and UI/Excel ranges | PASS; 1/7/31/90/180/365 days |
 | Existing calendar smoke scripts | All six passed |
 | A5 print/server PDFs | Four scenarios; portrait approximately 420 × 595 pt |
 | Empty and normal reports | One page each; no unexpected blank pages |
 | Sixty long Persian employee names | Seven pages; text bounds passed; rendered sample inspected |
-| 100-person, 365-day web range fixture | 244 workdays; approximately 1.1 s in that CI run |
+| 100-person, 365-day web range fixture | 244 workdays; approximately 1.4 s in that CI run |
 
-The follow-up local suite has 18 tests: 17 passed, none failed, one deliberately
+The subsequent transport-hardening local suite has 20 tests: 19 passed, none failed, one deliberately
 skipped native session-lock test under disposable PGlite. It includes database
 fault injection after successful Bale and Talk sends, probe file deletion failure,
-and manual title preservation. PGlite is not evidence for native advisory locks.
+and manual title preservation. New transport tests use a real local TLS socket
+with an unresolvable hostname: the pinned address connects, SNI is preserved,
+trusted certificates work, and untrusted/wrong-host certificates are rejected.
+Mixed public/private and empty DNS answers are rejected before connecting.
+Requests now use a bounded response and a per-request pinned dispatcher, including
+each allowed redirect. PGlite is not evidence for native advisory locks.
 The PR's Quality gate must also pass on the final head; consult its checks for the
 native results of these additional tests. CI retains PDF/screenshots/JSON evidence
 in `verification-output` for 14 days. Timings describe fixtures, not a production SLA.
@@ -59,18 +64,17 @@ in `verification-output` for 14 days. Timings describe fixtures, not a productio
    holiday dates / 244 workdays / 104 weekly offdays, but this does **not** certify
    extraction from the actual PDF. Generic layouts, partial/wrong-year PDFs and
    a complete leap-year PDF must be normalized and tested before certification.
+   The currently retrieved 1405 files are one-page transfer notices, not the
+   twelve-month university calendar; they cannot serve as a golden PDF fixture.
 2. Live Nextcloud/Bale/Talk staging verification has not been performed. Test
    doubles cover disabled sharing, private recipients, anonymous hash validation,
    retries and expiry, but do not prove the site's deployed policies or credentials.
-3. DNS addresses are checked before fetch, but the transport does not pin that
-   resolution to its connection. Close the DNS rebinding gap and verify the
-   transport before clearing the security merge gate.
-4. Browser coverage is not yet the full existing-feature matrix: profile/avatar,
+3. Browser coverage is not yet the full existing-feature matrix: profile/avatar,
    password changes, password resets, user activation and all guest/manual CRUD
    paths still require regression verification.
-5. A production company-logo asset has not been provided. The current placeholder
+4. A production company-logo asset has not been provided. The current placeholder
    is not final branding approval.
-6. Exact physical public-link revocation during worker/network outage cannot be
+5. Exact physical public-link revocation during worker/network outage cannot be
    guaranteed. The worker revokes at the first tick at/after the exact stored
    expiry and records failures. Verify the operational timer and monitoring on
    staging and assess this limitation against the required 24-hour policy.
