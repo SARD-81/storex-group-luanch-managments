@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { chromium } from "playwright";
@@ -26,17 +26,22 @@ export async function checkBrowser(base: string, cookie: string) {
     const page = await context.newPage(),
       errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    await page.goto(base + "/reports?from=2026-03-21&to=2027-03-20");
+    await page.goto(base + "/reports?from=2026-10-07&to=2026-10-14");
     for (let i = 0; i < 6; i++) {
       const prior = page.url();
       await page
         .locator("label")
-        .filter({ hasText: "تا تاریخ" })
+        .filter({ hasText: "از تاریخ" })
         .locator("button")
         .click();
       await page
-        .locator(".rmdp-day:not(.rmdp-disabled):not(.rmdp-day-hidden) > span")
-        .nth(i + 5)
+        .locator(".rmdp-day:not(.rmdp-deactive):not(.rmdp-disabled) > span")
+        .filter({
+          hasText: new RegExp(
+            "^" + ["۱۶", "۱۷", "۱۸", "۱۹", "۲۰", "۲۱"][i] + "$",
+          ),
+        })
+        .first()
         .click();
       assert.equal(
         page.url(),
@@ -46,15 +51,29 @@ export async function checkBrowser(base: string, cookie: string) {
       await page.getByRole("button", { name: "اعمال فیلتر" }).click();
       await page.waitForURL((url) => url.toString() !== prior, {
         timeout: 15000,
+        waitUntil: "domcontentloaded",
       });
       await page
-        .getByRole("button", { name: "اعمال فیلتر" })
-        .waitFor({ state: "visible" });
+        .getByText("در حال به‌روزرسانی گزارش...")
+        .waitFor({ state: "hidden" });
+      assert.equal(
+        new URL(page.url()).search,
+        new URL(
+          (await page
+            .getByRole("link", { name: "دریافت فایل Excel" })
+            .getAttribute("href"))!,
+          base,
+        ).search,
+      );
       assert.equal(
         await page.getByRole("button", { name: "اعمال فیلتر" }).isEnabled(),
         true,
       );
     }
+    await page.goBack();
+    await page.goForward();
+    await page.reload();
+    await page.getByRole("button", { name: "اعمال فیلتر" }).waitFor();
     await page.screenshot({
       path: "verification-output/reports-desktop.png",
       fullPage: true,
@@ -68,6 +87,9 @@ export async function checkBrowser(base: string, cookie: string) {
       "/reporter/next-day",
     ]) {
       await page.goto(base + route);
+      await page
+        .getByText("در حال بارگذاری اطلاعات...", { exact: true })
+        .waitFor({ state: "hidden" });
       assert.ok((await page.locator("body").innerText()).trim().length > 50);
       assert.equal(await page.locator("[data-nextjs-dialog]").count(), 0);
     }
@@ -75,6 +97,10 @@ export async function checkBrowser(base: string, cookie: string) {
       path: "verification-output/reporter-screen.png",
       fullPage: true,
     });
+    await page.locator(".meal-report").waitFor({ state: "visible" });
+    await page
+      .getByText("در حال بارگذاری اطلاعات...", { exact: true })
+      .waitFor({ state: "hidden" });
     await page.emulateMedia({ media: "print" });
     await page.pdf({
       path: "verification-output/manual-print.pdf",
@@ -153,6 +179,25 @@ export async function checkBrowser(base: string, cookie: string) {
         pdfInspection: JSON.parse(inspect.stdout),
       }),
     );
+  } catch (error) {
+    for (const page of browser
+      .contexts()
+      .flatMap((context) => context.pages())) {
+      await page
+        .screenshot({
+          path: "verification-output/browser-failure.png",
+          timeout: 5000,
+        })
+        .catch(() => {});
+      await writeFile(
+        "verification-output/browser-failure.txt",
+        await page
+          .locator("body")
+          .innerText()
+          .catch(() => "unavailable"),
+      );
+    }
+    throw error;
   } finally {
     await browser.close();
   }

@@ -1,146 +1,140 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import DatePicker from "react-multi-date-picker";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
+import gregorian from "react-date-object/calendars/gregorian";
 import persianFa from "react-date-object/locales/persian_fa";
-import { getDateKey } from "@/lib/date/date-key";
+import gregorianEn from "react-date-object/locales/gregorian_en";
+import { resolveReportDateRange } from "@/lib/reports/report-date-range";
 
-type ReportDateFilterProps = {
-  fromDateKey: string;
-  toDateKey: string;
-};
-
-function dateKeyToDateObject(dateKey: string) {
-  const [year, month, day] = dateKey.split("-").map(Number);
-
+function dateObject(dateKey: string) {
   return new DateObject({
-    date: new Date(year, month - 1, day),
-    calendar: persian,
-    locale: persianFa,
-  });
+    date: dateKey,
+    format: "YYYY-MM-DD",
+    calendar: gregorian,
+    locale: gregorianEn,
+  }).convert(persian, persianFa);
+}
+function dateKey(value: DateObject) {
+  return new DateObject(value)
+    .convert(gregorian, gregorianEn)
+    .format("YYYY-MM-DD");
 }
 
-function dateObjectToGregorianDate(value: DateObject) {
-  const date = value.toDate();
-
-  return new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
-  );
-}
-
+/** Keep one filter instance throughout navigation; sync drafts only on applied URL changes. */
 export function ReportDateFilter({
   fromDateKey,
   toDateKey,
-}: ReportDateFilterProps) {
+  valid = true,
+}: {
+  fromDateKey: string;
+  toDateKey: string;
+  valid?: boolean;
+}) {
   const router = useRouter();
+  const [from, setFrom] = useState(() => dateObject(fromDateKey));
+  const [to, setTo] = useState(() => dateObject(toDateKey));
   const [isPending, startTransition] = useTransition();
-  const [draftFrom, setDraftFrom] = useState(fromDateKey);
-  const [draftTo, setDraftTo] = useState(toDateKey);
-  const fromValue = useMemo(() => dateKeyToDateObject(draftFrom), [draftFrom]);
-  const toValue = useMemo(() => dateKeyToDateObject(draftTo), [draftTo]);
-  const rangeError =
-    draftFrom > draftTo
-      ? "تاریخ پایان قبل از شروع است."
-      : (Date.parse(draftTo) - Date.parse(draftFrom)) / 86400000 >= 366
-        ? "حداکثر بازه گزارش ۳۶۶ روز است."
-        : null;
-
-  const updateRange = (nextFromDateKey: string, nextToDateKey: string) => {
-    startTransition(() => {
-      router.push(
-        `/reports?from=${encodeURIComponent(nextFromDateKey)}&to=${encodeURIComponent(nextToDateKey)}`,
-      );
-    });
-  };
-
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    setFrom((current) =>
+      dateKey(current) === fromDateKey ? current : dateObject(fromDateKey),
+    );
+    setTo((current) =>
+      dateKey(current) === toDateKey ? current : dateObject(toDateKey),
+    );
+    setError(null);
+  }, [fromDateKey, toDateKey]);
   return (
     <section className="dashboard-glass-card">
-      <div className="flex flex-wrap items-end gap-4">
-        <label className="flex flex-col gap-2 text-sm">
-          <span>از تاریخ</span>
-          <DatePicker
-            calendar={persian}
-            locale={persianFa}
-            value={fromValue}
-            calendarPosition="bottom-right"
-            portal
-            zIndex={10000}
-            render={(value, openCalendar) => (
-              <button
-                type="button"
-                onClick={openCalendar}
-                className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
-              >
-                {value || "انتخاب تاریخ"}
-              </button>
-            )}
-            onChange={(value) => {
-              if (!value || Array.isArray(value)) {
-                return;
-              }
-
-              const gregorianDate = dateObjectToGregorianDate(value);
-              setDraftFrom(getDateKey(gregorianDate));
-            }}
-          />
-        </label>
-
-        <label className="flex flex-col gap-2 text-sm">
-          <span>تا تاریخ</span>
-          <DatePicker
-            calendar={persian}
-            locale={persianFa}
-            value={toValue}
-            calendarPosition="bottom-right"
-            portal
-            zIndex={10000}
-            render={(value, openCalendar) => (
-              <button
-                type="button"
-                onClick={openCalendar}
-                className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
-              >
-                {value || "انتخاب تاریخ"}
-              </button>
-            )}
-            onChange={(value) => {
-              if (!value || Array.isArray(value)) {
-                return;
-              }
-
-              const gregorianDate = dateObjectToGregorianDate(value);
-              setDraftTo(getDateKey(gregorianDate));
-            }}
-          />
-        </label>
-
+      <form
+        className="flex flex-wrap items-end gap-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const range = resolveReportDateRange({
+            from: dateKey(from),
+            to: dateKey(to),
+          });
+          setError(range.error);
+          if (range.error) return;
+          if (
+            range.fromDateKey === fromDateKey &&
+            range.toDateKey === toDateKey &&
+            valid
+          )
+            return;
+          startTransition(() =>
+            router.push(
+              `/reports?from=${range.fromDateKey}&to=${range.toDateKey}`,
+              { scroll: false },
+            ),
+          );
+        }}
+      >
+        {[
+          { label: "از تاریخ", value: from, set: setFrom },
+          { label: "تا تاریخ", value: to, set: setTo },
+        ].map((field) => (
+          <label key={field.label} className="flex flex-col gap-2 text-sm">
+            <span>{field.label}</span>
+            <DatePicker
+              calendar={persian}
+              locale={persianFa}
+              value={field.value}
+              calendarPosition="bottom-right"
+              portal
+              zIndex={10000}
+              render={(value, openCalendar) => (
+                <button
+                  type="button"
+                  onClick={openCalendar}
+                  className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
+                >
+                  {value || "انتخاب تاریخ"}
+                </button>
+              )}
+              onChange={(value) => {
+                if (value && !Array.isArray(value)) {
+                  field.set((current) =>
+                    dateKey(current) === dateKey(value)
+                      ? current
+                      : new DateObject(value),
+                  );
+                  setError(null);
+                }
+              }}
+            />
+          </label>
+        ))}
         <button
-          type="button"
+          type="submit"
+          disabled={isPending}
           className="dashboard-primary-button"
-          disabled={isPending || !!rangeError}
-          onClick={() => {
-            if (draftFrom !== fromDateKey || draftTo !== toDateKey)
-              updateRange(draftFrom, draftTo);
-          }}
         >
           اعمال فیلتر
         </button>
-        {rangeError ? <p role="alert">{rangeError}</p> : null}
-        {isPending ? (
-          <p className="text-sm text-zinc-300">در حال به‌روزرسانی گزارش...</p>
-        ) : null}
-
-        <Link
-          href={`/reports/export?from=${encodeURIComponent(fromDateKey)}&to=${encodeURIComponent(toDateKey)}`}
-          className="rounded-xl border border-zinc-700 px-5 py-2 text-sm text-zinc-100 transition hover:bg-zinc-800"
-        >
-          دریافت فایل Excel
-        </Link>
-      </div>
+        {isPending && (
+          <p role="status" className="text-sm">
+            در حال به‌روزرسانی گزارش...
+          </p>
+        )}
+        {valid && (
+          <a
+            href={`/reports/export?from=${fromDateKey}&to=${toDateKey}`}
+            className="dashboard-action-button"
+          >
+            دریافت فایل Excel
+          </a>
+        )}
+        {error && (
+          <p role="alert" className="w-full text-sm text-rose-600">
+            {error}
+          </p>
+        )}
+      </form>
     </section>
   );
 }

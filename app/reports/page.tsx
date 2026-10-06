@@ -78,9 +78,9 @@ export default async function ReportsPage({
         </header>
 
         <ReportDateFilter
-          key={`${fromDateKey}:${toDateKey}`}
           fromDateKey={fromDateKey}
           toDateKey={toDateKey}
+          valid={!error}
         />
 
         <section className="dashboard-glass-card">
