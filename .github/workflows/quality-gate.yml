@@ -33,6 +33,15 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Committed diff whitespace check
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git diff --check "origin/$GITHUB_BASE_REF...HEAD"
+          else
+            git show --format= --check HEAD
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: "24"

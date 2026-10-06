@@ -176,4 +176,3 @@ CREATE INDEX "AutomationShareLease_expiresAt_revokedAt_idx" ON "AutomationShareL
 
 -- AddForeignKey
 ALTER TABLE "ReportDelivery" ADD CONSTRAINT "ReportDelivery_artifactId_fkey" FOREIGN KEY ("artifactId") REFERENCES "AutomationArtifact"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
