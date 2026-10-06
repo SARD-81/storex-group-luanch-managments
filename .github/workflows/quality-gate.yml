@@ -1,0 +1,65 @@
+name: Quality gate
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: storex_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test-only-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:test-only-password@127.0.0.1:5432/storex_test
+      TEST_DATABASE_URL: postgresql://postgres:test-only-password@127.0.0.1:5432/storex_test
+      NODE_ENV: production
+      TZ: Asia/Tehran
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npx prisma validate && npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: python3 -m pip install -r scripts/requirements-calendar.txt
+      - run: npx playwright install --with-deps chromium
+      - run: node --import tsx scripts/import-calendar-base-year.ts --year=1405
+      - run: node --import tsx scripts/import-official-calendar-events-1405.ts --year=1405
+      - run: npx tsc --noEmit
+      - run: node --import tsx --test --test-concurrency=1 tests/*.test.ts
+      - run: npm run build
+      - run: node --import tsx scripts/check-web-regression.ts
+        env:
+          RUN_BROWSER_TESTS: "true"
+      - name: Existing calendar smoke checks
+        run: |
+          for check in service overrides attendance-policy dashboard-integration weekly-plan reports; do
+            node --import tsx "scripts/check-calendar-${check}.ts"
+          done
+      - run: git diff --check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-output
+          path: verification-output
+          if-no-files-found: ignore
+          retention-days: 14
