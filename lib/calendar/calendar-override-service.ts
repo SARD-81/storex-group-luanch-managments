@@ -1,6 +1,11 @@
 import { CalendarOverrideType } from "../../app/generated/prisma/client";
 import type { PrismaClient } from "../../app/generated/prisma/client";
 import { resolveCalendarWorkday } from "./calendar-workday";
+import {
+  attendanceTransaction,
+  reconcileAttendanceTx,
+} from "../attendance/reconciliation";
+import { getTehranDateKey } from "../date/tehran-time";
 
 export type CalendarOverrideReason = {
   title: string;
@@ -64,16 +69,16 @@ export async function forceCalendarDayHoliday(
 ): Promise<CalendarOverrideResult> {
   assertDateKey(dateKey);
   const normalizedReason = normalizeReason(reason);
-  const calendarDay = await prisma.calendarDay.findUnique({
-    where: { dateKey },
-    select: calendarDayOverrideSelect,
-  });
+  return attendanceTransaction(prisma, async (tx) => {
+    const calendarDay = await tx.calendarDay.findUnique({
+      where: { dateKey },
+      select: calendarDayOverrideSelect,
+    });
 
-  if (!calendarDay) {
-    throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
-  }
+    if (!calendarDay) {
+      throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
+    }
 
-  return prisma.$transaction(async (tx) => {
     await tx.calendarOverride.upsert({
       where: { calendarDayId: calendarDay.id },
       create: {
@@ -117,6 +122,8 @@ export async function forceCalendarDayHoliday(
       select: calendarDayOverrideSelect,
     });
 
+    if (dateKey >= getTehranDateKey())
+      await reconcileAttendanceTx(tx, { from: dateKey, to: dateKey });
     return mapCalendarDayOverrideResult(updatedDay);
   });
 }
@@ -128,16 +135,16 @@ export async function forceCalendarDayWorkday(
 ): Promise<CalendarOverrideResult> {
   assertDateKey(dateKey);
   const normalizedReason = normalizeReason(reason);
-  const calendarDay = await prisma.calendarDay.findUnique({
-    where: { dateKey },
-    select: calendarDayOverrideSelect,
-  });
+  return attendanceTransaction(prisma, async (tx) => {
+    const calendarDay = await tx.calendarDay.findUnique({
+      where: { dateKey },
+      select: calendarDayOverrideSelect,
+    });
 
-  if (!calendarDay) {
-    throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
-  }
+    if (!calendarDay) {
+      throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
+    }
 
-  return prisma.$transaction(async (tx) => {
     await tx.calendarOverride.upsert({
       where: { calendarDayId: calendarDay.id },
       create: {
@@ -181,6 +188,8 @@ export async function forceCalendarDayWorkday(
       select: calendarDayOverrideSelect,
     });
 
+    if (dateKey >= getTehranDateKey())
+      await reconcileAttendanceTx(tx, { from: dateKey, to: dateKey });
     return mapCalendarDayOverrideResult(updatedDay);
   });
 }
@@ -190,16 +199,16 @@ export async function clearCalendarDayOverride(
   dateKey: string,
 ): Promise<CalendarOverrideResult> {
   assertDateKey(dateKey);
-  const calendarDay = await prisma.calendarDay.findUnique({
-    where: { dateKey },
-    select: calendarDayOverrideSelect,
-  });
+  return attendanceTransaction(prisma, async (tx) => {
+    const calendarDay = await tx.calendarDay.findUnique({
+      where: { dateKey },
+      select: calendarDayOverrideSelect,
+    });
 
-  if (!calendarDay) {
-    throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
-  }
+    if (!calendarDay) {
+      throw new Error(`CalendarDay was not found for dateKey ${dateKey}.`);
+    }
 
-  return prisma.$transaction(async (tx) => {
     await tx.calendarOverride.deleteMany({
       where: { calendarDayId: calendarDay.id },
     });
@@ -217,12 +226,17 @@ export async function clearCalendarDayOverride(
         isManualHoliday: false,
         isForcedWorkday: false,
         isWorkday,
-        description: appendUniqueDescriptionNote(calendarDay.description, "[Calendar override cleared]"),
+        description: appendUniqueDescriptionNote(
+          calendarDay.description,
+          "[Calendar override cleared]",
+        ),
         verifiedAt: new Date(),
       },
       select: calendarDayOverrideSelect,
     });
 
+    if (dateKey >= getTehranDateKey())
+      await reconcileAttendanceTx(tx, { from: dateKey, to: dateKey });
     return {
       ...mapCalendarDayOverrideResult(updatedDay),
       overrideType: null,
@@ -250,7 +264,9 @@ function assertDateKey(value: string): void {
   }
 }
 
-function normalizeReason(reason: CalendarOverrideReason): Required<CalendarOverrideReason> {
+function normalizeReason(
+  reason: CalendarOverrideReason,
+): Required<CalendarOverrideReason> {
   const title = reason.title.trim();
 
   if (!title) {
@@ -264,7 +280,10 @@ function normalizeReason(reason: CalendarOverrideReason): Required<CalendarOverr
   };
 }
 
-function appendUniqueDescriptionNote(existing: string | null, note: string): string {
+function appendUniqueDescriptionNote(
+  existing: string | null,
+  note: string,
+): string {
   if (!existing) {
     return note;
   }
@@ -277,7 +296,9 @@ function appendUniqueDescriptionNote(existing: string | null, note: string): str
   return `${existing}\n${note}`;
 }
 
-function mapCalendarDayOverrideResult(day: SelectedCalendarDayOverride): CalendarOverrideResult {
+function mapCalendarDayOverrideResult(
+  day: SelectedCalendarDayOverride,
+): CalendarOverrideResult {
   return {
     calendarDayId: day.id,
     dateKey: day.dateKey,

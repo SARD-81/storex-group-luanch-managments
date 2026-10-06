@@ -257,7 +257,7 @@ export async function GET(request: Request) {
 
   dashboardSheet.mergeCells("A8:H8");
   const noteCell = dashboardSheet.getCell("A8");
-  noteCell.value = "این گزارش فقط شامل روزهای کاری شنبه تا چهارشنبه است.";
+  noteCell.value = "این گزارش فقط شامل روزهای کاری نهایی تقویم سامانه است.";
   noteCell.font = {
     name: "Tahoma",
     size: 10,

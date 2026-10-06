@@ -48,6 +48,14 @@ const actionLabels: Partial<Record<AuditAction, string>> = {
   [AuditAction.CALENDAR_OVERRIDE_FORCE_HOLIDAY]: "ثبت تعطیلی دستی",
   [AuditAction.CALENDAR_OVERRIDE_FORCE_WORKDAY]: "ثبت روز کاری اجباری",
   [AuditAction.CALENDAR_OVERRIDE_CLEARED]: "پاک‌کردن تغییر تقویم",
+  [AuditAction.ATTENDANCE_OVERRIDE_APPLIED]: "ثبت تصمیم حضور مدیر",
+  [AuditAction.ATTENDANCE_OVERRIDE_CLEARED]: "لغو تصمیم حضور مدیر",
+  [AuditAction.ATTENDANCE_OVERRIDE_BLOCKED]: "جلوگیری از تغییر تصمیم مدیر",
+  [AuditAction.AUTO_RESERVATION_CHANGED]: "تغییر حضور خودکار",
+  [AuditAction.ATTENDANCE_RECONCILED]: "همسان‌سازی حضور",
+  [AuditAction.AUTOMATION_CONFIG_CHANGED]: "تغییر تنظیمات اتوماسیون",
+  [AuditAction.AUTOMATION_RUN_REQUESTED]: "درخواست اجرای اتوماسیون",
+  [AuditAction.CALENDAR_DATASET_APPLIED]: "اعمال مجموعهٔ تقویم",
   [AuditAction.REPORT_EXPORTED]: "خروجی گزارش",
 };
 

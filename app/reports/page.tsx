@@ -7,7 +7,11 @@ import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
 import { getAttendanceReport } from "@/lib/reports/get-attendance-report";
 import { resolveReportDateRange } from "@/lib/reports/report-date-range";
 
-type ReportSearchParams = Promise<{ from?: string; to?: string }>;
+type ReportSearchParams = Promise<{
+  from?: string;
+  to?: string;
+  page?: string;
+}>;
 
 const statusLabels = {
   PRESENT: "حاضر",
@@ -27,9 +31,24 @@ export default async function ReportsPage({
   const params = await searchParams;
   const { fromDate, toDate, fromDateKey, toDateKey, error } =
     resolveReportDateRange(params);
-  const { dailySummary, userRows, calendarExcludedDays } =
-    error ? { dailySummary: [], userRows: [], calendarExcludedDays: [] }
-      : await getAttendanceReport(fromDate, toDate);
+  const { dailySummary, userRows, calendarExcludedDays } = error
+    ? { dailySummary: [], userRows: [], calendarExcludedDays: [] }
+    : await getAttendanceReport(fromDate, toDate);
+  const pageSize = 100,
+    pageCount = Math.max(1, Math.ceil(userRows.length / pageSize));
+  const detailPage = Math.min(
+    pageCount,
+    Math.max(
+      1,
+      Number.isSafeInteger(Number(params.page)) ? Number(params.page) : 1,
+    ),
+  );
+  const visibleRows = userRows.slice(
+    (detailPage - 1) * pageSize,
+    detailPage * pageSize,
+  );
+  const detailPageHref = (page: number) =>
+    `/reports?from=${fromDateKey}&to=${toDateKey}&page=${page}`;
   const activeRangeLabel = `${formatPersianWeekdayDate(fromDate)} تا ${formatPersianWeekdayDate(toDate)}`;
 
   return (
@@ -58,7 +77,11 @@ export default async function ReportsPage({
           </Link>
         </header>
 
-        <ReportDateFilter key={`${fromDateKey}:${toDateKey}`} fromDateKey={fromDateKey} toDateKey={toDateKey} />
+        <ReportDateFilter
+          key={`${fromDateKey}:${toDateKey}`}
+          fromDateKey={fromDateKey}
+          toDateKey={toDateKey}
+        />
 
         <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">خلاصه روزانه</h2>
@@ -151,6 +174,31 @@ export default async function ReportsPage({
 
         <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">جزئیات کاربران</h2>
+          <nav
+            aria-label="صفحه‌بندی جزئیات"
+            className="mb-4 flex flex-wrap items-center gap-3"
+          >
+            <span>
+              صفحهٔ {detailPage} از {pageCount} — {userRows.length} ردیف؛ Excel
+              شامل کل بازه است.
+            </span>
+            {detailPage > 1 ? (
+              <Link
+                className="dashboard-action-button"
+                href={detailPageHref(detailPage - 1)}
+              >
+                قبلی
+              </Link>
+            ) : null}
+            {detailPage < pageCount ? (
+              <Link
+                className="dashboard-action-button"
+                href={detailPageHref(detailPage + 1)}
+              >
+                بعدی
+              </Link>
+            ) : null}
+          </nav>
           <div className="overflow-x-auto rounded-xl border border-border/60">
             <table className="w-full min-w-[900px] text-sm">
               <thead className="border-b border-border/60 bg-muted/60 text-muted-foreground">
@@ -163,7 +211,7 @@ export default async function ReportsPage({
                 </tr>
               </thead>
               <tbody>
-                {userRows.map((row) => (
+                {visibleRows.map((row) => (
                   <tr
                     key={`${row.dateKey}-${row.username}`}
                     className="border-b border-border/60"

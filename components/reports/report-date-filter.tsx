@@ -18,7 +18,7 @@ function dateKeyToDateObject(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
 
   return new DateObject({
-    date: new Date(Date.UTC(year, month - 1, day)),
+    date: new Date(year, month - 1, day),
     calendar: persian,
     locale: persianFa,
   });
@@ -42,9 +42,12 @@ export function ReportDateFilter({
   const [draftTo, setDraftTo] = useState(toDateKey);
   const fromValue = useMemo(() => dateKeyToDateObject(draftFrom), [draftFrom]);
   const toValue = useMemo(() => dateKeyToDateObject(draftTo), [draftTo]);
-  const rangeError = draftFrom > draftTo ? "تاریخ پایان قبل از شروع است."
-    : (Date.parse(draftTo) - Date.parse(draftFrom)) / 86400000 >= 366
-      ? "حداکثر بازه گزارش ۳۶۶ روز است." : null;
+  const rangeError =
+    draftFrom > draftTo
+      ? "تاریخ پایان قبل از شروع است."
+      : (Date.parse(draftTo) - Date.parse(draftFrom)) / 86400000 >= 366
+        ? "حداکثر بازه گزارش ۳۶۶ روز است."
+        : null;
 
   const updateRange = (nextFromDateKey: string, nextToDateKey: string) => {
     startTransition(() => {
@@ -115,11 +118,17 @@ export function ReportDateFilter({
           />
         </label>
 
-        <button type="button" className="dashboard-primary-button"
+        <button
+          type="button"
+          className="dashboard-primary-button"
           disabled={isPending || !!rangeError}
           onClick={() => {
-            if (draftFrom !== fromDateKey || draftTo !== toDateKey) updateRange(draftFrom, draftTo);
-          }}>اعمال فیلتر</button>
+            if (draftFrom !== fromDateKey || draftTo !== toDateKey)
+              updateRange(draftFrom, draftTo);
+          }}
+        >
+          اعمال فیلتر
+        </button>
         {rangeError ? <p role="alert">{rangeError}</p> : null}
         {isPending ? (
           <p className="text-sm text-zinc-300">در حال به‌روزرسانی گزارش...</p>

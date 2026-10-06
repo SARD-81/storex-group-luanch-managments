@@ -1,4 +1,8 @@
-import { AttendanceStatus, MealType, UserRole } from "@/app/generated/prisma/client";
+import {
+  AttendanceStatus,
+  MealType,
+  UserRole,
+} from "@/app/generated/prisma/client";
 import { getAttendanceDatePoliciesByDateRange } from "@/lib/attendance/calendar-attendance-policy";
 import { getDateKey } from "@/lib/date/date-key";
 import { formatPersianWeekdayDate } from "@/lib/date/persian-format";
@@ -10,14 +14,22 @@ type ReportUser = {
   username: string;
 };
 
-export async function getAttendanceReport(fromDate: Date, toDate: Date) {
+export async function getAttendanceReport(
+  fromDate: Date,
+  toDate: Date,
+  db = prisma,
+) {
   const fromDateKey = getDateKey(fromDate);
   const toDateKey = getDateKey(toDate);
-  const policies = await getAttendanceDatePoliciesByDateRange(prisma, fromDateKey, toDateKey);
+  const policies = await getAttendanceDatePoliciesByDateRange(
+    db,
+    fromDateKey,
+    toDateKey,
+  );
   const reportDays = policies.filter((policy) => policy.isWorkday === true);
 
   const [attendances, users] = await Promise.all([
-    prisma.mealAttendance.findMany({
+    db.mealAttendance.findMany({
       where: {
         date: {
           gte: fromDate,
@@ -25,11 +37,9 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
         },
         user: { role: { not: UserRole.REPORTER } },
       },
-      include: {
-        user: true,
-      },
+      select: { userId: true, date: true, mealType: true, status: true },
     }),
-    prisma.user.findMany({
+    db.user.findMany({
       where: { isActive: true, role: { not: UserRole.REPORTER } },
       select: { id: true, name: true, username: true },
       orderBy: { createdAt: "asc" },
@@ -42,11 +52,17 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
   for (const attendance of attendances) {
     const dateKey = getDateKey(attendance.date);
 
-    if (!workDateKeys.has(dateKey) || attendance.status !== AttendanceStatus.PRESENT) {
+    if (
+      !workDateKeys.has(dateKey) ||
+      attendance.status !== AttendanceStatus.PRESENT
+    ) {
       continue;
     }
 
-    presentMap.set(`${dateKey}:${attendance.userId}:${attendance.mealType}`, AttendanceStatus.PRESENT);
+    presentMap.set(
+      `${dateKey}:${attendance.userId}:${attendance.mealType}`,
+      AttendanceStatus.PRESENT,
+    );
   }
 
   const dailySummary = reportDays.map((policy) => {
@@ -59,11 +75,17 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
     let lunchCount = 0;
 
     for (const user of users) {
-      if (presentMap.get(`${dateKey}:${user.id}:${MealType.BREAKFAST}`) === AttendanceStatus.PRESENT) {
+      if (
+        presentMap.get(`${dateKey}:${user.id}:${MealType.BREAKFAST}`) ===
+        AttendanceStatus.PRESENT
+      ) {
         breakfastCount += 1;
       }
 
-      if (presentMap.get(`${dateKey}:${user.id}:${MealType.LUNCH}`) === AttendanceStatus.PRESENT) {
+      if (
+        presentMap.get(`${dateKey}:${user.id}:${MealType.LUNCH}`) ===
+        AttendanceStatus.PRESENT
+      ) {
         lunchCount += 1;
       }
     }
@@ -99,9 +121,11 @@ export async function getAttendanceReport(fromDate: Date, toDate: Date) {
       userName: user.name,
       username: user.username,
       breakfastStatus:
-        presentMap.get(`${dateKey}:${user.id}:${MealType.BREAKFAST}`) ?? AttendanceStatus.ABSENT,
+        presentMap.get(`${dateKey}:${user.id}:${MealType.BREAKFAST}`) ??
+        AttendanceStatus.ABSENT,
       lunchStatus:
-        presentMap.get(`${dateKey}:${user.id}:${MealType.LUNCH}`) ?? AttendanceStatus.ABSENT,
+        presentMap.get(`${dateKey}:${user.id}:${MealType.LUNCH}`) ??
+        AttendanceStatus.ABSENT,
     }));
   });
 
