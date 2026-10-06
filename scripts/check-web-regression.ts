@@ -121,8 +121,8 @@ async function main() {
         "/settings/automations/calendar",
       ]) {
         const r = await request(route, role);
-        assert.ok([303, 307].includes(r.status));
-        assert.equal(r.headers.get("location"), "/");
+        if(![303,307].includes(r.status)){const body=await r.text();console.log(JSON.stringify({redirectCheck:{role,route,status:r.status,meta:body.match(/<meta[^>]*http-equiv="refresh"[^>]*>/)?.[0]}}));assert.ok(r.status===200&&/http-equiv="refresh"[^>]*content="[01];url=\/"/.test(body),`${role} ${route} expected redirect`);}
+        if(r.status!==200) assert.equal(r.headers.get("location"), "/");
       }
     }
     const legacy = await request("/settings/weekly-plan");

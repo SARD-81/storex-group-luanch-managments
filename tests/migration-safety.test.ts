@@ -60,7 +60,7 @@ test(
       }
       const rows = (
         await db.query(
-          `SELECT "id","source"::text,"createdAt","updatedAt" FROM "MealAttendance" ORDER BY "id"`,
+          `SELECT "id","source"::text,"createdAt"::text AS "createdAt","updatedAt"::text AS "updatedAt" FROM "MealAttendance" ORDER BY "id"`,
         )
       ).rows;
       assert.deepEqual(
@@ -72,8 +72,8 @@ test(
         ],
       );
       for (const r of rows) {
-        assert.equal(r.createdAt.toISOString().slice(0, 10), "2025-01-01");
-        assert.equal(r.updatedAt.toISOString().slice(0, 10), "2025-01-02");
+        assert.equal(r.createdAt.slice(0, 10), "2025-01-01");
+        assert.equal(r.updatedAt.slice(0, 10), "2025-01-02");
       }
       assert.equal(
         (
