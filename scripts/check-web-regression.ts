@@ -9,6 +9,10 @@ import { checkBrowser } from "./check-browser-regression";
 import { prisma } from "../lib/prisma";
 const base = "http://127.0.0.1:3100",
   prefix = "web-regression-";
+async function assertRedirect(response:Response,target:string) {
+  if([303,307,308].includes(response.status)){assert.equal(response.headers.get("location"),target);return;}
+  const body=await response.text();assert.equal(response.status,200);assert.ok(body.includes('http-equiv="refresh"')&&body.includes(`url=${target}"`),`expected streamed redirect to ${target}`);
+}
 async function main() {
   assert.equal(process.env.TEST_DATABASE_URL, process.env.DATABASE_URL);
   assert.match(
@@ -126,9 +130,9 @@ async function main() {
       }
     }
     const legacy = await request("/settings/weekly-plan");
-    assert.equal(legacy.headers.get("location"), "/settings/attendance");
+    await assertRedirect(legacy,"/settings/attendance");
     const anonymous = await request("/reports", "ANONYMOUS");
-    assert.equal(anonymous.headers.get("location"), "/login");
+    await assertRedirect(anonymous,"/login");
     const rows = [];
     for (const days of [1, 7, 31, 90, 180, 365]) {
       const from = "2026-03-21",
