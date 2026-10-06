@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import DatePicker from "react-multi-date-picker";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
@@ -38,6 +38,13 @@ export function ReportDateFilter({
 }: ReportDateFilterProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [draftFrom, setDraftFrom] = useState(fromDateKey);
+  const [draftTo, setDraftTo] = useState(toDateKey);
+  const fromValue = useMemo(() => dateKeyToDateObject(draftFrom), [draftFrom]);
+  const toValue = useMemo(() => dateKeyToDateObject(draftTo), [draftTo]);
+  const rangeError = draftFrom > draftTo ? "تاریخ پایان قبل از شروع است."
+    : (Date.parse(draftTo) - Date.parse(draftFrom)) / 86400000 >= 366
+      ? "حداکثر بازه گزارش ۳۶۶ روز است." : null;
 
   const updateRange = (nextFromDateKey: string, nextToDateKey: string) => {
     startTransition(() => {
@@ -55,7 +62,7 @@ export function ReportDateFilter({
           <DatePicker
             calendar={persian}
             locale={persianFa}
-            value={dateKeyToDateObject(fromDateKey)}
+            value={fromValue}
             calendarPosition="bottom-right"
             portal
             zIndex={10000}
@@ -63,7 +70,6 @@ export function ReportDateFilter({
               <button
                 type="button"
                 onClick={openCalendar}
-                disabled={isPending}
                 className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
               >
                 {value || "انتخاب تاریخ"}
@@ -75,7 +81,7 @@ export function ReportDateFilter({
               }
 
               const gregorianDate = dateObjectToGregorianDate(value);
-              updateRange(getDateKey(gregorianDate), toDateKey);
+              setDraftFrom(getDateKey(gregorianDate));
             }}
           />
         </label>
@@ -85,7 +91,7 @@ export function ReportDateFilter({
           <DatePicker
             calendar={persian}
             locale={persianFa}
-            value={dateKeyToDateObject(toDateKey)}
+            value={toValue}
             calendarPosition="bottom-right"
             portal
             zIndex={10000}
@@ -93,7 +99,6 @@ export function ReportDateFilter({
               <button
                 type="button"
                 onClick={openCalendar}
-                disabled={isPending}
                 className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
               >
                 {value || "انتخاب تاریخ"}
@@ -105,11 +110,17 @@ export function ReportDateFilter({
               }
 
               const gregorianDate = dateObjectToGregorianDate(value);
-              updateRange(fromDateKey, getDateKey(gregorianDate));
+              setDraftTo(getDateKey(gregorianDate));
             }}
           />
         </label>
 
+        <button type="button" className="dashboard-primary-button"
+          disabled={isPending || !!rangeError}
+          onClick={() => {
+            if (draftFrom !== fromDateKey || draftTo !== toDateKey) updateRange(draftFrom, draftTo);
+          }}>اعمال فیلتر</button>
+        {rangeError ? <p role="alert">{rangeError}</p> : null}
         {isPending ? (
           <p className="text-sm text-zinc-300">در حال به‌روزرسانی گزارش...</p>
         ) : null}

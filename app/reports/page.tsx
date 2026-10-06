@@ -25,10 +25,11 @@ export default async function ReportsPage({
   noStore();
 
   const params = await searchParams;
-  const { fromDate, toDate, fromDateKey, toDateKey } =
+  const { fromDate, toDate, fromDateKey, toDateKey, error } =
     resolveReportDateRange(params);
   const { dailySummary, userRows, calendarExcludedDays } =
-    await getAttendanceReport(fromDate, toDate);
+    error ? { dailySummary: [], userRows: [], calendarExcludedDays: [] }
+      : await getAttendanceReport(fromDate, toDate);
   const activeRangeLabel = `${formatPersianWeekdayDate(fromDate)} تا ${formatPersianWeekdayDate(toDate)}`;
 
   return (
@@ -50,14 +51,14 @@ export default async function ReportsPage({
             می‌شوند.
           </p>
           <p className="dashboard-muted-panel mt-4 text-sm">
-            بازهٔ فعال گزارش: {activeRangeLabel}
+            {error ? error : `بازهٔ فعال گزارش: ${activeRangeLabel}`}
           </p>
           <Link href="/" className="dashboard-action-button mt-4 inline-block">
             بازگشت به داشبورد
           </Link>
         </header>
 
-        <ReportDateFilter fromDateKey={fromDateKey} toDateKey={toDateKey} />
+        <ReportDateFilter key={`${fromDateKey}:${toDateKey}`} fromDateKey={fromDateKey} toDateKey={toDateKey} />
 
         <section className="dashboard-glass-card">
           <h2 className="mb-4 text-xl font-semibold">خلاصه روزانه</h2>
