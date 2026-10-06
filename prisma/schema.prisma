@@ -22,6 +22,13 @@ enum AttendanceStatus {
   ABSENT
 }
 
+enum AttendanceSource {
+  USER_MANUAL
+  ADMIN_OVERRIDE
+  AUTO_RESERVATION
+  LEGACY_WEEKLY_PLAN
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -90,6 +97,14 @@ enum AuditAction {
 
   GUEST_MEAL_CREATED
   GUEST_MEAL_DELETED
+  ATTENDANCE_OVERRIDE_APPLIED
+  ATTENDANCE_OVERRIDE_CLEARED
+  ATTENDANCE_OVERRIDE_BLOCKED
+  AUTO_RESERVATION_CHANGED
+  ATTENDANCE_RECONCILED
+  AUTOMATION_CONFIG_CHANGED
+  AUTOMATION_RUN_REQUESTED
+  CALENDAR_DATASET_APPLIED
 }
 
 enum AuditTargetType {
@@ -126,9 +141,14 @@ model User {
   avatarImage     Bytes?
   avatarMimeType  String?
   avatarUpdatedAt DateTime?
+  autoBreakfast Boolean @default(false)
+  autoLunch Boolean @default(false)
+  autoBreakfastFrom DateTime? @db.Date
+  autoLunchFrom DateTime? @db.Date
 
   weeklyPreferences     WeeklyMealPreference[]
   attendances           MealAttendance[]
+  attendanceDecisions   AttendanceDecision[]
   sessions              Session[]
   calendarOverrides     CalendarOverride[]     @relation("CalendarOverrideCreatedBy")
   calendarImportBatches CalendarImportBatch[]  @relation("CalendarImportBatchCreatedBy")
@@ -219,6 +239,7 @@ model MealAttendance {
 
   generatedFromWeeklyPlan Boolean @default(false)
   manuallyEdited          Boolean @default(false)
+  source AttendanceSource @default(USER_MANUAL)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -226,6 +247,22 @@ model MealAttendance {
   @@unique([userId, date, mealType])
   @@index([date, mealType])
   @@index([userId, date])
+}
+
+/// Preserves lower-priority decisions while an admin override is effective.
+/// AUTO_RESERVATION is computed from User settings, never a decision here.
+model AttendanceDecision {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date DateTime @db.Date
+  mealType MealType
+  source AttendanceSource
+  status AttendanceStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, date, mealType, source])
+  @@index([date, userId])
 }
 
 model GuestMealOrder {
