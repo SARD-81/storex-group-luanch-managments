@@ -18,13 +18,13 @@ async function login(
   password: string,
 ) {
   await page.goto(base + "/login");
-  await page.locator('[name="username"]').fill(username);
-  await page.locator('[name="password"]').fill(password);
+  await page.locator('[name="username"]:visible').fill(username);
+  await page.locator('[name="password"]:visible').fill(password);
   await Promise.all([
     page.waitForURL((u) => u.pathname !== "/login", {
       waitUntil: "domcontentloaded",
     }),
-    page.getByRole("button", { name: /^ورود/ }).click(),
+    page.getByRole("button", { name: /^ورود/ }).filter({ visible: true }).click(),
   ]);
 }
 export async function checkLegacyBrowserFlows(

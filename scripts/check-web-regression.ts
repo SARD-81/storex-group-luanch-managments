@@ -287,7 +287,7 @@ async function main() {
 }
 main().catch((error) => {
   console.error(
-    error instanceof Error ? error.message : "WEB_REGRESSION_FAILED",
+    error instanceof Error ? error.stack : "WEB_REGRESSION_FAILED",
   );
   process.exitCode = 1;
 });
