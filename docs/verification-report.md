@@ -70,12 +70,15 @@ reported the following observed outputs (credentials and chat ID omitted here):
 - `getChat` -> `ok=true`, `type=private`, chat ID matched the requested destination.
 - After explicit `SEND` confirmation: `sendMessage` -> `ok=true`, `message_id=3`.
 
-This **proves the ordinary Bale Bot API accepted a real private outbound message**
-from the operator's workstation. It does **not yet prove** recipient-side
-presentation, the StoreX TypeScript `BaleClient` running on staging, scheduled
-reminder delivery, Nextcloud link delivery, or production networking. Capture
-recipient confirmation and run `scripts/check-bale-live.ts` with the staging ENV
-before closing the Bale staging acceptance gate. Keep bot tokens out of this report.
+Following a second check, the project operator **explicitly confirmed the test
+message was visible in the intended private Bale conversation**. Therefore,
+the direct-workstation live Bot API **send-and-receive** acceptance is PASS
+(`sendMessage ok=true`, `message_id=3`, recipient-side visual confirmation).
+This does **not yet prove** the StoreX TypeScript `BaleClient` running on staging,
+scheduled reminder delivery, Nextcloud PDF-link delivery, or production networking.
+Run `scripts/check-bale-live.ts` with the staging ENV, verify its message visibly
+arrives, and capture sanitized staging evidence before closing that separate gate.
+Keep bot tokens and chat IDs out of this report.
 
 Decision: standard Bale Bot API only; the recipient may send `/start` once.
 No Safir, personal-account automation, or new Bale sender identity is required.
@@ -90,9 +93,10 @@ No Safir, personal-account automation, or new Bale sender identity is required.
    a complete leap-year PDF must be normalized and tested before certification.
    The currently retrieved 1405 files are one-page transfer notices, not the
    twelve-month university calendar; they cannot serve as a golden PDF fixture.
-2. The operator's live workstation Bale `sendMessage` test succeeded (see above),
-   but staging execution through the StoreX `BaleClient`, recipient-side confirmation,
-   and live Nextcloud/Talk integration tests are still open. Test doubles cover
+2. The operator's live workstation Bale private send-and-receive test succeeded,
+   including recipient-side confirmation (see above). Staging execution through
+   the StoreX `BaleClient` and live Nextcloud/Talk integrations remain open.
+   Test doubles cover
    disabled sharing, private recipients, anonymous hash validation, retries and expiry,
    but do not prove the deployed service policies or credentials.
 3. Browser coverage is not yet the full existing-feature matrix: profile/avatar,
