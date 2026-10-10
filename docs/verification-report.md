@@ -58,6 +58,28 @@ The PR's Quality gate must also pass on the final head; consult its checks for t
 native results of these additional tests. CI retains PDF/screenshots/JSON evidence
 in `verification-output` for 14 days. Timings describe fixtures, not a production SLA.
 
+## Live Bale Bot API evidence (2026-10-10; operator workstation)
+
+The project operator performed a real HTTPS Bot API smoke test from their
+Linux workstation, using the newly created StoreX notification bot. The operator
+reported the following observed outputs (credentials and chat ID omitted here):
+
+- `getMe` -> `ok=true`; the bot authenticated successfully.
+- `getWebhookInfo` -> no active webhook (polling was used only for onboarding).
+- `getUpdates` -> `ok=true`, two updates from the same private chat.
+- `getChat` -> `ok=true`, `type=private`, chat ID matched the requested destination.
+- After explicit `SEND` confirmation: `sendMessage` -> `ok=true`, `message_id=3`.
+
+This **proves the ordinary Bale Bot API accepted a real private outbound message**
+from the operator's workstation. It does **not yet prove** recipient-side
+presentation, the StoreX TypeScript `BaleClient` running on staging, scheduled
+reminder delivery, Nextcloud link delivery, or production networking. Capture
+recipient confirmation and run `scripts/check-bale-live.ts` with the staging ENV
+before closing the Bale staging acceptance gate. Keep bot tokens out of this report.
+
+Decision: standard Bale Bot API only; the recipient may send `/start` once.
+No Safir, personal-account automation, or new Bale sender identity is required.
+
 ## Open gates
 
 1. The official PDF extractor still emits `parserVerified=false`, no normalized
@@ -68,9 +90,11 @@ in `verification-output` for 14 days. Timings describe fixtures, not a productio
    a complete leap-year PDF must be normalized and tested before certification.
    The currently retrieved 1405 files are one-page transfer notices, not the
    twelve-month university calendar; they cannot serve as a golden PDF fixture.
-2. Live Nextcloud/Bale/Talk staging verification has not been performed. Test
-   doubles cover disabled sharing, private recipients, anonymous hash validation,
-   retries and expiry, but do not prove the site's deployed policies or credentials.
+2. The operator's live workstation Bale `sendMessage` test succeeded (see above),
+   but staging execution through the StoreX `BaleClient`, recipient-side confirmation,
+   and live Nextcloud/Talk integration tests are still open. Test doubles cover
+   disabled sharing, private recipients, anonymous hash validation, retries and expiry,
+   but do not prove the deployed service policies or credentials.
 3. Browser coverage is not yet the full existing-feature matrix: profile/avatar,
    password changes, password resets, user activation and all guest/manual CRUD
    paths still require regression verification.
