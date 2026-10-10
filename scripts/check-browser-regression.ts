@@ -29,11 +29,7 @@ export async function checkBrowser(base: string, cookie: string) {
     await page.goto(base + "/reports?from=2026-10-07&to=2026-10-14");
     for (let i = 0; i < 6; i++) {
       const prior = page.url();
-      await page
-        .locator("label")
-        .filter({ hasText: "از تاریخ" })
-        .locator("button")
-        .click();
+      await page.getByRole("button", { name: "از تاریخ", exact: true }).click();
       await page
         .locator(".rmdp-day:not(.rmdp-deactive):not(.rmdp-disabled) > span")
         .filter({
@@ -109,11 +105,7 @@ export async function checkBrowser(base: string, cookie: string) {
     await page.emulateMedia({ media: "screen" });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(base + "/reports?from=2026-03-21&to=2027-03-20");
-    await page
-      .locator("label")
-      .filter({ hasText: "تا تاریخ" })
-      .locator("button")
-      .click();
+    await page.getByRole("button", { name: "تا تاریخ", exact: true }).click();
     await page.locator(".rmdp-calendar").waitFor({ state: "visible" });
     const box = await page.locator(".rmdp-calendar").boundingBox();
     assert.ok(
