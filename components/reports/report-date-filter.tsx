@@ -90,6 +90,7 @@ export function ReportDateFilter({
               render={(value, openCalendar) => (
                 <button
                   type="button"
+                  aria-label={field.label}
                   onClick={openCalendar}
                   className="dashboard-muted-panel min-h-10 min-w-36 rounded-xl px-4 py-2 text-right text-sm"
                 >
