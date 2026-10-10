@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import sharp from "sharp";
+import ExcelJS from "exceljs";
 import type { BrowserContext, Page } from "playwright";
 import { prisma } from "../lib/prisma";
 import { getNextDayMealReport } from "../lib/reporter/next-day-report";
@@ -400,13 +401,11 @@ export async function checkLegacyBrowserFlows(
         return img?.complete && img.naturalWidth > 0;
       });
     }
-    await page.locator(".meal-report img").waitFor();
-    await page.waitForFunction(() => {
-      const image = document.querySelector<HTMLImageElement>(".meal-report img");
-      return image?.complete && image.naturalWidth > 0;
-    });
+    const reportLogo = page.locator(".meal-report:visible img");
+    await reportLogo.waitFor();
+    await reportLogo.evaluate((image: HTMLImageElement) => image.decode());
     await page.emulateMedia({ media: "print" });
-    const printLogo = await page.locator(".meal-report img").evaluate((image: HTMLImageElement) => {
+    const printLogo = await reportLogo.evaluate((image: HTMLImageElement) => {
       const box = image.getBoundingClientRect();
       return { width: box.width, height: box.height, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
     });
@@ -423,7 +422,14 @@ export async function checkLegacyBrowserFlows(
     );
     const excel = await page.request.get(base + "/reporter/next-day/export");
     assert.equal(excel.status(), 200);
-    assert.ok((await excel.body()).length > 1000);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await excel.body() as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    const embedded = workbook.worksheets[0].getImages();
+    assert.equal(embedded.length, 1, "Excel must contain the active company logo");
+    // ExcelJS persists ext in one-cell anchors but omits it from ImageRange's type.
+    const size = (embedded[0].range as ExcelJS.ImageRange & { ext?: { width: number; height: number } }).ext;
+    assert.ok(size, "Excel logo must have a bounded one-cell image anchor");
+    assert.ok(Math.abs(size.width / size.height - width / height) < .01, "Excel logo must retain the active image aspect ratio");
   }
   await page.goto(base + "/settings/branding");
   await submit(page, "بازگردانی نسخهٔ قبلی", /saved=logo/);

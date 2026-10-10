@@ -1,6 +1,9 @@
 # Verification and remaining merge gates
 
-Status on 2026-10-06: draft PR #76; **not approved for production or merge**.
+Status updated 2026-10-10: draft PR #76; **not approved for production or merge**.
+
+Current requirement matrix and Persian acceptance report: [acceptance-report-fa.md](acceptance-report-fa.md).
+The calendar/logo/full-browser additions supersede the historical 2026-10-06 checkpoint below.
 
 PR: https://github.com/SARD-81/storex-group-luanch-managments/pull/76
 
@@ -83,38 +86,66 @@ Keep bot tokens and chat IDs out of this report.
 Decision: standard Bale Bot API only; the recipient may send `/start` once.
 No Safir, personal-account automation, or new Bale sender identity is required.
 
+## Current implementation and acceptance work (2026-10-10)
+
+- Real supplied 1405 PDF parsed by `ut-evidence-parser-v2`: 365 daily mappings,
+  459 events, 26 holiday dates, zero unresolved entries. The source checksum and
+  semantic certificate match; all corrected fixture fields match the extraction.
+  Historical 424 reconciliation identified 35 omitted occupations and two title
+  transcription corrections; unchanged metadata matches. See the updated
+  [source audit](calendar-1405-pdf-audit.md).
+- Supplied-file acquisition/staging/approval/import proof passed locally on
+  disposable PGlite, including historical attendance and repeat-import safety.
+  Native CI separately verifies review/promotion, migration and multi-session
+  locks. Do not confuse the local WASM run with native lock evidence.
+- Current-year recovery is independent of Esfand next-year discovery, including
+  missed windows, Nowruz role rollover, backoff preservation and emergency data.
+- Admin branding supports persistent previews, revision-protected activation,
+  previous/default rollback, audit, decoded raster validation and storage fallback.
+  UI, manual print, server PDF and Reporter Excel share the active asset.
+- Existing-feature browser coverage now exercises user creation/activation,
+  login/logout, profile/avatar/change/reset, guest create/update/delete, ordinary
+  attendance, admin override/clear, company calendar override, emergency twelve
+  months/CSV/apply, automation pause/resume/queue, and branding on all surfaces.
+  Final-head CI must certify the completed suite before closing the regression gate.
+- PDF acceptance now distinguishes actual header logos from background tiles,
+  verifies embedded Type3 glyph streams plus ToUnicode instead of requiring only
+  TTF streams, and allows at most one CSS pixel of placement quantization.
+  Long-name content is checked around lam-alef ToUnicode extraction differences;
+  rendered glyphs remain subject to visual review. Print explicitly uses light
+  paper color scheme; PDF corner pixels and DOM checks prevent dark margins.
+  Reporter Excel retains the actual logo ratio, checked in the exported workbook.
+- Reconciliation/review-image CLI tools now execute under this project's CommonJS
+  TypeScript mode; previously top-level await prevented the documented commands.
+- Local domain run: 28 total, 27 passed, zero failed, one native-lock skip.
+  Python: 26 passed. Current local lockfile audit: zero vulnerabilities.
+  CI stores main/current audit snapshots; the recovered 2026-10-10 main snapshot
+  has 34 findings (2 critical), not an immutable historical count.
+
 ## Open gates
 
-1. **The real 1405 source PDF is now available (2026-10-10).** The operator
-   supplied a 17-page file declaring the final official University of Tehran
-   calendar. A reproducible PyMuPDF source audit recovered 365 dated daily
-   rows, 189 non-empty main rows, 128 appendix rows and **26 official holiday
-   dates**; the SHA-256 and date-level provenance are recorded in
-   [calendar-1405-pdf-audit.md](calendar-1405-pdf-audit.md).
-   This removes the prior **missing valid PDF** obstacle, but does NOT close
-   the parser correctness gate: those 317 composite source rows must still be
-   accurately normalized and reconciled against the separately curated 424
-   event fixture. The production importer still emits
-   `parserVerified=false` and deliberately fails closed. Full semantic
-   normalization, malformed/wrong-year/leap-year tests, golden comparison
-   and staging proof must pass before certifying future automatic imports.
-   The uploaded bytes have not yet been independently checked against a live
-   download from the university website.
-2. The operator's live workstation Bale private send-and-receive test succeeded,
-   including recipient-side confirmation (see above). Staging execution through
-   the StoreX `BaleClient` and live Nextcloud/Talk integrations remain open.
-   Test doubles cover
-   disabled sharing, private recipients, anonymous hash validation, retries and expiry,
-   but do not prove the deployed service policies or credentials.
-3. Browser coverage is not yet the full existing-feature matrix: profile/avatar,
-   password changes, password resets, user activation and all guest/manual CRUD
-   paths still require regression verification.
-4. A production company-logo asset has not been provided. The current placeholder
-   is not final branding approval.
-5. Exact physical public-link revocation during worker/network outage cannot be
-   guaranteed. The worker revokes at the first tick at/after the exact stored
-   expiry and records failures. Verify the operational timer and monitoring on
-   staging and assess this limitation against the required 24-hour policy.
+1. **Final-head regression and visual acceptance:** latest corrected CI must pass.
+   Prior runs `38036552817` and `38037853789` exposed PDF-inspection and cached-hidden
+   logo-selector errors, respectively. Their failed states are not acceptance.
+2. **Live staging integrations:** workstation Bale send-and-receive is confirmed
+   by the owner, but actual StoreX BaleClient, Nextcloud anonymous PDF/share cleanup
+   and Talk group delivery remain unperformed. No credentials/staging access are
+   supplied to this runtime. Use the opt-in live scripts and runbook; no live sends
+   belong in CI.
+3. **Source download provenance and future certification:** the supplied file is
+   certified; the live university site still returns a transfer page, preventing
+   independent download/hash comparison here. Different years/editions fail closed
+   until reviewed certification, even if their structure parses successfully.
+4. **Operational staging:** prepare the service account, StoreX Automation Alerts
+   group, durable shared spool/branding, credentials, worker timer, backup/restore
+   and monitoring, then verify controlled reminders, delivery and outage recovery.
+   The owner has accepted first-tick revocation at/after exact stored 24-hour expiry
+   with outage delays; a custom gateway is not a remaining requirement.
+
+The original displayed company fallback is explicitly accepted by the owner;
+missing approval for a new logo is not a blocker. The tracked repository has no
+company-logo.png, so the existing title placeholder remains until an administrator
+uploads one or the deployment supplies its original file. Do not invent branding.
 
 ## Review and operations
 

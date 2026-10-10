@@ -44,7 +44,19 @@ Secrets are ENV-only; admin screens display only configured/not-configured flags
 
 Starting 1 Esfand, check the next Jalali year daily. Discover the year PDF href from `https://calendar.ut.ac.ir/`; do not hardcode Liferay document UUIDs. Download is size-bounded and checks PDF magic, then hashes, extracts with PyMuPDF, validates/stages and imports in one transaction with post-count verification. Failed extraction/validation never modifies the active year. Original PDF and extraction/diff JSON are retained in the protected spool and synchronized privately when Nextcloud recovers.
 
-**Current blocker:** the extractor is explicitly uncertified and returns parserVerified=false. Automatic official import deliberately stops at PARSER_GOLDEN_VALIDATION_REQUIRED. Full official event normalization and golden-layout calibration are not implemented/verified yet. Do not enable this as a production calendar importer or mark the mission complete. Required certification is the real official 1405 PDF -> 365 days, 424 events, 26 official holiday dates, 244 final workdays, 104 weekly offdays, plus malformed/partial/wrong-year and leap-year cases.
+The supplied 1405 source is now certified by `ut-evidence-parser-v2`: 365 days,
+459 events, 26 official holiday dates, 244 final workdays and 104 weekly off-days.
+The former 424-event fixture omitted 35 occupational entries and had two title
+transcription differences. See `calendar-1405-pdf-audit.md`. Certification checks
+the exact PDF hash and extracted semantics; a new edition/year requires reviewed
+source certification and cannot be promoted by a forged parser flag. Unsupported
+sources retain the active calendar and report `PARSER_SOURCE_REVIEW_REQUIRED`.
+
+Every enabled calendar tick also schedules/resumes a missing/unverified current
+Jalali year, independently of next-year Esfand checks. A missed Esfand window or
+Nowruz restart does not defer recovery for another year. Emergency holidays and
+organization overrides remain until an approved source diff is applied. Ordinary
+occasions need not be entered in emergency mode.
 
 Emergency UI offers all 12 months, Persian/Arabic/English digits, slash/hyphen dates, multiline `1406-01-01 | نوروز`, and CSV:
 
@@ -63,6 +75,9 @@ Rows are validated with row errors, identical duplicates deduplicated and confli
 - BALE_BOT_TOKEN: official bot token.
 - AUTOMATION_ALLOWED_NEXTCLOUD_HOSTS: comma-separated trusted DNS hostnames.
 - AUTOMATION_SPOOL_DIR: durable protected spool directory, writable by worker and readable by admin artifact route if web/worker are separate.
+- BRANDING_STORAGE_DIR: absolute protected durable logo directory shared by web and worker; default is the branding subdirectory of AUTOMATION_SPOOL_DIR.
+- STOREX_APP_ORIGIN: canonical HTTPS application origin for authenticated reminder links.
+- STOREX_ENVIRONMENT: set staging only on the controlled staging host for opt-in live probes.
 - PLAYWRIGHT_BROWSERS_PATH: installed Chromium location; alternatively use an explicit executable path.
 
 Optional: AUTOMATION_ALLOWED_PRIVATE_HOSTS, CALENDAR_APPROVED_SOURCE_HOSTS, CALENDAR_PYTHON (default python3), PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, REPORT_PDF_FONT_PATH. Set NODE_ENV=production and TZ=Asia/Tehran. Existing AUTH_COOKIE_SECURE should be true behind production HTTPS. TEST_DATABASE_URL and TEST_PGLITE are test-only and must never be installed in production. The sample is `deploy/automation.env.example`.
@@ -71,7 +86,7 @@ Optional: AUTOMATION_ALLOWED_PRIVATE_HOSTS, CALENDAR_APPROVED_SOURCE_HOSTS, CALE
 
 Create a dedicated Nextcloud account with access only to the two private directories and configured Talk group. Create/revoke its app password separately from personal accounts. Enable public link sharing with read-only anonymous downloads and permission to revoke shares; mandatory password policy blocks this workflow. Ensure the configured base URL and `/s/.../download` are reachable anonymously with valid TLS, no login wall, no credential-bearing redirects. Put multiple technical responders in the Talk group and add the service account. Verify service quota, outbound DNS/HTTPS to Nextcloud, tapi.bale.ai and calendar.ut.ac.ir, access to the protected spool and clock synchronization.
 
-Create the Bale bot via the official BotFather, store its token only in the root-managed environment file, ask the single report recipient to start the bot, obtain their private chat ID and run getMe/connection tests from the admin page. The sender checks getChat type=private before every message.
+Use the existing `@storex_lunch_notify_bot` (https://ble.ir/storex_lunch_notify_bot); do not recreate it. Store its token only in the root-managed environment file. The one approved recipient sends `/start` once; configure the verified private chat ID and run readiness checks. The sender checks getChat type=private before every message.
 
 ## Bale private-recipient live acceptance (required before merge)
 
@@ -135,11 +150,11 @@ npm run automation:admin -- --dry-run=calendar --year=1406
 npm run automation:admin -- --reconcile
 ```
 
-The calendar dry-run stores diagnostic artifacts but never imports Calendar data. It currently fails closed at the uncertified parser. Use admin connection tests, inspect job history, verify a public-safe probe, then leave Reporter manual while sharing is disabled. On staging enable Reporter, set a controlled test recipient, verify both reminders/latest guests, one PDF/link/send, retry resumption and minute cleanup at expiry. Verify USERS cannot access admin routes/override actions and REPORTER keeps manual guest, Print and Excel controls. Compare 1/7/31/90/180/365-day UI/Excel ranges.
+The calendar dry-run stores diagnostic artifacts but never imports Calendar data. It never promotes the staged dataset; unsupported/unreviewed sources fail closed. Use admin connection tests, inspect job history, verify a public-safe probe, then leave Reporter manual while sharing is disabled. On staging enable Reporter, set a controlled test recipient, verify both reminders/latest guests, one PDF/link/send, retry resumption and minute cleanup at expiry. Verify USERS cannot access admin routes/override actions and REPORTER keeps manual guest, Print and Excel controls. Compare 1/7/31/90/180/365-day UI/Excel ranges.
 
 ## Migrations and rollback
 
-Migrations: 20261006060000_attendance_provenance; 20261006070000_automation_control_plane. Additive tables/columns/enums only; old weekly data retained. Provenance migration backfills preserved legacy/manual decisions using original statuses/timestamps. Pause Reporter/Calendar and stop the timer before rollback, but first manually revoke all outstanding public shares by recorded shareId if the cleanup service cannot run. Keep private PDFs and diagnostic artifacts. Restore the previous application release with new DB tables/columns intact; do not drop AttendanceDecision or reset weekly/manual flags. Old recurring writers must remain disabled during rollback to prevent overwriting new decisions. If restoring a DB snapshot, reconcile/revoke any shares created after that snapshot from Nextcloud before restarting. Take an explicit backup and plan data reconciliation for writes made after the backup; a destructive down migration is not supplied.
+Migrations: 20261006060000_attendance_provenance; 20261006070000_automation_control_plane; 20261010090000_global_branding. Additive tables/columns/enums only; old weekly data retained. Provenance migration backfills preserved legacy/manual decisions using original statuses/timestamps. Pause Reporter/Calendar and stop the timer before rollback, but first manually revoke all outstanding public shares by recorded shareId if the cleanup service cannot run. Keep private PDFs and diagnostic artifacts. Restore the previous application release with new DB tables/columns intact; do not drop AttendanceDecision or reset weekly/manual flags. Old recurring writers must remain disabled during rollback to prevent overwriting new decisions. If restoring a DB snapshot, reconcile/revoke any shares created after that snapshot from Nextcloud before restarting. Take an explicit backup and plan data reconciliation for writes made after the backup; a destructive down migration is not supplied.
 
 ## Upstream references
 
@@ -147,3 +162,68 @@ Migrations: 20261006060000_attendance_provenance; 20261006070000_automation_cont
 - Official Talk chat/conversation API: https://nextcloud-talk.readthedocs.io/en/latest/chat/ and https://nextcloud-talk.readthedocs.io/en/latest/conversation/
 - Official Bale API: https://docs.bale.ai/
 - Official Calendar source: https://calendar.ut.ac.ir/
+
+
+## Global branding storage and rollback
+
+`/settings/branding` is ADMIN-only. Upload preview does not change the active logo.
+PNG/JPEG/WebP signatures and decoded pixels are checked (2 MiB input/output,
+16–6000 pixels per axis, 16 million input pixels, one frame). Images are stripped
+and normalized to bounded PNG, retaining transparency. SVG is refused. Attempts
+are rate limited; stale concurrent approval fails instead of overwriting another
+admin. Content-addressed PNG files are mode 0600 in a mode-0700 directory; active
+references, revision and audit history swap atomically under a transaction lock.
+
+The originally displayed fallback is accepted by the owner. If the installation
+has `public/company-logo.png`, it remains the original fallback; otherwise the
+existing company-title placeholder remains. Do not invent a company logo.
+Previous/default rollback is available. Missing/corrupt active bytes fall back
+and the branding page reports storage trouble. Web and worker must share both
+database and durable directory. Back up/restore PNG files together with
+BrandingAsset/BrandingConfig/BrandingAudit; check hashes before re-enabling.
+Keep revision references intact. Historical delivered PDFs are not regenerated.
+
+The asset is used in login/dashboard/admin/profile/Reporter surfaces, manual A5
+print, server PDF and Reporter Excel. Print forces a light paper color scheme
+when the UI is dark. Export images retain the actual aspect ratio. Never point
+BRANDING_STORAGE_DIR at the build directory or a public path. The supplied
+systemd worker permits `/var/lib/storex/automation`; if branding or spool is
+elsewhere, adjust `ReadWritePaths` explicitly for that directory.
+
+## Controlled Nextcloud and Talk acceptance
+
+The required group is StoreX Automation Alerts. In approved staging Nextcloud,
+create a multi-person Talk conversation, add the technical responders and the
+dedicated service account, obtain its room token from the conversation link,
+and configure `technicalConversation` in `/settings/automations/reporter`.
+The service account must read/send to that group, upload to the two private
+folders, create read-only anonymous shares and revoke them. An app password must
+belong to that account. Keep Reporter paused during probes.
+
+Load credentials through the protected service environment without printing
+values; set STOREX_ENVIRONMENT=staging only on staging. Run:
+
+```bash
+# Read-only identity, capabilities and group checks; no messages/shares.
+node --import tsx scripts/check-nextcloud-live.ts --check
+# After approval for a public-safe synthetic PDF: verify anonymous download/hash,
+# share revocation and private-probe deletion, using durable cleanup intents.
+node --import tsx scripts/check-nextcloud-live.ts --probe-share
+# After approval for the technical group: send one distinguishable test alert.
+node --import tsx scripts/check-nextcloud-live.ts --talk-once
+```
+
+Confirm the Talk message visibly in the intended group. Capture sanitized code,
+probe stage, job ID, receipt confirmation and cleanup result; never include room
+or private recipient IDs, credentials or raw response bodies in public artifacts.
+If a send outcome is ambiguous, inspect the group before repeating. Resolve a
+pending cleanup intent instead of leaving a test share/file behind.
+
+For Bale, run readiness first and `--send-once` only after approval for its private
+recipient. The owner confirmed workstation send-and-receive; it does not certify
+StoreX staging. Finally verify a controlled 09:20/09:25/09:30 schedule with saved
+guest changes, next-working-day date, one immutable PDF, one link notification,
+retry recovery and first-tick revocation after exactly 24 hours. The owner accepts
+delayed physical revocation during outages: test restart recovery, overdue status
+and Talk escalation; a custom public proxy is not required. Do not enable
+production or merge before live integration and operational gates are recorded.

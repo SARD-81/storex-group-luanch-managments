@@ -1,75 +1,98 @@
-# Golden source audit — uploaded official calendar 1405
+# Reviewed source certificate — supplied calendar 1405
 
-Date: 2026-10-10
-Scope: inspect the user-supplied 17-page PDF **without importing it**.
+Updated: 2026-10-10. Original PDF and raw extraction/reconciliation outputs remain
+outside Git and public application paths. No production import was performed.
 
-The operator supplied a full `Calendar-1405.pdf` file from the purported
-University of Tehran / Geophysics Institute official calendar. The document's
-first page declares `نسخه نهایی` and year 1405. File authenticity beyond
-that title and the user's supplied provenance has **not** been independently
-verified against a live university download.
+## Source and limits
 
-SHA-256 (exact uploaded file):
+The owner supplied the 17-page final calendar declaring University of Tehran /
+Geophysics Institute provenance. Exact SHA-256:
+
 `8e32b520d5da058414b9378d62a01117273336a4c074591f4e84d59ab32a963c`
 
-Source-layout audit results, executed with PyMuPDF on the supplied bytes:
+The checksum was recomputed on the supplied bytes. A fresh attempt to open the
+university site on 2026-10-10 still returned a transfer/interstitial page.
+Byte-for-byte authenticity against a live university download is therefore
+**unverified**. This is separate from the reviewed supplied-file parser certificate.
 
-| Evidence | Observed |
+## Structural and semantic results
+
+| Evidence | Result |
 | --- | ---: |
-| Pages | 17 |
-| Monthly tables (pages 3–14) | 12 |
-| Daily rows | 365 |
+| Pages / complete month tables | 17 / 12 |
+| Unique daily records | 365 |
 | Month lengths | 31,31,31,31,31,31,30,30,30,30,30,29 |
-| Main-month rows with occasion text | 189 |
-| Appendix rows (pages 15–17) | 128 |
-| Combined *source* entries | 317 |
-| Unique official holiday dates marked تعطیل | 26 |
-| Existing manually normalized 1405 fixture | 424 events |
+| Main composite occasion rows / appendix rows | 189 / 128 |
+| Combined source entries | 317 |
+| Extracted, normalized events | 459 |
+| Unique official holiday dates / holiday events | 26 / 31 |
+| Company weekly off-days / final workdays | 104 / 244 |
+| Unresolved rows / corrected-fixture discrepancies | 0 / 0 |
 
-**317 source entries != 424 normalized events.** Several main-table cells
-contain multiple independent occasions. Splitting on `و` is unsafe, since
-the conjunction also appears inside names and descriptions. In particular,
-this result does NOT certify each of the existing 424 normalized fixture
-entries or their classifications. The official importer's existing
-`parserVerified=false` fail-closed gate MUST remain in force until semantic
-normalization, date-by-date content comparison and golden-layout certification
-are complete. No production DB import was performed.
+Each extracted event carries its dated source span, source page and section,
+classification, calendar system, stable key and splitting rationale. Conjunctions
+inside titles are preserved; catalog-aware matching splits independent occasions.
+Unknown residual text blocks certification instead of being dropped.
 
-The following 26 official holiday dates were read from the uploaded PDF:
+The historical 424-event fixture at `75941c0` omitted **35 occupational occasions
+from page 17**. Two titles also differed from their printed source:
 
-`1405-01-01, 1405-01-02, 1405-01-03, 1405-01-04, 1405-01-12,
-1405-01-13, 1405-01-25, 1405-03-06, 1405-03-14, 1405-03-15,
-1405-04-03, 1405-04-04, 1405-05-13, 1405-05-21, 1405-05-22,
-1405-05-30, 1405-06-08, 1405-08-22, 1405-10-02, 1405-10-16,
-1405-11-04, 1405-11-22, 1405-12-09, 1405-12-19, 1405-12-20,
-1405-12-29`.
+| Date | Baseline | Source-corrected wording |
+| --- | --- | --- |
+| 1405-03-27 | `... در ۱۳۵۸ هـ ش` | `... ۱۳۵۸ هـ ش` |
+| 1405-09-09 | `(هشت سال قبل از هجرت)` | `(هشتم قبل از هجرت)` |
 
-## How to reproduce on the real PDF
+The latter preserves the printed wording even if it appears unusual; it is not
+silently editorialized. Exact protected comparison reports 37 unmatched parsed
+titles and two unmatched baseline titles: 35 omissions plus the two replacements.
+All unchanged matched events have zero metadata differences. The corrected
+459-event fixture and real-PDF extraction match on date, title, classification,
+calendar system, holiday flag, source page/section and display order.
+
+## Certification and future sources
+
+Parser version: `ut-evidence-parser-v2`. Reviewed source certificate:
+`scripts/official_calendar/certificates.json`; semantic hash:
+`b0c91b9e21b3b09dbd752751af45ce34395a229e2fcb17aa479ac6daa3430d17`.
+
+The Python parser actually reads PDF tables. The TypeScript boundary independently
+checks all daily Jalali/Gregorian/weekday relationships, holiday consistency and
+the reviewed semantic certificate. A forged `parserVerified` flag is insufficient.
+Only this reviewed source edition is certified. A different hash/year/layout,
+unknown event or changed semantic content requires source review and a new
+reviewed certificate; administrator dataset approval cannot bypass certification.
+Leap/non-leap structures and adverse cases are tested with synthetic documents;
+no second real official leap-year PDF has been supplied, so no claim is made that
+one has been independently certified.
+
+## Reproduce without production data
 
 ```bash
 python3 -m pip install -r scripts/requirements-calendar.txt
-python3 scripts/audit-official-calendar-pdf.py \
-  /secure/location/Calendar-1405.pdf 1405 \
-  --out /secure/location/calendar-1405-source-evidence.json
+python3 scripts/audit-official-calendar-pdf.py /secure/Calendar-1405.pdf 1405 \
+  --out /secure/calendar-source-evidence.json
+python3 scripts/parse-official-calendar.py /secure/Calendar-1405.pdf 1405 \
+  > /secure/calendar-parsed.json
+# Use an archived copy of data/calendar/iran/official-1405 from 75941c0:
+node --import tsx scripts/reconcile-calendar-1405.ts \
+  --parsed-json=/secure/calendar-parsed.json \
+  --baseline-module=/secure/baseline/data/calendar/iran/official-1405/index.ts \
+  --out=/secure/calendar-reconciliation.json
 ```
 
-This audit makes no network requests and writes no database rows. The resulting
-JSON contains all 365 dated main rows and 128 dated appendix rows with their
-original source page number. Keep uploaded PDF and raw audit outputs in
-access-controlled storage, not publicly served paths.
+On an isolated localhost database ending `_test`, with DATABASE_URL and
+TEST_DATABASE_URL pointing to the same database:
 
-## Remaining certification work
+```bash
+node --import tsx scripts/check-calendar-pdf-pipeline.ts \
+  --pdf=/secure/Calendar-1405.pdf \
+  --sha256=8e32b520d5da058414b9378d62a01117273336a4c074591f4e84d59ab32a963c
+```
 
-1. Compare all 424 individually normalized fixture entries with dated PDF
-   source rows (including multi-event cells, appendix items, and holiday flags).
-   Make ambiguity explicit in a reviewed diff. Do not silently guess missing events.
-2. Implement verified normalized extraction for future years, with strict
-   malformed, wrong-year, missing-month, and leap-year rejection.
-3. Only set `parserVerified=true` after complete independent checks pass.
-4. Test staging import, Admin review for changes to an active year,
-   preservation of organizational overrides, and attendance reconciliation.
-5. Document canonical source retrieval and/or approved admin PDF upload; the
-   existing calendar site was previously returning transfer pages.
-
-Source file itself is **not committed to the repository**; only this audit
-and the reproducible audit utility are committed.
+The real supplied-PDF pipeline passed locally with PGlite: staging did not mutate
+the active calendar; admin import produced 365 days / 459 events / 26 holidays /
+104 weekly off-days / 244 workdays; historical manual attendance was unchanged;
+repeat import was idempotent; changed-source and wrong-year input were rejected.
+This local run is not evidence for native PostgreSQL advisory locking. Separate
+native CI integration tests check import review, fallback promotion, override
+preservation, migrations and multi-session worker locks.

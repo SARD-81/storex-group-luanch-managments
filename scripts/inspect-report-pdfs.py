@@ -59,7 +59,10 @@ for filename in sorted(root.glob("*.pdf")):
                     assert abs(rect.height - rect.width/ratio) <= .8, f"Distorted logo aspect ratio: {filename.name}"
                     logos += 1
                 images += 1
-            page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5)).save(str(filename.with_suffix(""))+f"-page-{index+1:02d}.png")
+            rendered = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
+            for x, y in ((2, 2), (rendered.width-3, 2), (2, rendered.height-3), (rendered.width-3, rendered.height-3)):
+                assert min(rendered.pixel(x, y)[:3]) >= 245, f"Dark paper margin: {filename.name}, page {index+1}"
+            rendered.save(str(filename.with_suffix(""))+f"-page-{index+1:02d}.png")
         assert embedded_fonts, f"Persian font not embedded: {filename.name}"
         if "logo-" in filename.name and "restored" not in filename.name:
             assert logos == 1, f"Selected logo missing or duplicated in PDF: {filename.name}"
