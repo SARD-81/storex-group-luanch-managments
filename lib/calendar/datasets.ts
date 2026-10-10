@@ -1,7 +1,9 @@
 import {
   OFFICIAL_PARSER_VERSION,
+  AUTOMATED_PARSER_VERSION,
   validateParsedDailyRecords,
   verifyParserCertificate,
+  verifyAutomaticAttestation,
 } from "./parser-certification";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -29,6 +31,7 @@ export const DATASET_SCHEMA = z.object({
   parserVersion: z.string().min(1),
   parserVerified: z.boolean(),
   mode: z.enum(["OFFICIAL", "MANUAL"]),
+  attestation: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   dailyRecords: z
     .array(
       z.object({
@@ -89,8 +92,16 @@ export function validateAnnualDataset(raw: unknown) {
   }
   if (
     data.mode === "OFFICIAL" &&
+    data.parserVersion === AUTOMATED_PARSER_VERSION
+  ) {
+    if (!data.dailyRecords) throw new Error("PARSER_DAILY_RECORDS_REQUIRED");
+    validateParsedDailyRecords(data.year, data.dailyRecords, data.events);
+    if (data.parserVerified) verifyAutomaticAttestation(data);
+  }
+  if (
+    data.mode === "OFFICIAL" &&
     data.parserVerified &&
-    data.parserVersion !== OFFICIAL_PARSER_VERSION
+    ![OFFICIAL_PARSER_VERSION, AUTOMATED_PARSER_VERSION].includes(data.parserVersion)
   )
     throw new Error("PARSER_CERTIFICATE_REQUIRED");
   return data;

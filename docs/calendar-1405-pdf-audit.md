@@ -5,6 +5,11 @@ outside Git and public application paths. No production import was performed.
 
 ## Source and limits
 
+Owner acceptance decision (2026-10-10): accept the supplied 1405 PDF as
+the working source while explicitly recording that byte-for-byte provenance
+against the online University source could not be established. This exception
+is limited to the exact reviewed 1405 checksum, not subsequent PDFs or years.
+
 The owner supplied the 17-page final calendar declaring University of Tehran /
 Geophysics Institute provenance. Exact SHA-256:
 
@@ -58,9 +63,11 @@ Parser version: `ut-evidence-parser-v2`. Reviewed source certificate:
 The Python parser actually reads PDF tables. The TypeScript boundary independently
 checks all daily Jalali/Gregorian/weekday relationships, holiday consistency and
 the reviewed semantic certificate. A forged `parserVerified` flag is insufficient.
-Only this reviewed source edition is certified. A different hash/year/layout,
-unknown event or changed semantic content requires source review and a new
-reviewed certificate; administrator dataset approval cannot bypass certification.
+Only the supplied 1405 source edition has the fixed v2 certificate. For
+1406+ there is a separate conservative automatic-attestation policy using
+trusted live University HTTPS download, complete semantic parsing, independent
+day validation and a server HMAC. Unknown text/layouts and changes to an active
+year still need review; administrator approval cannot bypass verification.
 Leap/non-leap structures and adverse cases are tested with synthetic documents;
 no second real official leap-year PDF has been supplied, so no claim is made that
 one has been independently certified.

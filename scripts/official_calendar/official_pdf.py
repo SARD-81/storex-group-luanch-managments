@@ -480,6 +480,23 @@ def normalize_entries(entries, catalog):
     return events, unresolved
 
 
+def is_auto_eligible(year, days, events, unresolved):
+    """Conservative year-independent gate for complete known semantics.
+
+    Unknown/new occasion text, ambiguous holiday indicators and unsupported
+    layouts are held for review, never guessed or silently omitted.
+    """
+    return bool(
+        year >= 1406
+        and not unresolved
+        and len(days) == sum(expected_lengths(year))
+        and len({d["jalaliDateKey"] for d in days}) == len(days)
+        and len({e["jalaliDateKey"][5:7] for e in events}) == 12
+        and len(events) >= 12
+        and all(e["title"] and e["sourcePage"] is not None for e in events)
+    )
+
+
 def parse_pdf(path, year):
     require(1200 <= year <= 1700, "YEAR_OUT_OF_RANGE")
     require(Path(path).stat().st_size <= 20 * 1024 * 1024, "INVALID_PDF_BYTES")
@@ -523,8 +540,15 @@ def parse_pdf(path, year):
         "year": year,
         "parserVersion": VERSION,
         "parserVerified": verified,
+        # Candidate, not an authorization: server must verify the HTTPS
+        # download and independently sign validated source-bound data.
+        "autoEligible": is_auto_eligible(year, days, events, unresolved),
         "sourceHash": sha,
-        "reviewReason": None if verified else "SOURCE_SEMANTIC_REVIEW_REQUIRED",
+        "reviewReason": (
+            None
+            if verified or is_auto_eligible(year, days, events, unresolved)
+            else "SOURCE_SEMANTIC_REVIEW_REQUIRED"
+        ),
         "dailyRecords": days,
         "events": events,
         "unresolved": unresolved,

@@ -243,6 +243,23 @@ class ParserTest(unittest.TestCase):
             )[1]
         )
 
+    def test_future_year_auto_candidate_needs_complete_semantics(self):
+        year = 1406
+        days, _ = p.extract_structure(Doc(year), year)
+        events = [
+            {
+                "jalaliDateKey": f"{year}-{m:02d}-01",
+                "title": f"روز آزمون {m}",
+                "sourcePage": m + 2,
+            }
+            for m in range(1, 13)
+        ]
+        self.assertTrue(p.is_auto_eligible(year, days, events, []))
+        self.assertFalse(p.is_auto_eligible(1405, days, events, []))
+        self.assertFalse(p.is_auto_eligible(year, days, events, [{"reason": "UNKNOWN"}]))
+        self.assertFalse(p.is_auto_eligible(year, days, events[:-1], []))
+        self.assertFalse(p.is_auto_eligible(year, days[:-1], events, []))
+
     def test_repeated_extraction_deterministic(self):
         self.assertEqual(
             p.extract_structure(Doc(1406), 1406), p.extract_structure(Doc(1406), 1406)

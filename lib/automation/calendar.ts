@@ -1,5 +1,9 @@
 import { readFile, stat } from "node:fs/promises";
-import { OFFICIAL_PARSER_VERSION } from "@/lib/calendar/parser-certification";
+import {
+  OFFICIAL_PARSER_VERSION,
+  AUTOMATED_PARSER_VERSION,
+  signAutomaticDataset,
+} from "@/lib/calendar/parser-certification";
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -10,6 +14,7 @@ import type {
 } from "@/app/generated/prisma/client";
 import {
   AnnualDataset,
+  DATASET_SCHEMA,
   applyAnnualDataset,
   stageAnnualDataset,
   isAnnualDatasetApplied,
@@ -95,7 +100,7 @@ export async function synchronizeCalendar(
   });
   if (
     prior?.status === "VERIFIED" &&
-    prior.parserVersion === CALENDAR_PARSER_VERSION &&
+    [CALENDAR_PARSER_VERSION, AUTOMATED_PARSER_VERSION].includes(prior.parserVersion) &&
     (await isAnnualDatasetApplied(db, prior.payload))
   )
     return;
@@ -154,19 +159,52 @@ export async function synchronizeCalendar(
     nextcloudPath: `${config.calendarDirectory}/${year}/${hash}/${CALENDAR_PARSER_VERSION}/${createHash("sha256").update(output).digest("hex")}/parsed.json`,
   });
   const parsed = JSON.parse(output);
-  // No golden certification => no fabricated calendar or partial import.
-  if (parsed.parserVerified !== true) {
+  // Reviewed 1405 retains its exact source certificate. Future years may
+  // use trusted HTTPS + exhaustive semantic checks + server HMAC.
+  const autoCandidate =
+    parsed.parserVerified !== true &&
+    parsed.autoEligible === true &&
+    year >= 1406 &&
+    !approvedLocal &&
+    new URL(url).hostname === "calendar.ut.ac.ir" &&
+    parsed.sourceHash === hash &&
+    parsed.year === year &&
+    parsed.parserVersion === OFFICIAL_PARSER_VERSION &&
+    Array.isArray(parsed.unresolved) &&
+    parsed.unresolved.length === 0;
+  if (parsed.parserVerified !== true && !autoCandidate) {
     await stage("SOURCE_SEMANTIC_REVIEW_REQUIRED");
+    await queueAlert(
+      db, "CALENDAR", String(year), `calendar-unverified:${year}:${hash}`,
+      `تقویم ${year} به اعتبارسنجی خودکار نرسید؛ فایل و شواهد برای بررسی مدیر حفظ شدند.`,
+    );
     throw new AutomationError("PARSER_SOURCE_REVIEW_REQUIRED");
   }
   await stage("NORMALIZE_VALIDATE");
-  const payload: AnnualDataset = {
+  let payload: AnnualDataset = DATASET_SCHEMA.parse({
     ...parsed,
     year,
     sourceName,
     sourceHash: hash,
+    parserVersion: autoCandidate ? AUTOMATED_PARSER_VERSION : OFFICIAL_PARSER_VERSION,
+    parserVerified: true,
     mode: "OFFICIAL",
-  };
+  });
+  if (autoCandidate) {
+    // No default secret: staged payloads must be signed only by the worker.
+    try {
+      payload = DATASET_SCHEMA.parse({
+        ...payload,
+        attestation: signAutomaticDataset(payload),
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "CALENDAR_ATTESTATION_KEY_NOT_CONFIGURED") {
+        await stage("AUTO_ATTESTATION_KEY_NOT_CONFIGURED");
+        throw new AutomationError("AUTO_ATTESTATION_KEY_NOT_CONFIGURED");
+      }
+      throw error;
+    }
+  }
   const dataset = await stageAnnualDataset(db, payload, url);
   await storeArtifact(db, {
     artifactKey: `diff:${year}:${hash}:${CALENDAR_PARSER_VERSION}:${createHash("sha256").update(JSON.stringify(dataset.diff)).digest("hex")}`,

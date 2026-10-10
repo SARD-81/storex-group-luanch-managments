@@ -191,3 +191,21 @@ Use [automation-runbook.md](automation-runbook.md) for environment configuration
 DevOps handoff, dry-run, migration, rollback and manual fallback. Keep automations
 disabled and the PR unmerged until every open correctness/security/verification
 gate is closed.
+
+## Subsequent owner decisions and implementation (2026-10-10, PR #76)
+
+The owner authorized automatic admission of future official year PDFs only if
+strict independent validation succeeds; suspicious semantics/layout changes must
+stay blocked for review. The supplied 1405 PDF is accepted despite lack of
+live online byte-for-byte provenance comparison. Organizational Nextcloud
+acceptance will wait for the production organization environment, and the
+actual Bale recipient is **not** the earlier tested private chat.
+
+A new auto-attestation path for unseen 1406+ trusted University HTTPS sources
+was introduced in the same draft PR, with fail-closed semantic parsing,
+independent date/holiday checks, ENV-only HMAC verification of persisted data,
+and explicit regression tests. The old 1405 pinned certificate remains intact.
+This new commit requires fresh CI; **do not treat previous CI as verification
+for the changed commit**. Real future University PDF variations and all
+external integration/operational tests remain outstanding. Keep PR Draft and
+unmerged until evidence and explicit owner approval are obtained.

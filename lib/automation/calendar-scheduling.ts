@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@/app/generated/prisma/client";
 import { buildBaseJalaliYearDays } from "@/lib/calendar/calendar-date";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
-import { OFFICIAL_PARSER_VERSION } from "@/lib/calendar/parser-certification";
+import { OFFICIAL_PARSER_VERSION, AUTOMATED_PARSER_VERSION } from "@/lib/calendar/parser-certification";
 import { ensureJob } from "./jobs";
 /** Current-year catch-up is independent of the Esfand next-year check. */
 export async function scheduleCalendarImports(
@@ -16,7 +16,7 @@ export async function scheduleCalendarImports(
         year: jalali.year,
         sourceName,
         status: "VERIFIED",
-        parserVersion: OFFICIAL_PARSER_VERSION,
+        parserVersion: { in: [OFFICIAL_PARSER_VERSION, AUTOMATED_PARSER_VERSION] },
       },
     }),
     db.calendarDay.count({

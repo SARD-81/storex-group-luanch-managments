@@ -6,6 +6,8 @@ import certificates from "../scripts/official_calendar/certificates.json";
 import {
   verifyParserCertificate,
   OFFICIAL_PARSER_VERSION,
+  AUTOMATED_PARSER_VERSION,
+  signAutomaticDataset,
 } from "../lib/calendar/parser-certification";
 import { buildBaseJalaliYearDays } from "../lib/calendar/calendar-date";
 import {
@@ -105,6 +107,57 @@ test("certificate cannot bless changed title, holiday, date, source, taxonomy, d
     const data = golden();
     mutate(data);
     assert.throws(() => validateAnnualDataset(data));
+  }
+});
+
+test("unknown future-year source needs server attestation, exact semantic payload and daily mapping", () => {
+  const old = process.env.CALENDAR_ATTESTATION_KEY;
+  process.env.CALENDAR_ATTESTATION_KEY = "19".repeat(32);
+  try {
+    const year = 1406;
+    const base = buildBaseJalaliYearDays(year);
+    const events = Array.from({length: 12}, (_,i) => ({
+      eventKey: `1406-${String(i+1).padStart(2,"0")}-01:test`,
+      jalaliDateKey: `1406-${String(i+1).padStart(2,"0")}-01`,
+      title: `رویداد آزمایشی ماه ${i+1}`,
+      type: "CULTURAL" as const,
+      calendarType: "JALALI" as const,
+      isHoliday: i === 0,
+      displayOrder: 1,
+      sourcePage: i+3,
+      sourceSection: "MAIN_MONTH_TABLE" as const,
+    }));
+    const unsigned = {
+      year,
+      sourceName: `tehran-university-official-calendar-${year}`,
+      sourceHash: "3".repeat(64),
+      parserVersion: AUTOMATED_PARSER_VERSION,
+      parserVerified: true,
+      mode: "OFFICIAL" as const,
+      events,
+      dailyRecords: base.map(day => ({
+        dateKey: day.dateKey,
+        jalaliDateKey: day.jalaliDateKey,
+        dayOfWeek: day.dayOfWeek,
+        isOfficialHoliday: day.jalaliDateKey === "1406-01-01",
+      })),
+    };
+    assert.throws(() => validateAnnualDataset(unsigned), /attestation/i);
+    const signed = {...unsigned, attestation: signAutomaticDataset(unsigned)};
+    assert.deepEqual(validateAnnualDataset(signed).events, events);
+    for (const changed of [
+      {...signed, sourceHash:"4".repeat(64)},
+      {...signed, events: events.map((e,i)=>i===0?{...e,title:"تغییر جعلی"}:e)},
+      {...signed, events: events.map((e,i)=>i===0?{...e,isHoliday:false}:e)},
+      {...signed, dailyRecords: signed.dailyRecords.map((d,i)=>i===0?{...d,dayOfWeek:(d.dayOfWeek+1)%7}:d)},
+      {...signed, year:1405,sourceName:"tehran-university-official-calendar-1405"},
+      {...signed, attestation:"f".repeat(64)},
+    ]) assert.throws(() => validateAnnualDataset(changed));
+    process.env.CALENDAR_ATTESTATION_KEY = "";
+    assert.throws(() => validateAnnualDataset(signed), /KEY_NOT_CONFIGURED/);
+  } finally {
+    if (old === undefined) delete process.env.CALENDAR_ATTESTATION_KEY;
+    else process.env.CALENDAR_ATTESTATION_KEY = old;
   }
 });
 

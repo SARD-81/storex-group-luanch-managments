@@ -40,6 +40,43 @@ Routes: `/settings/automations`, `/settings/automations/reporter`, `/settings/au
 
 Secrets are ENV-only; admin screens display only configured/not-configured flags. Allowlisted URLs must use HTTPS and port 443 without credentials. Credential-bearing redirects are refused. Unapproved hosts, loopback/private metadata addresses and oversized responses are blocked. Every connection is pinned to its checked DNS address while preserving hostname/SNI and TLS certificate verification; each allowed redirect is checked again. An explicitly allowlisted private Nextcloud host is the only private-address exception. Errors persist fixed codes, never remote response bodies, Authorization headers, passwords or token-bearing Bale URLs.
 
+## Automatic official calendar acceptance for future years
+
+The owner's current policy: import future PDFs automatically when independently
+and exhaustively validated; escalate suspicious cases for human review.
+The supplied official-source PDF for 1405 is accepted by the owner with the
+documented lack of independent online byte-for-byte provenance. The immutable
+1405 reviewed SHA-256 certificate is not relaxed.
+
+Unseen 1406+ sources can be automatically accepted without a preinstalled
+certificate only after all these checks:
+- Download via verified HTTPS from `calendar.ut.ac.ir`; private/operator PDFs
+  and alternate approved hosts are intentionally review-only.
+- PyMuPDF extracts a complete supported 12-month structure, every daily
+  Gregorian/Jalali/weekday/Hijri reference, and every known occasion text.
+  Unknown fragments, unclassified holidays or changed page layout fail closed.
+- Node validates all daily mappings independently, including holiday flags,
+  and every month must contain at least one represented occasion.
+- The worker signs only normalized and complete data using an ENV-only HMAC.
+  The database stage/apply gates verify the signature on every read.
+
+Set `CALENDAR_ATTESTATION_KEY` to a truly random **64-character hex** string
+from `openssl rand -hex 32`; provide the same key in the protected environment
+for every web and worker instance. No default key or logged secret. Store and
+back it up securely. Key rotation/loss makes old auto-attested staged datasets
+unverifiable until safely re-attested using the original trusted PDF; do not
+rotate casually. Missing or invalid key stops only the new automatic path.
+
+Conservative handling is deliberate: unrecognized *new* occasion titles are
+considered suspicious, not ignored or confidently inferred. A new source that
+fails may be inspected using the protected PDF/parser evidence and company
+emergency tools, while no unsafe import is performed. Future published PDF
+layouts are not guaranteed. An active-year revised official calendar or an
+existing emergency import still requires explicit admin diff approval, exactly
+as before. Final live acceptance needs the organization’s real Nextcloud/Talk
+and a verified **different** Bale recipient; the workstation test account does
+not establish this.
+
 ## Calendar and emergency mode
 
 Starting 1 Esfand, check the next Jalali year daily. Discover the year PDF href from `https://calendar.ut.ac.ir/`; do not hardcode Liferay document UUIDs. Download is size-bounded and checks PDF magic, then hashes, extracts with PyMuPDF, validates/stages and imports in one transaction with post-count verification. Failed extraction/validation never modifies the active year. Original PDF and extraction/diff JSON are retained in the protected spool and synchronized privately when Nextcloud recovers.
@@ -49,7 +86,8 @@ The supplied 1405 source is now certified by `ut-evidence-parser-v2`: 365 days,
 The former 424-event fixture omitted 35 occupational entries and had two title
 transcription differences. See `calendar-1405-pdf-audit.md`. Certification checks
 the exact PDF hash and extracted semantics; a new edition/year requires reviewed
-source certification and cannot be promoted by a forged parser flag. Unsupported
+source certification **unless** the conservative new-year automatic
+attestation described above passes. Forged parser flags still fail. Unsupported
 sources retain the active calendar and report `PARSER_SOURCE_REVIEW_REQUIRED`.
 
 Every enabled calendar tick also schedules/resumes a missing/unverified current
