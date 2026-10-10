@@ -28,7 +28,7 @@ async function main() {
     select: { reportRecipient: true },
   });
   const recipient = config?.reportRecipient?.trim();
-  if (!recipient || !/^\\d{1,30}$/.test(recipient)) {
+  if (!recipient || !/^\d{1,30}$/.test(recipient)) {
     throw new Error("BALE_PRIVATE_RECIPIENT_NOT_CONFIGURED");
   }
 
@@ -54,8 +54,8 @@ async function main() {
 
   const marker = randomUUID().slice(0, 8);
   const text =
-    "🧪 آزمون اتصال بله - سامانه StoreX\\n" +
-    "این پیام فقط برای تأیید ارتباط Bot API است و گزارش واقعی نیست.\\n" +
+    "🧪 آزمون اتصال بله - سامانه StoreX\n" +
+    "این پیام فقط برای تأیید ارتباط Bot API است و گزارش واقعی نیست.\n" +
     `کد تأیید آزمون: ${marker}`;
   const messageId = await client.send(recipient, text);
   console.log(JSON.stringify({
