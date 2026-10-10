@@ -155,10 +155,13 @@ export async function GET(request: Request) {
   const auditContext = await getAuditRequestContext();
 
   const { searchParams } = new URL(request.url);
-  const { fromDate, toDate } = resolveReportDateRange({
-    from: searchParams.get("from") ?? undefined,
-    to: searchParams.get("to") ?? undefined,
+  const fromValues = searchParams.getAll("from"),
+    toValues = searchParams.getAll("to");
+  const { fromDate, toDate, error } = resolveReportDateRange({
+    from: fromValues.length > 1 ? fromValues : fromValues[0],
+    to: toValues.length > 1 ? toValues : toValues[0],
   });
+  if (error) return Response.json({ error }, { status: 400 });
 
   const { dailySummary, userRows } = await getAttendanceReport(
     fromDate,
@@ -256,7 +259,7 @@ export async function GET(request: Request) {
 
   dashboardSheet.mergeCells("A8:H8");
   const noteCell = dashboardSheet.getCell("A8");
-  noteCell.value = "این گزارش فقط شامل روزهای کاری شنبه تا چهارشنبه است.";
+  noteCell.value = "این گزارش فقط شامل روزهای کاری نهایی تقویم سامانه است.";
   noteCell.font = {
     name: "Tahoma",
     size: 10,

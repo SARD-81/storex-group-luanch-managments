@@ -36,21 +36,21 @@ export const OFFICIAL_1405_EVENT_MONTHS = {
 } as const satisfies Record<string, readonly OfficialCalendarEvent1405[]>;
 
 export const OFFICIAL_1405_EVENT_MONTH_COUNTS = {
-  farvardin: 32,
-  ordibehesht: 40,
-  khordad: 39,
-  tir: 40,
+  farvardin: 33,
+  ordibehesht: 45,
+  khordad: 42,
+  tir: 46,
   mordad: 34,
-  shahrivar: 46,
-  mehr: 37,
-  aban: 28,
-  azar: 36,
-  dey: 40,
-  bahman: 19,
-  esfand: 33,
+  shahrivar: 48,
+  mehr: 38,
+  aban: 31,
+  azar: 40,
+  dey: 45,
+  bahman: 20,
+  esfand: 37,
 } as const;
 
-export const OFFICIAL_1405_EXPECTED_TOTAL_EVENTS = 424;
+export const OFFICIAL_1405_EXPECTED_TOTAL_EVENTS = 459;
 
 export const OFFICIAL_1405_EVENTS: OfficialCalendarEvent1405[] = [
   ...FARVARDIN_1405_EVENTS,

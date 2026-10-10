@@ -1,4 +1,9 @@
 import "dotenv/config";
+import {
+  attendanceTransaction,
+  reconcileCalendarAttendanceTx,
+  attendanceAudit,
+} from "../lib/attendance/reconciliation";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
   CalendarDateSystem,
@@ -227,7 +232,7 @@ function groupHolidayEventsByJalaliDateKey(): Map<
 }
 
 async function runImport(prisma: PrismaClient, options: CliOptions) {
-  return prisma.$transaction(async (tx) => {
+  return attendanceTransaction(prisma, async (tx) => {
     const calendarDays = await tx.calendarDay.findMany({
       where: {
         jalaliYear: TARGET_JALALI_YEAR,
@@ -237,6 +242,7 @@ async function runImport(prisma: PrismaClient, options: CliOptions) {
         jalaliDateKey: true,
         isWeeklyOffDay: true,
         isManualHoliday: true,
+        holidayTitle: true,
         isForcedWorkday: true,
       },
     });
@@ -337,13 +343,21 @@ async function runImport(prisma: PrismaClient, options: CliOptions) {
     }
 
     const holidayEventsByDate = groupHolidayEventsByJalaliDateKey();
+    const allHolidayEvents = await tx.calendarEvent.findMany({
+      where: {
+        calendarDayId: { in: calendarDays.map((day) => day.id) },
+        isOfficial: true,
+        isHoliday: true,
+      },
+      select: { calendarDayId: true, title: true },
+      orderBy: { displayOrder: "asc" },
+    });
     let updatedCalendarDayRows = 0;
 
     for (const calendarDay of calendarDays) {
-      const officialHolidayTitles =
-        holidayEventsByDate
-          .get(calendarDay.jalaliDateKey)
-          ?.map((event) => event.title) ?? [];
+      const officialHolidayTitles = allHolidayEvents
+        .filter((event) => event.calendarDayId === calendarDay.id)
+        .map((event) => event.title);
       const nextIsOfficialHoliday = officialHolidayTitles.length > 0;
       const nextHolidayTitle = nextIsOfficialHoliday
         ? officialHolidayTitles.join("، ")
@@ -359,7 +373,9 @@ async function runImport(prisma: PrismaClient, options: CliOptions) {
         where: { id: calendarDay.id },
         data: {
           isOfficialHoliday: nextIsOfficialHoliday,
-          holidayTitle: nextHolidayTitle,
+          holidayTitle: calendarDay.isManualHoliday
+            ? calendarDay.holidayTitle
+            : nextHolidayTitle,
           isWorkday: nextIsWorkday,
           sourceName: options.sourceName,
           sourceVersion: options.sourceVersion,
@@ -368,6 +384,13 @@ async function runImport(prisma: PrismaClient, options: CliOptions) {
       updatedCalendarDayRows += 1;
     }
 
+    await reconcileCalendarAttendanceTx(tx);
+    await attendanceAudit(tx, "CALENDAR_DATASET_APPLIED", null, {
+      year: options.year,
+      sourceName: options.sourceName,
+      sourceVersion: options.sourceVersion,
+      mode: "LEGACY_IMPORT",
+    });
     return {
       deletedOldFixedHolidayEvents: deleteResult.count,
       createdCalendarEventRows,

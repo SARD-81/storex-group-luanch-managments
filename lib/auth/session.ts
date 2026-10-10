@@ -13,7 +13,7 @@ function sha256(value: string) {
 }
 
 function shouldUseSecureSessionCookie() {
-  return process.env.AUTH_COOKIE_SECURE === "true";
+  return process.env.AUTH_COOKIE_SECURE === "true" || (process.env.NODE_ENV === "production" && process.env.AUTH_COOKIE_SECURE !== "false");
 }
 
 async function getSessionCookieTokens() {

@@ -38,7 +38,8 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-09-05-main-01-basij-mostazafan-formation",
     jalaliDateKey: "1405-09-05",
-    title: "تشکیل بسیج مستضعفان به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    title:
+      "تشکیل بسیج مستضعفان به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -93,7 +94,7 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-09-09-main-01-hazrat-fatemeh-birthday",
     jalaliDateKey: "1405-09-09",
-    title: "ولادت حضرت فاطمه زهرا سلام‌الله علیها (هشت سال قبل از هجرت)",
+    title: "ولادت حضرت فاطمه زهرا سلام‌الله علیها (هشتم قبل از هجرت)",
     type: "RELIGIOUS",
     calendarType: "HIJRI",
     isHoliday: false,
@@ -215,7 +216,8 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-09-12-main-03-international-day-of-persons-with-disabilities",
+    eventKey:
+      "1405-09-12-main-03-international-day-of-persons-with-disabilities",
     jalaliDateKey: "1405-09-12",
     title: "روز جهانی معلولان",
     type: "INTERNATIONAL",
@@ -263,7 +265,8 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-09-18-appendix-01-iraq-responsible-for-war-by-un",
     jalaliDateKey: "1405-09-18",
-    title: "معرفی عراق به عنوان مسؤول و آغازگر جنگ از سوی سازمان ملل (۱۳۷۰ هـ ش)",
+    title:
+      "معرفی عراق به عنوان مسؤول و آغازگر جنگ از سوی سازمان ملل (۱۳۷۰ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -272,9 +275,11 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "APPENDIX_TABLE",
   },
   {
-    eventKey: "1405-09-19-main-01-supreme-council-of-cultural-revolution-formation",
+    eventKey:
+      "1405-09-19-main-01-supreme-council-of-cultural-revolution-formation",
     jalaliDateKey: "1405-09-19",
-    title: "تشکیل شورای عالی انقلاب فرهنگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۶۳ هـ ش)",
+    title:
+      "تشکیل شورای عالی انقلاب فرهنگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۶۳ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -406,5 +411,49 @@ export const AZAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 1,
     sourcePage: 11,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-09-01-occupations-22",
+    jalaliDateKey: "1405-09-01",
+    title: "روز صنعت سرب و روی",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-09-15-occupations-23",
+    jalaliDateKey: "1405-09-15",
+    title: "روز حسابدار",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-09-18-occupations-24",
+    jalaliDateKey: "1405-09-18",
+    title: "روز سد و نیروگاه برق آبی",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-09-22-occupations-25",
+    jalaliDateKey: "1405-09-22",
+    title: "روز صنعت مس",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

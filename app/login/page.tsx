@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import { LockKeyhole, UserRound } from "lucide-react";
 import { loginAction } from "@/actions/auth";
 import { LoginSubmitButton } from "@/components/auth/login-submit-button";
@@ -31,6 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="pointer-events-none absolute -bottom-24 -left-20 h-48 w-48 rounded-full bg-indigo-300/20 blur-3xl transition duration-500 group-hover:bg-indigo-300/30 dark:bg-indigo-500/10" />
 
           <div className="relative">
+            <CompanyLogo />
             <div className="mb-8 flex items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground">

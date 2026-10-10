@@ -22,6 +22,13 @@ enum AttendanceStatus {
   ABSENT
 }
 
+enum AttendanceSource {
+  USER_MANUAL
+  ADMIN_OVERRIDE
+  AUTO_RESERVATION
+  LEGACY_WEEKLY_PLAN
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -90,6 +97,14 @@ enum AuditAction {
 
   GUEST_MEAL_CREATED
   GUEST_MEAL_DELETED
+  ATTENDANCE_OVERRIDE_APPLIED
+  ATTENDANCE_OVERRIDE_CLEARED
+  ATTENDANCE_OVERRIDE_BLOCKED
+  AUTO_RESERVATION_CHANGED
+  ATTENDANCE_RECONCILED
+  AUTOMATION_CONFIG_CHANGED
+  AUTOMATION_RUN_REQUESTED
+  CALENDAR_DATASET_APPLIED
 }
 
 enum AuditTargetType {
@@ -126,9 +141,14 @@ model User {
   avatarImage     Bytes?
   avatarMimeType  String?
   avatarUpdatedAt DateTime?
+  autoBreakfast Boolean @default(false)
+  autoLunch Boolean @default(false)
+  autoBreakfastFrom DateTime? @db.Date
+  autoLunchFrom DateTime? @db.Date
 
   weeklyPreferences     WeeklyMealPreference[]
   attendances           MealAttendance[]
+  attendanceDecisions   AttendanceDecision[]
   sessions              Session[]
   calendarOverrides     CalendarOverride[]     @relation("CalendarOverrideCreatedBy")
   calendarImportBatches CalendarImportBatch[]  @relation("CalendarImportBatchCreatedBy")
@@ -219,6 +239,7 @@ model MealAttendance {
 
   generatedFromWeeklyPlan Boolean @default(false)
   manuallyEdited          Boolean @default(false)
+  source AttendanceSource @default(USER_MANUAL)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -226,6 +247,22 @@ model MealAttendance {
   @@unique([userId, date, mealType])
   @@index([date, mealType])
   @@index([userId, date])
+}
+
+/// Preserves lower-priority decisions while an admin override is effective.
+/// AUTO_RESERVATION is computed from User settings, never a decision here.
+model AttendanceDecision {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date DateTime @db.Date
+  mealType MealType
+  source AttendanceSource
+  status AttendanceStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, date, mealType, source])
+  @@index([date, userId])
 }
 
 model GuestMealOrder {
@@ -402,4 +439,173 @@ model CalendarOverride {
   @@index([dateKey])
   @@index([type])
   @@index([createdById])
+}
+
+enum AutomationStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  RETRYING
+  BLOCKED
+  MANUAL_ACTION_REQUIRED
+  SKIPPED
+}
+
+model AutomationConfig {
+  id String @id @default("singleton")
+  reporterEnabled Boolean @default(false)
+  calendarEnabled Boolean @default(false)
+  nextcloudBaseUrl String @default("")
+  reportsDirectory String @default("/StoreX-Automation/Reports")
+  calendarDirectory String @default("/StoreX-Automation/Calendar")
+  reportRecipient String @default("")
+  technicalConversation String @default("")
+  reminder1 String @default("09:20")
+  reminder2 String @default("09:25")
+  deliveryTime String @default("09:30")
+  retry1 String @default("09:40")
+  retry2 String @default("09:50")
+  finalRetry String @default("10:00")
+  calendarSourceOverride String @default("")
+  publicSharingState String @default("UNKNOWN")
+  capabilityCheckedAt DateTime?
+  health Json?
+  updatedAt DateTime @updatedAt
+}
+
+model AutomationJobRun {
+  id String @id @default(cuid())
+  jobType String
+  executionKey String @unique
+  target String
+  attempt Int @default(0)
+  status AutomationStatus @default(PENDING)
+  stage String @default("PENDING")
+  startedAt DateTime?
+  finishedAt DateTime?
+  nextRetryAt DateTime?
+  errorCode String?
+  errorMessage String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, nextRetryAt])
+  @@index([jobType, target])
+}
+
+model AutomationArtifact {
+  id String @id @default(cuid())
+  artifactKey String @unique
+  type String
+  target String
+  sha256 String
+  spoolPath String
+  nextcloudPath String?
+  uploadState String @default("PENDING")
+  retainUntil DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deliveries ReportDelivery[]
+  @@index([uploadState])
+}
+
+model ReportDelivery {
+  id String @id @default(cuid())
+  reportDateKey String @unique
+  artifactId String?
+  artifact AutomationArtifact? @relation(fields:[artifactId],references:[id],onDelete:Restrict)
+  stage String @default("PENDING")
+  status AutomationStatus @default(PENDING)
+  shareId String?
+  publicUrl String?
+  shareCreatedAt DateTime?
+  expiresAt DateTime?
+  revokedAt DateTime?
+  sentAt DateTime?
+  baleMessageId String?
+  nextRetryAt DateTime?
+  cleanupError String?
+  snapshot Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([expiresAt, revokedAt])
+}
+
+model AutomationAlert {
+  id String @id @default(cuid())
+  alertKey String @unique
+  jobType String
+  target String
+  message String
+  status AutomationStatus @default(PENDING)
+  remoteMessageId String?
+  createdAt DateTime @default(now())
+  sentAt DateTime?
+}
+
+model CalendarDataset {
+  id String @id @default(cuid())
+  year Int
+  sourceName String
+  sourceUrl String?
+  sourceHash String
+  parserVersion String
+  status String @default("STAGED")
+  payload Json
+  diff Json?
+  importBatchId String?
+  approvedById String?
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  @@unique([year, sourceName, sourceHash])
+  @@index([year, status])
+}
+
+/// Durable expiry tracking for non-report capability probes.
+model AutomationShareLease {
+  id String @id @default(cuid())
+  leaseKey String @unique
+  nextcloudPath String
+  shareId String?
+  publicUrl String?
+  shareCreatedAt DateTime?
+  expiresAt DateTime?
+  revokedAt DateTime?
+  cleanupError String?
+  createdAt DateTime @default(now())
+  @@index([expiresAt, revokedAt])
+}
+
+// References change atomically; normalized image bytes live in durable storage.
+model BrandingAsset {
+  hash String @id
+  width Int
+  height Int
+  byteSize Int
+  createdAt DateTime @default(now())
+  activeConfigurations BrandingConfig[] @relation("ActiveBranding")
+  previousConfigurations BrandingConfig[] @relation("PreviousBranding")
+}
+model BrandingConfig {
+  id String @id @default("singleton")
+  activeHash String?
+  activeAsset BrandingAsset? @relation("ActiveBranding", fields: [activeHash], references: [hash], onDelete: Restrict)
+  previousHash String?
+  previousAsset BrandingAsset? @relation("PreviousBranding", fields: [previousHash], references: [hash], onDelete: Restrict)
+  revision Int @default(0)
+  updatedAt DateTime @updatedAt
+}
+model BrandingAudit {
+  id String @id @default(cuid())
+  actorUserId String
+  actorUsername String
+  actorName String
+  action String
+  fromHash String?
+  toHash String?
+  revision Int
+  occurredAt DateTime @default(now())
+  @@index([occurredAt])
 }

@@ -59,7 +59,8 @@ export const SHAHRIVAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-06-03-main-01-prophet-birthday-sunni-narration",
     jalaliDateKey: "1405-06-03",
-    title: "ولادت حضرت رسول اکرم صلی‌الله علیه و آله به روایت اهل سنت (۵۳ سال قبل از هجرت)",
+    title:
+      "ولادت حضرت رسول اکرم صلی‌الله علیه و آله به روایت اهل سنت (۵۳ سال قبل از هجرت)",
     type: "RELIGIOUS",
     calendarType: "HIJRI",
     isHoliday: false,
@@ -195,7 +196,8 @@ export const SHAHRIVAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-06-08-main-04-prime-minister-office-bombing",
     jalaliDateKey: "1405-06-08",
-    title: "انفجار دفتر نخست‌وزیری به دست منافقان و شهادت مظلومانه شهیدان رجایی و باهنر (۱۳۶۰ هـ ش)",
+    title:
+      "انفجار دفتر نخست‌وزیری به دست منافقان و شهادت مظلومانه شهیدان رجایی و باهنر (۱۳۶۰ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -237,9 +239,11 @@ export const SHAHRIVAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "APPENDIX_TABLE",
   },
   {
-    eventKey: "1405-06-10-appendix-03-khatam-al-anbiya-air-defense-base-formation-day",
+    eventKey:
+      "1405-06-10-appendix-03-khatam-al-anbiya-air-defense-base-formation-day",
     jalaliDateKey: "1405-06-10",
-    title: "روز تشکیل قرارگاه پدافند هوایی حضرت خاتم‌الانبیاء صلی‌الله علیه و آله",
+    title:
+      "روز تشکیل قرارگاه پدافند هوایی حضرت خاتم‌الانبیاء صلی‌الله علیه و آله",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -383,7 +387,8 @@ export const SHAHRIVAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-06-17-main-01-shahrivar-17-uprising",
     jalaliDateKey: "1405-06-17",
-    title: "قیام ۱۷ شهریور و کشتار جمعی از مردم به دست مأموران ستم‌شاهی پهلوی (۱۳۵۷ هـ ش)",
+    title:
+      "قیام ۱۷ شهریور و کشتار جمعی از مردم به دست مأموران ستم‌شاهی پهلوی (۱۳۵۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -514,5 +519,27 @@ export const SHAHRIVAR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 3,
     sourcePage: 8,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-06-25-occupations-16",
+    jalaliDateKey: "1405-06-25",
+    title: "روز کفاش، صنعت کفش و چرم",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 3,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-06-26-occupations-17",
+    jalaliDateKey: "1405-06-26",
+    title: "روز فوریت‌های پزشکی (اورژانس)",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

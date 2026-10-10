@@ -1,0 +1,1 @@
+The CSS in shadcn-tailwind.css is copied unchanged from shadcn 4.7.0 (packages/shadcn/dist/tailwind.css). Source: https://github.com/shadcn-ui/ui . MIT license: shadcn-LICENSE.md. It preserves the existing Tailwind variants without shipping the build-time CLI and its dependencies.

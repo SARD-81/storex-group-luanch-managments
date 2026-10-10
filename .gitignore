@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# Durable worker spool and verification output (never commit business artifacts)
+/.automation-spool/
+/verification-output/
+
+# Python parser bytecode
+__pycache__/
+*.pyc

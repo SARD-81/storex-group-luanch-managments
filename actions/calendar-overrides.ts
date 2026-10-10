@@ -77,6 +77,8 @@ export async function applyManualHolidayOverrideAction(
     ...auditContext,
   });
 
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=manual-holiday`);
 }
@@ -123,6 +125,8 @@ export async function applyForcedWorkdayOverrideAction(
     ...auditContext,
   });
 
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=forced-workday`);
 }
@@ -160,6 +164,8 @@ export async function clearCalendarOverrideAction(
     ...auditContext,
   });
 
+  revalidatePath("/settings/attendance");
+  revalidatePath("/reporter/next-day");
   revalidateCalendarOverrideConsumers();
   redirect(`${CALENDAR_OVERRIDES_PATH}?date=${dateKey}&success=cleared`);
 }
