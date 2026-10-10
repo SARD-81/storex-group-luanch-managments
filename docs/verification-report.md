@@ -85,14 +85,21 @@ No Safir, personal-account automation, or new Bale sender identity is required.
 
 ## Open gates
 
-1. The official PDF extractor still emits `parserVerified=false`, no normalized
-   events, and stops automatic import at `PARSER_GOLDEN_VALIDATION_REQUIRED`.
-   The existing static 1405 fixture reproduces 365 days / 424 events / 26 official
-   holiday dates / 244 workdays / 104 weekly offdays, but this does **not** certify
-   extraction from the actual PDF. Generic layouts, partial/wrong-year PDFs and
-   a complete leap-year PDF must be normalized and tested before certification.
-   The currently retrieved 1405 files are one-page transfer notices, not the
-   twelve-month university calendar; they cannot serve as a golden PDF fixture.
+1. **The real 1405 source PDF is now available (2026-10-10).** The operator
+   supplied a 17-page file declaring the final official University of Tehran
+   calendar. A reproducible PyMuPDF source audit recovered 365 dated daily
+   rows, 189 non-empty main rows, 128 appendix rows and **26 official holiday
+   dates**; the SHA-256 and date-level provenance are recorded in
+   [calendar-1405-pdf-audit.md](calendar-1405-pdf-audit.md).
+   This removes the prior **missing valid PDF** obstacle, but does NOT close
+   the parser correctness gate: those 317 composite source rows must still be
+   accurately normalized and reconciled against the separately curated 424
+   event fixture. The production importer still emits
+   `parserVerified=false` and deliberately fails closed. Full semantic
+   normalization, malformed/wrong-year/leap-year tests, golden comparison
+   and staging proof must pass before certifying future automatic imports.
+   The uploaded bytes have not yet been independently checked against a live
+   download from the university website.
 2. The operator's live workstation Bale private send-and-receive test succeeded,
    including recipient-side confirmation (see above). Staging execution through
    the StoreX `BaleClient` and live Nextcloud/Talk integrations remain open.
