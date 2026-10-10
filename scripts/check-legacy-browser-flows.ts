@@ -38,11 +38,11 @@ export async function checkLegacyBrowserFlows(
     password = "browser-test-password-only";
   await page.goto(base + "/settings/users");
   const create = page
-    .locator("form")
+    .locator("form:visible")
     .filter({ has: page.locator('[name="username"]') });
   await create.locator('[name="username"]').fill(username);
   await create.locator('[name="name"]').fill("کاربر آزمون مرورگر");
-  await create.locator('[name="password"]').fill(password);
+  await create.locator('[name="password"]:visible').fill(password);
   await create.locator('[name="role"]').selectOption("USER");
   await submit(page, "ایجاد کاربر", /saved=created/);
   let row = page.getByRole("row").filter({ hasText: "@" + username });
@@ -71,7 +71,7 @@ export async function checkLegacyBrowserFlows(
   const own = await session.newPage();
   await login(own, base, username, password);
   // Choose an actual editable current-month workday through the attendance UI.
-  const meal = own.locator('input[data-monthly-meal="LUNCH"]:enabled').first();
+  const meal = own.locator('input[data-monthly-meal="LUNCH"]:enabled:visible').first();
   await meal.waitFor();
   const dateKey = (await meal.getAttribute("name"))!.split(":")[1];
   const card = meal.locator("xpath=ancestor::article");
@@ -95,7 +95,7 @@ export async function checkLegacyBrowserFlows(
   await page.goto(base + "/settings/attendance?date=" + dateKey);
   const lunchForm = () =>
     page
-      .locator("form")
+      .locator("form:visible")
       .filter({ has: page.locator(`[name="userId"][value="${user.id}"]`) })
       .filter({ has: page.locator('[name="mealType"][value="LUNCH"]') });
   await lunchForm().getByRole("button", { name: "غایب", exact: true }).click();
@@ -142,8 +142,8 @@ export async function checkLegacyBrowserFlows(
   await page.goto(base + "/settings/calendar-overrides?date=" + dateKey);
   await submit(page, "پاک کردن تغییر دستی", /success=cleared/);
   await own.goto(base + "/profile");
-  await own.locator('[name="firstName"]').fill("نام آزمون");
-  await own.locator('[name="lastName"]').fill("خانوادگی آزمون");
+  await own.locator('[name="firstName"]:visible').fill("نام آزمون");
+  await own.locator('[name="lastName"]:visible').fill("خانوادگی آزمون");
   await submit(own, "ذخیره اطلاعات", /saved=profile/);
   assert.equal(
     (await prisma.user.findUniqueOrThrow({ where: { username } })).name,
@@ -159,7 +159,7 @@ export async function checkLegacyBrowserFlows(
   })
     .png()
     .toBuffer();
-  await own.locator('[name="avatar"]').setInputFiles({
+  await own.locator('[name="avatar"]:visible').setInputFiles({
     name: "avatar.png",
     mimeType: "image/png",
     buffer: avatar,
@@ -172,7 +172,7 @@ export async function checkLegacyBrowserFlows(
   const before = await prisma.user.findUniqueOrThrow({
     where: { id: user.id },
   });
-  await own.locator('[name="avatar"]').setInputFiles({
+  await own.locator('[name="avatar"]:visible').setInputFiles({
     name: "fake.png",
     mimeType: "image/png",
     buffer: Buffer.from("<svg><script>alert(1)</script></svg>"),
@@ -188,7 +188,7 @@ export async function checkLegacyBrowserFlows(
     (await own.request.get(base + `/api/users/avatar/${user.id}`)).status(),
     404,
   );
-  await own.locator('[name="newPassword"]').fill("changed-browser-password");
+  await own.locator('[name="newPassword"]:visible').fill("changed-browser-password");
   await submit(own, "تغییر رمز عبور", /saved=password/);
   await own.goto(base + "/");
   await submit(own, "خروج از حساب", /\/login$/);
@@ -196,9 +196,9 @@ export async function checkLegacyBrowserFlows(
   await page.goto(base + "/settings/users");
   row = page.getByRole("row").filter({ hasText: "@" + username });
   const reset = row
-    .locator("form")
-    .filter({ has: page.locator('[name="password"]') });
-  await reset.locator('[name="password"]').fill(password);
+    .locator("form:visible")
+    .filter({ has: page.locator('[name="password"]:visible') });
+  await reset.locator('[name="password"]:visible').fill(password);
   await reset.getByRole("button", { name: "ثبت", exact: true }).click();
   await page.waitForURL(/saved=password/);
   await own.goto(base + "/profile");
@@ -225,8 +225,8 @@ export async function checkLegacyBrowserFlows(
     [4, 1],
     [0, 0],
   ]) {
-    await rp.locator('[name="breakfastGuestCount"]').fill(String(b));
-    await rp.locator('[name="lunchGuestCount"]').fill(String(l));
+    await rp.locator('[name="breakfastGuestCount"]:visible').fill(String(b));
+    await rp.locator('[name="lunchGuestCount"]:visible').fill(String(l));
     await rp
       .getByRole("button", { name: "ذخیره تعداد مهمان‌ها", exact: true })
       .click();
@@ -244,11 +244,11 @@ export async function checkLegacyBrowserFlows(
   // Settings pause/resume and queued health checks have no network execution in CI.
   await page.goto(base + "/settings/automations/reporter");
   await page
-    .locator('[name="nextcloudBaseUrl"]')
+    .locator('[name="nextcloudBaseUrl"]:visible')
     .fill("https://cloud.example.test");
-  await page.locator('[name="reportRecipient"]').fill("123456");
-  await page.locator('[name="technicalConversation"]').fill("testgroup");
-  await page.locator('[name="reporterEnabled"]').check();
+  await page.locator('[name="reportRecipient"]:visible').fill("123456");
+  await page.locator('[name="technicalConversation"]:visible').fill("testgroup");
+  await page.locator('[name="reporterEnabled"]:visible').check();
   await submit(page, "ذخیرهٔ تنظیمات", /saved=config/);
   assert.equal(
     (
@@ -259,7 +259,7 @@ export async function checkLegacyBrowserFlows(
     true,
   );
   await page.goto(base + "/settings/automations/reporter");
-  await page.locator('[name="reporterEnabled"]').uncheck();
+  await page.locator('[name="reporterEnabled"]:visible').uncheck();
   await submit(page, "ذخیرهٔ تنظیمات", /saved=config/);
   assert.equal(
     (
@@ -284,8 +284,8 @@ export async function checkLegacyBrowserFlows(
         `[name="selectedDates"][value="1406-${String(m).padStart(2, "0")}-02"]`,
       )
       .check();
-  await page.locator('[name="holidayText"]').fill("۱۴۰۶/۰۱/۰۳ | آزمون تعطیلی");
-  await page.locator('[name="csv"]').setInputFiles({
+  await page.locator('[name="holidayText"]:visible').fill("۱۴۰۶/۰۱/۰۳ | آزمون تعطیلی");
+  await page.locator('[name="csv"]:visible').setInputFiles({
     name: "holidays.csv",
     mimeType: "text/csv",
     buffer: Buffer.from(
@@ -308,7 +308,7 @@ export async function checkLegacyBrowserFlows(
     }),
     0,
   );
-  await page.locator('[name="confirmed"]').check();
+  await page.locator('[name="confirmed"]:visible').check();
   await submit(page, "اعمال مجموعهٔ تأییدشده", /saved=applied/);
   assert.equal(
     (
@@ -349,7 +349,7 @@ export async function checkLegacyBrowserFlows(
     })
       [format]()
       .toBuffer();
-    await page.locator('[name="logo"]').setInputFiles({
+    await page.locator('[name="logo"]:visible').setInputFiles({
       name: `logo.${format}`,
       mimeType: `image/${format}`,
       buffer: bytes,

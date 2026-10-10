@@ -81,7 +81,7 @@ export async function updateMyPasswordAction(formData: FormData) {
   const auditContext = await getAuditRequestContext();
   const newPassword = formData.get("newPassword")?.toString() ?? "";
 
-  if (newPassword.length < 8) {
+  if (newPassword.length < 8 || newPassword.length > 256) {
     redirect("/profile?error=invalid-password");
   }
 
