@@ -35,11 +35,11 @@ function stableJson(value: unknown): string {
  * Server-only attestation for exhaustively parsed trusted PDF bytes.
  * Admin JSON cannot assert parserVerified simply by setting a boolean.
  */
-export function signAutomaticDataset<T extends { attestation?: string }>(data: T): string {
+export function signAutomaticDataset<T extends object>(data: T): string {
   const secret = process.env[AUTO_KEY_NAME];
   if (!secret || !/^[a-f0-9]{64}$/i.test(secret))
     throw new Error("CALENDAR_ATTESTATION_KEY_NOT_CONFIGURED");
-  const { attestation: _discard, ...unsigned } = data;
+  const { attestation: _discard, ...unsigned } = data as T & { attestation?: string };
   return createHmac("sha256", Buffer.from(secret, "hex"))
     .update(AUTO_ATTESTATION_CONTEXT)
     .update(stableJson(unsigned))
