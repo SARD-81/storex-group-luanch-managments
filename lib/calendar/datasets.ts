@@ -1,3 +1,8 @@
+import {
+  OFFICIAL_PARSER_VERSION,
+  validateParsedDailyRecords,
+  verifyParserCertificate,
+} from "./parser-certification";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -24,6 +29,17 @@ export const DATASET_SCHEMA = z.object({
   parserVersion: z.string().min(1),
   parserVerified: z.boolean(),
   mode: z.enum(["OFFICIAL", "MANUAL"]),
+  dailyRecords: z
+    .array(
+      z.object({
+        jalaliDateKey: z.string(),
+        dateKey: z.string(),
+        dayOfWeek: z.number().int().min(0).max(6),
+        isOfficialHoliday: z.boolean(),
+      }),
+    )
+    .max(366)
+    .optional(),
   events: z
     .array(
       z.object({
@@ -63,6 +79,20 @@ export function validateAnnualDataset(raw: unknown) {
       data.events.some((e) => !e.isHoliday || e.sourceSection !== "MANUAL"))
   )
     throw new Error("INVALID_MANUAL_SOURCE");
+  if (
+    data.mode === "OFFICIAL" &&
+    data.parserVersion === OFFICIAL_PARSER_VERSION
+  ) {
+    if (!data.dailyRecords) throw new Error("PARSER_DAILY_RECORDS_REQUIRED");
+    validateParsedDailyRecords(data.year, data.dailyRecords, data.events);
+    if (data.parserVerified) verifyParserCertificate(data);
+  }
+  if (
+    data.mode === "OFFICIAL" &&
+    data.parserVerified &&
+    data.parserVersion !== OFFICIAL_PARSER_VERSION
+  )
+    throw new Error("PARSER_CERTIFICATE_REQUIRED");
   return data;
 }
 export function normalizeDigits(s: string) {
@@ -257,6 +287,15 @@ export async function stageAnnualDataset(
     currentEventCount: current.length,
     incomingEventCount: data.events.length,
   };
+  const previous = await db.calendarDataset.findUnique({
+    where: {
+      year_sourceName_sourceHash: {
+        year: data.year,
+        sourceName: data.sourceName,
+        sourceHash: data.sourceHash,
+      },
+    },
+  });
   return db.calendarDataset.upsert({
     where: {
       year_sourceName_sourceHash: {
@@ -274,7 +313,15 @@ export async function stageAnnualDataset(
       diff,
       sourceUrl,
     },
-    update: { diff },
+    update: {
+      diff,
+      payload: data as unknown as Prisma.InputJsonValue,
+      parserVersion: data.parserVersion,
+      ...(previous?.status === "VERIFIED" &&
+      previous.parserVersion !== data.parserVersion
+        ? { status: "REVIEW_REQUIRED", approvedById: null, verifiedAt: null }
+        : {}),
+    },
   });
 }
 export async function applyAnnualDataset(

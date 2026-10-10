@@ -45,3 +45,7 @@ next-env.d.ts
 # Durable worker spool and verification output (never commit business artifacts)
 /.automation-spool/
 /verification-output/
+
+# Python parser bytecode
+__pycache__/
+*.pyc

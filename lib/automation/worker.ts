@@ -7,7 +7,7 @@ import type {
 } from "@/app/generated/prisma/client";
 import { reconcileAttendance } from "@/lib/attendance/reconciliation";
 import { getJalaliPartsFromUtcDate } from "@/lib/calendar/calendar-date";
-import { getTehranDateKey } from "@/lib/date/tehran-time";
+import { scheduleCalendarImports } from "./calendar-scheduling";
 import { getAutomationConfig, credentialStatus } from "./config";
 import { AutomationError } from "./http";
 import { BaleClient, NextcloudClient } from "./integrations";
@@ -316,20 +316,7 @@ export async function workerTick(
     for (const a of pending)
       await ensureJob(db, "ARTIFACT_SYNC", `artifact-sync:${a.id}`, a.id);
   }
-  if (config.calendarEnabled && jalali.month === 12) {
-    const year = jalali.year + 1,
-      key = `calendar-import:${year}`;
-    let job = await ensureJob(db, "CALENDAR_IMPORT", key, String(year));
-    if (
-      job.status === "SUCCESS" &&
-      job.finishedAt &&
-      getTehranDateKey(job.finishedAt) < clock.dateKey
-    )
-      job = await db.automationJobRun.update({
-        where: { id: job.id },
-        data: { status: "PENDING" },
-      });
-  }
+  if (config.calendarEnabled) await scheduleCalendarImports(db, jalali, now);
   const today = await db.calendarDay.findUnique({
     where: { dateKey: clock.dateKey },
     select: { isWorkday: true },

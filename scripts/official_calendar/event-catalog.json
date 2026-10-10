@@ -1,0 +1,2320 @@
+[
+  {
+    "title": "عید سعید فطر",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "آغاز نوروز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تعطیل به مناسبت عید سعید فطر و عید نوروز",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "هجوم مأموران ستم‌شاهی پهلوی به مدرسه فیضیه قم (۱۳۴۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز عملیات فتح‌المبین (۱۳۶۱ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی آب",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "عید نوروز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی هواشناسی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "زادروز زرتشت پیامبر",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز هنرهای نمایشی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جمهوری اسلامی ایران",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز طبیعت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ذخایر ژنتیکی و زیستی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی کودک فلسطینی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز فرهنگ پهلوانی و ورزش زورخانه‌ای",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز سلامتی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله سیدمحمدباقر صدر و خواهر ایشان بنت‌الهدی به دست حکومت بعث عراق (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی فناوری هسته‌ای",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت سید مرتضی آوینی (۱۳۷۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز هنر انقلاب اسلامی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت امیر سپهبد علی صیاد شیرازی (۱۳۷۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز افتتاح حساب شماره ۱۰۰ به فرمان حضرت امام خمینی (رحمة‌الله علیه)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تأسیس بنیاد مسکن انقلاب اسلامی (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "فتح اندلس به دست مسلمانان (۹۲ هـ ق)",
+    "type": "OFFICIAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "شهادت حضرت امام جعفر صادق علیه‌السلام (۱۴۸ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت عطار نیشابوری",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ارتش جمهوری اسلامی و نیروی زمینی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت معصومه سلام‌الله علیها (۱۷۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز دختران",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز دهه کرامت",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز گندم و نان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت سعدی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نثر فارسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شهدای ورزشکار",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تأسیس سپاه پاسداران انقلاب اسلامی (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز اعلام انقلاب فرهنگی (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز زمین پاک",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تجلیل از امامزادگان و بقاع متبرکه",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت امیر سپهبد قرنی (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شیخ بهایی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز معماری",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت حضرت صالح بن موسی کاظم علیه‌السلام",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت حضرت احمد بن موسی شاهچراغ علیه‌السلام",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شکست حمله نظامی آمریکا به ایران در طبس (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ایمنی حمل و نقل",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام رضا علیه‌السلام (۱۴۸ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز شوراها",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی خلیج فارس",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز عملیات بیت‌المقدس (۱۳۶۱ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی کار و کارگر",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت استاد مرتضی مطهری (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز معلم",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شیخ صدوق",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی ماما",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بیماری‌های خاص و صعب‌العلاج",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی صلیب سرخ و هلال احمر",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بزرگداشت شیخ کلینی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اسناد ملی و میراث مکتوب",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز گل محمدی و گلاب",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "لغو امتیاز تنباکو به فتوای آیت‌الله میرزا حسن شیرازی (۱۲۷۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز پاسداشت زبان فارسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "بزرگداشت حکیم ابوالقاسم فردوسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام محمد تقی علیه‌السلام «جوادالائمه» (۲۲۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز ارتباطات و روابط عمومی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز ازدواج حضرت امام علی علیه‌السلام و حضرت فاطمه سلام‌الله علیها (۲ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز ازدواج",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت حکیم عمر خیام",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی موزه و میراث فرهنگی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز ملی جمعیت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شهدای خدمت",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اهدای عضو، اهدای زندگی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بهره‌وری و بهینه‌سازی مصرف",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت ملاصدرا (صدرالمتألهین)",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت مظلومانه زائران خانه خدا به دست مأموران آل سعود (۱۳۶۶ هـ ش و برابر با ۶ ذی‌الحجه ۱۴۰۷ هـ ق)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام محمد باقر علیه‌السلام (۱۱۴ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "فتح خرمشهر در عملیات بیت‌المقدس (۱۳۶۱ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مقاومت، ایثار و پیروزی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مقاومت و پایداری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز دزفول",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز عرفه (روز نیایش)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز نسیم مهر (روز حمایت از خانواده زندانیان)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "عید سعید قربان",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "آغاز دهه امامت و ولایت",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "افتتاح اولین دوره مجلس شورای اسلامی (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی بدون دخانیات",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "ولادت حضرت امام علی النقی الهادی علیه‌السلام (۲۱۲ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "عید سعید غدیر خم (۱۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "رحلت حضرت امام خمینی رهبر کبیر انقلاب و بنیانگذار جمهوری اسلامی ایران (۱۳۶۸ هـ ش)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "انتخاب حضرت آیت‌الله امام خامنه‌ای به رهبری (۱۳۶۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "قیام خونین ۱۵ خرداد (۱۳۴۲ هـ ش)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی محیط زیست",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "زندانی شدن حضرت امام خمینی (رحمة‌الله علیه) به دست مأموران ستم‌شاهی پهلوی (۱۳۴۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام موسی کاظم علیه‌السلام (۱۲۸ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز مباهله پیامبر اسلام صلی‌الله علیه و آله (۱۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز صنایع دستی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی فرش",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله سعیدی به دست مأموران ستم‌شاهی پهلوی (۱۳۴۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز خانواده و تکریم بازنشستگان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شهدای اقتدار و اتحاد ملی ایران",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز سال ۱۴۴۸ هجری قمری",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت محتشم کاشانی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شعر و ادبیات آیینی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت سربازان دلیر اسلام: بخارایی، امانی، صفار هرندی و نیک‌نژاد (۱۳۴۴ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز امر به معروف و نهی از منکر",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز جهاد کشاورزی (تشکیل جهاد سازندگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) ۱۳۵۸ هـ ش)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی بیابان‌زدایی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "درگذشت دکتر علی شریعتی (۱۳۵۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت زائران حرم رضوی علیه‌السلام به دست ایادی آمریکا (عاشورای ۱۳۷۳ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت دکتر مصطفی چمران (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بسیج استادان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز صدور فرمان حضرت امام خمینی (رحمة‌الله علیه) مبنی بر تأسیس سازمان تبلیغات اسلامی (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تبلیغ و اطلاع‌رسانی دینی",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اصناف",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تاسوعای حسینی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "عاشورای حسینی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز تجلیل از اسرا و مفقودان",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی مبارزه با مواد مخدر",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت حضرت امام زین‌العابدین علیه‌السلام (۹۵ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "شهادت مظلومانه آیت‌الله دکتر بهشتی و ۷۲ تن از یاران امام خمینی با انفجار بمب به دست منافقان در دفتر مرکزی حزب جمهوری اسلامی (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز قوه قضاییه",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "بمباران شیمیایی شهر سردشت (۱۳۶۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مبارزه با سلاح‌های شیمیایی و میکروبی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز صنعت و معدن",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز دیپلماسی فرهنگی و تعامل با جهان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "یادروز ورود حضرت امام رضا علیه‌السلام به نیشابور و نقل حدیث سلسله‌الذهب",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آزادسازی شهر مهران",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت صائب تبریزی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت چهارمین شهید محراب، آیت‌الله صدوقی به دست منافقان (۱۳۶۱ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "حمله ددمنشانه ناوگان آمریکای جنایتکار به هواپیمای مسافربری جمهوری اسلامی ایران (۱۳۶۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز افشای حقوق بشر آمریکایی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت علامه امینی (۱۳۴۹ هـ ش)",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز قلم",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شهرداری و دهیاری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مالیات",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ادبیات کودکان و نوجوانان",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "کشف توطئه آمریکایی در پایگاه هوایی شهید نوژه (کودتای نافرجام نقاب - ۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام زین‌العابدین علیه‌السلام (۹۵ هـ ق) به روایتی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "یادروز قیام مردم سیستان به خونخواهی شهدای کربلا (۶۲ هـ ق)",
+    "type": "OFFICIAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز عفاف و حجاب",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "حمله به مسجد گوهرشاد و کشتار مردم به دست رضاخان (۱۳۱۴ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت خوارزمی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز فناوری اطلاعات",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "گشایش نخستین مجلس خبرگان رهبری (۱۳۶۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بهزیستی و تأمین اجتماعی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز تأسیس نهاد شورای نگهبان",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "اعلام پذیرش قطعنامه ۵۹۸ شورای امنیت از سوی ایران (۱۳۶۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام محمدباقر علیه‌السلام (۵۷ هـ ق) به روایتی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت آیت‌الله سید ابوالقاسم کاشانی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام حسن مجتبی علیه‌السلام (۵۰ هـ ق) به روایتی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت سلمان فارسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شیخ صفی‌الدین اردبیلی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز عملیات افتخارآفرین مرصاد (۱۳۶۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "اقامه اولین نماز جمعه با حکم حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز کارآفرینی و آموزش‌های فنی و حرفه‌ای",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شیخ شهاب‌الدین سهروردی (شیخ اشراق)",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز زنجان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اهدای خون",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی شیر مادر",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت آیت‌الله شیخ فضل‌الله نوری (۱۲۸۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "اربعین حسینی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "صدور فرمان مشروطیت (۱۲۸۵ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز حقوق بشر اسلامی و کرامت انسانی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "انفجار بمب اتمی آمریکا در هیروشیما با بیش از ۱۶۰ هزار کشته و مجروح (۱۹۴۵ میلادی)",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت امیر سرلشکر خلبان عباس بابایی",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تشکیل جهاد دانشگاهی (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز شهادت محمود صارمی",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز خبرنگار",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شهدای مدافع حرم",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "رحلت حضرت رسول اکرم صلی‌الله علیه و آله (۱۱ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI",
+    "holidayGroup": "CO_LISTED_RELIGIOUS_OBSERVANCE",
+    "rationale": "Religious observance in composite main cell; reviewed shared explicit holiday marker with co-listed religious observance (pages 7/8). Civil occasions remain non-holidays."
+  },
+  {
+    "title": "شهادت حضرت امام حسن مجتبی علیه‌السلام (۵۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز حمایت از صنایع کوچک",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام رضا علیه‌السلام (۲۰۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز تشکل‌ها و مشارکت‌های اجتماعی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "هجرت حضرت رسول اکرم صلی‌الله علیه و آله از مکه به مدینه",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز مقاومت اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز بازگشت آزادگان به میهن اسلامی (۱۳۶۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "کودتای آمریکا برای بازگرداندن شاه (۱۳۳۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "گشایش مجلس خبرگان برای بررسی نهایی قانون اساسی جمهوری اسلامی ایران (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام حسن عسکری علیه‌السلام (۲۶۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI",
+    "holidayGroup": "CO_LISTED_RELIGIOUS_OBSERVANCE",
+    "rationale": "Religious observance in composite main cell; reviewed shared explicit holiday marker with co-listed religious observance (pages 7/8). Civil occasions remain non-holidays."
+  },
+  {
+    "title": "آغاز امامت حضرت ولی‌عصر (عجل‌الله تعالی فرجه)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت علامه مجلسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی مسجد",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز صنعت دفاعی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز عسل",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت ابوعلی سینا",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز پزشک",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز همدان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز هفته دولت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت سید علی اندرزگو (۱۹ رمضان - ۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت رسول اکرم صلی‌الله علیه و آله به روایت اهل سنت (۵۳ سال قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI",
+    "holidayGroup": "CO_LISTED_RELIGIOUS_OBSERVANCE",
+    "rationale": "Religious observance in composite main cell; reviewed shared explicit holiday marker with co-listed religious observance (pages 7/8). Civil occasions remain non-holidays."
+  },
+  {
+    "title": "آغاز هفته وحدت",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "اشغال ایران توسط متفقین و فرار رضاخان (۱۳۲۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز کارمند",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت محمد بن زکریای رازی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز داروسازی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز کشتی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز سیستان و بلوچستان",
+    "type": "NATIONAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز وقف",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت رسول اکرم صلی‌الله علیه و آله (۵۳ سال قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI",
+    "holidayGroup": "CO_LISTED_RELIGIOUS_OBSERVANCE",
+    "rationale": "Religious observance in composite main cell; reviewed shared explicit holiday marker with co-listed religious observance (pages 7/8). Civil occasions remain non-holidays."
+  },
+  {
+    "title": "روز اخلاق و مهرورزی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام جعفر صادق علیه‌السلام مؤسس مذهب جعفری (۸۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "انفجار دفتر نخست‌وزیری به دست منافقان و شهادت مظلومانه شهیدان رجایی و باهنر (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مبارزه با تروریسم",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تصویب قانون عملیات بانکی بدون ربا (۱۳۶۲ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بانکداری اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تشکیل قرارگاه پدافند هوایی حضرت خاتم‌الانبیاء صلی‌الله علیه و آله",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز صنعت چاپ",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت رئیسعلی دلواری",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مبارزه با استعمار انگلیس",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بهورز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تعاون",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت ابوریحان بیرونی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز علوم پایه",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مردم‌شناسی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز زلزله فردوس در سال ۱۳۴۷",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز حرکت‌های جهادی و امداد مردمی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله قدوسی و سرتیپ وحید دستجردی (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز قم",
+    "type": "NATIONAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "قیام ۱۷ شهریور و کشتار جمعی از مردم به دست مأموران ستم‌شاهی پهلوی (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "وفات آیت‌الله سید محمود طالقانی اولین امام جمعه تهران (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت دومین شهید محراب، آیت‌الله مدنی به دست منافقان (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز سینما",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت عبدالعظیم حسنی علیه‌السلام",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز خرما",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شعر و ادب فارسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت استاد سید محمدحسین شهریار",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام حسن عسکری علیه‌السلام (۲۳۲ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "وفات حضرت معصومه سلام‌الله علیها (۲۰۱ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "آغاز جنگ تحمیلی (۱۳۵۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز هفته دفاع مقدس",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز پرچم",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شهدای منا",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز سرباز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شکست حصر آبادان در عملیات ثامن‌الائمه علیه‌السلام (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز گردشگری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی جهانگردی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت سرداران اسلام: فلاحی، فکوری، نامجو، کلاهدوز و جهان‌آرا (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت فرماندهان شهید دفاع مقدس",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آتش‌نشانی و ایمنی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شمس",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت مولوی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی دریانوردی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز جهانی ناشنوایان",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز جهانی سالمندان",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز نخبگان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آیین مذهبی قالیشویان مشهد اردهال",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "بزرگداشت امامزاده علی بن محمدباقر علیه‌السلام",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "هجرت حضرت امام خمینی (رحمة‌الله علیه) از عراق به پاریس (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نیروی انتظامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز دامپزشکی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز روستا و عشایر",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی حماسه فلسطین و طوفان الاقصی",
+    "type": "INTERNATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی کودک",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز جهانی پست",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بزرگداشت حافظ",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی استاندارد",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت پنجمین شهید محراب، آیت‌الله اشرفی اصفهانی به دست منافقان (۱۳۶۱ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی نابینایان (عصای سفید)",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "ولادت حضرت زینب سلام‌الله علیها (۵ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز پرستار",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی پارالمپیک",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز پیوند اولیا و مربیان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز واقعه به آتش کشیدن مسجد جامع شهر کرمان به دست دژخیمان حکومت پهلوی (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی غذا",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز نسل‌کشی کودکان و زنان فلسطینی",
+    "type": "INTERNATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تربیت بدنی و ورزش",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز صادرات",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت ابوالفضل بیهقی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت مظلومانه آیت‌الله حاج سید مصطفی خمینی (۱۳۵۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آمار و برنامه‌ریزی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت فاطمه زهرا سلام‌الله علیها (۱۱ هـ ق) به روایتی",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "اعتراض و افشاگری حضرت امام خمینی (رحمة‌الله علیه) علیه پذیرش کاپیتولاسیون (۱۳۴۳ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز زعفران",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز انار",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت محمدحسین فهمیده (بسیجی ۱۳ ساله)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نوجوان و بسیج دانش‌آموزی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز پدافند غیرعامل",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت اولین شهید محراب، آیت‌الله قاضی طباطبایی به دست منافقان (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تسخیر لانه جاسوسی آمریکا به دست دانشجویان پیرو خط امام (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی مبارزه با استکبار جهانی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز دانش‌آموز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تبعید حضرت امام خمینی (رحمة‌الله علیه) از ایران به ترکیه (۱۳۴۳ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز فرهنگ عمومی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مازندران",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز کیفیت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی علم در خدمت صلح و توسعه",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز هوافضا",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت فاطمه زهرا سلام‌الله علیها (۱۱ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز کتاب، کتابخوانی و کتابدار",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت آیت‌الله علامه سیدمحمدحسین طباطبایی (۱۳۶۰ هـ ش)",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اصفهان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز آزادسازی سوسنگرد",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز قهرمان ملی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت ابونصر فارابی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز حکمت و فلسفه",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "وفات حضرت ام‌البنین سلام‌الله علیها",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز تکریم مادران و همسران شهدا",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز زیتون",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تشکیل بسیج مستضعفان به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بسیج مستضعفان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز قیام مردم گرگان (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نیروی دریایی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نوآوری و فناوری ایران‌ساخت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت فاطمه زهرا سلام‌الله علیها (هشتم قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز زن",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تولد حضرت امام خمینی رهبر کبیر انقلاب اسلامی (۱۳۲۰ هـ ق)",
+    "type": "OFFICIAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز بزرگداشت شیخ مفید",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جزایر سه‌گانه خلیج فارس (بوموسی، تنب بزرگ و تنب کوچک)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله سید حسن مدرس (۱۳۱۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مجلس",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی مبارزه با ایدز",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "شهادت میرزا کوچک خان جنگلی (۱۳۰۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تصویب قانون اساسی جمهوری اسلامی ایران (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز قانون اساسی جمهوری اسلامی ایران",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی معلولان",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بیمه",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز دانشجو",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی هواپیمایی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "معرفی عراق به عنوان مسؤول و آغازگر جنگ از سوی سازمان ملل (۱۳۷۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تشکیل شورای عالی انقلاب فرهنگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۶۳ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام محمد باقر علیه‌السلام (۵۷ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "شهادت سومین شهید محراب، آیت‌الله دستغیب به دست منافقان (۱۳۶۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام علی النقی الهادی علیه‌السلام (۲۵۴ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز پژوهش",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز حمل و نقل و رانندگان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله دکتر محمد مفتح (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز وحدت حوزه و دانشگاه",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهان عاری از خشونت و افراطی‌گری",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "ولادت حضرت امام محمدتقی علیه‌السلام «جوادالائمه» (۱۹۵ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز تجلیل از شهید تندگویان",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شب یلدا و ترویج فرهنگ میهمانی و پیوند با خویشان",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام علی علیه‌السلام (۲۳ سال قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز پدر",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز ایام‌البیض (اعتکاف)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز ثبت احوال",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ارتحال حضرت زینب سلام‌الله علیها (۶۲ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "تغییر قبله مسلمین از بیت‌المقدس به مکه معظمه (۲ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "ولادت حضرت عیسی مسیح علیه‌السلام",
+    "type": "RELIGIOUS",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بزرگداشت رودکی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ایمنی در برابر زلزله و کاهش اثرات بلایای طبیعی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تشکیل نهضت سوادآموزی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت آیت‌الله حسین غفاری به دست مأموران ستم‌شاهی پهلوی (۱۳۵۳ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز صنعت پتروشیمی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بصیرت و میثاق امت با ولایت",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز سال ۲۰۲۷ میلادی",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "روز بزرگداشت علامه مصباح یزدی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز علوم انسانی اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی مقاومت",
+    "type": "INTERNATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت الگوی اخلاص و عمل سردار سپهبد قاسم سلیمانی به دست استکبار جهانی",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ابلاغ پیام تاریخی حضرت امام خمینی (رحمة‌الله علیه) به گورباچف رهبر شوروی سابق (۱۳۶۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام موسی کاظم علیه‌السلام (۱۸۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "مبعث حضرت رسول اکرم صلی‌الله علیه و آله (۱۳ سال قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "شهادت سیدحسین علم‌الهدی و همرزمان وی در هویزه",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز شهدای دانشجو",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "اجرای طرح استعماری حذف حجاب به دست رضاخان (۱۳۱۴ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت خواجوی کرمانی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز کرمان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "قیام خونین مردم قم (۱۳۵۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت میرزاتقی‌خان امیرکبیر (۱۲۳۰ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام حسین علیه‌السلام (۴ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز پاسدار",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تشکیل شورای انقلاب به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت ابوالفضل العباس علیه‌السلام (۲۶ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز جانباز",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام زین‌العابدین علیه‌السلام (۳۸ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز صحیفه سجادیه",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تاریخ‌نگاری انقلاب اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "فرار شاه معدوم (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت نواب صفوی، طهماسبی، برادران واحدی و ذوالقدر از فداییان اسلام (۱۳۳۴ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت علی‌اکبر علیه‌السلام (۳۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز جوان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت خاقانی شروانی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت قائم عجل‌الله تعالی فرجه (۲۵۵ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز جهانی مستضعفان",
+    "type": "INTERNATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز سربازان گمنام امام زمان عجل‌الله تعالی فرجه",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "سالروز حماسه مردم آمل",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت صفی‌الدین اُرمَوی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آواها و نواهای ایرانی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی گمرک",
+    "type": "INTERNATIONAL",
+    "calendarType": "GREGORIAN"
+  },
+  {
+    "title": "بازگشت حضرت امام خمینی (رحمة‌الله علیه) به ایران (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "آغاز دهه مبارک فجر انقلاب اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز فناوری فضایی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز نیروی هوایی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز چهارمحال و بختیاری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شکسته شدن حکومت نظامی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "پیروزی انقلاب اسلامی ایران و سقوط نظام شاهنشاهی (۱۳۵۷ هـ ش)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "صدور حکم تاریخی حضرت امام خمینی (رحمة‌الله علیه) مبنی بر ارتداد سلمان رشدی نویسنده خائن کتاب آیات شیطانی (۱۳۶۷ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "وفات حضرت خدیجه سلام‌الله علیها (۳ سال قبل از هجرت)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "قیام مردم تبریز به مناسبت چهلمین روز شهادت شهدای قم (۱۳۵۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز اقتصاد مقاومتی و کارآفرینی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "ولادت حضرت امام حسن مجتبی علیه‌السلام (۳ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز اکرام و تکریم خیرین",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "کودتای انگلیسی رضاخان (۱۲۹۹ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت خواجه نصیرالدین طوسی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز مهندسی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شب قدر",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "ضربت خوردن حضرت امام علی علیه‌السلام (۴۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز نهج‌البلاغه",
+    "type": "RELIGIOUS",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز حمایت از بیماران نادر",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز امور تربیتی و تربیت اسلامی",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت حکیم حاج ملاهادی سبزواری",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "شهادت حضرت امام علی علیه‌السلام (۴۰ هـ ق)",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز حمایت از حقوق مصرف‌کنندگان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز جهانی قدس (آخرین جمعه ماه رمضان)",
+    "type": "INTERNATIONAL",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز احسان و نیکوکاری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ترویج فرهنگ قرض‌الحسنه",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز درختکاری",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آموزش همگانی حفظ محیط زیست",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت سید جمال‌الدین اسدآبادی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "سالروز تأسیس کانون‌های فرهنگی و هنری مساجد کشور",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بوشهر",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "تعطیل به مناسبت عید سعید فطر",
+    "type": "RELIGIOUS",
+    "calendarType": "HIJRI"
+  },
+  {
+    "title": "روز راهیان نور",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت نظامی گنجوی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "صدور فرمان حضرت امام خمینی (رحمة‌الله علیه) مبنی بر تأسیس بنیاد شهید انقلاب اسلامی (۱۳۵۸ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت شهدا",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز بزرگداشت پروین اعتصامی",
+    "type": "CULTURAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز تکریم همسایگان",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "بمباران شیمیایی حلبچه به دست ارتش بعث عراق (۱۳۶۶ هـ ش)",
+    "type": "OFFICIAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز ملی شدن صنعت نفت ایران (۱۳۲۹ هـ ش)",
+    "type": "NATIONAL",
+    "calendarType": "JALALI"
+  },
+  {
+    "title": "روز آزمایشگاهیان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز روان‌شناس و مشاور",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت بتن آماده",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت تهویه مطبوع",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز مشاغل خانگی و تولید خانواده‌محور",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز بوم‌گردی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز نقشه‌برداری",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز مشاور املاک",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت موتورسیکلت",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت ابزارآلات",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز عینک‌سازی و بینایی‌سنجی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز حمایت از تولید ملی و مبارزه با قاچاق کالا",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز خیاط، صنعت نساجی و پوشاک",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت قیر و آسفالت",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز خلبان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز کفاش، صنعت کفش و چرم",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز فوریت‌های پزشکی (اورژانس)",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت آسانسور و پله برقی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت ساختمان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز محیط‌بان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت نوشت‌افزار",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت سرب و روی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز حسابدار",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز سد و نیروگاه برق آبی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت مس",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز آرایشگر",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز دفاتر اسناد رسمی",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت سیمان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز قناد، صنعت شیرینی و شکلات",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز معاینه فنی خودرو",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز ویراستار",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز بازاریاب و مدیر فروش",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز کارشناس و متخصص تغذیه",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز خادمان آرامستان",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  },
+  {
+    "title": "روز صنعت طلا، جواهر، نقره و گوهرسنگ‌ها",
+    "type": "ORGANIZATIONAL",
+    "calendarType": "JALALI",
+    "rationale": "Professional/occupational observance; source page 17 dedicated occupations table, Jalali date, no holiday marker."
+  }
+]

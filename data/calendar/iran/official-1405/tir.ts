@@ -2,9 +2,11 @@ import type { OfficialCalendarEvent1405 } from "./types";
 
 export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
-    eventKey: "1405-04-01-main-01-islamic-propagation-organization-founding-order",
+    eventKey:
+      "1405-04-01-main-01-islamic-propagation-organization-founding-order",
     jalaliDateKey: "1405-04-01",
-    title: "سالروز صدور فرمان حضرت امام خمینی (رحمة‌الله علیه) مبنی بر تأسیس سازمان تبلیغات اسلامی (۱۳۶۰ هـ ش)",
+    title:
+      "سالروز صدور فرمان حضرت امام خمینی (رحمة‌الله علیه) مبنی بر تأسیس سازمان تبلیغات اسلامی (۱۳۶۰ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -96,7 +98,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-04-07-main-01-shahid-beheshti-and-72-companions",
     jalaliDateKey: "1405-04-07",
-    title: "شهادت مظلومانه آیت‌الله دکتر بهشتی و ۷۲ تن از یاران امام خمینی با انفجار بمب به دست منافقان در دفتر مرکزی حزب جمهوری اسلامی (۱۳۶۰ هـ ش)",
+    title:
+      "شهادت مظلومانه آیت‌الله دکتر بهشتی و ۷۲ تن از یاران امام خمینی با انفجار بمب به دست منافقان در دفتر مرکزی حزب جمهوری اسلامی (۱۳۶۰ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -162,7 +165,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-04-10-appendix-03-imam-reza-nishapur-silsilat-al-dhahab",
     jalaliDateKey: "1405-04-10",
-    title: "یادروز ورود حضرت امام رضا علیه‌السلام به نیشابور و نقل حدیث سلسله‌الذهب",
+    title:
+      "یادروز ورود حضرت امام رضا علیه‌السلام به نیشابور و نقل حدیث سلسله‌الذهب",
     type: "RELIGIOUS",
     calendarType: "JALALI",
     isHoliday: false,
@@ -195,7 +199,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-04-11-main-01-shahid-sadoughi",
     jalaliDateKey: "1405-04-11",
-    title: "شهادت چهارمین شهید محراب، آیت‌الله صدوقی به دست منافقان (۱۳۶۱ هـ ش)",
+    title:
+      "شهادت چهارمین شهید محراب، آیت‌الله صدوقی به دست منافقان (۱۳۶۱ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -206,7 +211,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-04-12-main-01-iran-air-flight-655-attack",
     jalaliDateKey: "1405-04-12",
-    title: "حمله ددمنشانه ناوگان آمریکای جنایتکار به هواپیمای مسافربری جمهوری اسلامی ایران (۱۳۶۷ هـ ش)",
+    title:
+      "حمله ددمنشانه ناوگان آمریکای جنایتکار به هواپیمای مسافربری جمهوری اسلامی ایران (۱۳۶۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -248,7 +254,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-04-14-appendix-02-municipality-and-village-administration-day",
+    eventKey:
+      "1405-04-14-appendix-02-municipality-and-village-administration-day",
     jalaliDateKey: "1405-04-14",
     title: "روز شهرداری و دهیاری",
     type: "NATIONAL",
@@ -283,7 +290,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-04-18-appendix-02-nojeh-coup-discovery",
     jalaliDateKey: "1405-04-18",
-    title: "کشف توطئه آمریکایی در پایگاه هوایی شهید نوژه (کودتای نافرجام نقاب - ۱۳۵۹ هـ ش)",
+    title:
+      "کشف توطئه آمریکایی در پایگاه هوایی شهید نوژه (کودتای نافرجام نقاب - ۱۳۵۹ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -393,7 +401,8 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-04-27-appendix-01-un-security-council-resolution-598-acceptance",
+    eventKey:
+      "1405-04-27-appendix-01-un-security-council-resolution-598-acceptance",
     jalaliDateKey: "1405-04-27",
     title: "اعلام پذیرش قطعنامه ۵۹۸ شورای امنیت از سوی ایران (۱۳۶۷ هـ ش)",
     type: "OFFICIAL",
@@ -448,5 +457,71 @@ export const TIR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 2,
     sourcePage: 6,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-04-05-occupations-10",
+    jalaliDateKey: "1405-04-05",
+    title: "روز صنعت ابزارآلات",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 3,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-04-06-occupations-11",
+    jalaliDateKey: "1405-04-06",
+    title: "روز عینک‌سازی و بینایی‌سنجی",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-04-12-occupations-12",
+    jalaliDateKey: "1405-04-12",
+    title: "روز حمایت از تولید ملی و مبارزه با قاچاق کالا",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 4,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-04-12-occupations-13",
+    jalaliDateKey: "1405-04-12",
+    title: "روز خیاط، صنعت نساجی و پوشاک",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 5,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-04-18-occupations-14",
+    jalaliDateKey: "1405-04-18",
+    title: "روز صنعت قیر و آسفالت",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 3,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-04-30-occupations-15",
+    jalaliDateKey: "1405-04-30",
+    title: "روز خلبان",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

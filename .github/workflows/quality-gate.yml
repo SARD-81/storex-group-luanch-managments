@@ -50,6 +50,7 @@ jobs:
       - run: npx prisma validate && npx prisma generate
       - run: npx prisma migrate deploy
       - run: python3 -m pip install -r scripts/requirements-calendar.txt
+      - run: python3 -m unittest discover -s tests -p 'test_*.py'
       - run: npx playwright install --with-deps chromium
       - run: node --import tsx scripts/import-calendar-base-year.ts --year=1405
       - run: node --import tsx scripts/import-official-calendar-events-1405.ts --year=1405

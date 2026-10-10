@@ -6,14 +6,22 @@ import {
   credentialStatus,
 } from "../lib/automation/config";
 import { cleanError, ensureJob, runJob } from "../lib/automation/jobs";
-import { synchronizeCalendar } from "../lib/automation/calendar";
+import {
+  stageApprovedLocalCalendar,
+  synchronizeCalendar,
+} from "../lib/automation/calendar";
 import { withWorkerLock } from "../lib/automation/worker";
 import { reconcileAttendance } from "../lib/attendance/reconciliation";
 import { getNextDayMealReport } from "../lib/reporter/next-day-report";
 async function main() {
   const args = process.argv.slice(2),
     command = args[0] ?? "--status";
-  if (args.some((a, i) => i > 0 && !/^--year=\d{4}$/.test(a)))
+  if (
+    args.some(
+      (a, i) =>
+        i > 0 && !/^--(?:year=\d{4}|pdf=.+|sha256=[a-f0-9]{64})$/.test(a),
+    )
+  )
     throw new Error("INVALID_COMMAND");
   if (command === "--status") {
     const c = await prisma.automationConfig.findUnique({
@@ -52,11 +60,15 @@ async function main() {
     );
     return;
   }
-  if (!["--reconcile", "--dry-run=calendar"].includes(command))
+  if (
+    !["--reconcile", "--dry-run=calendar", "--stage-local-calendar"].includes(
+      command,
+    )
+  )
     throw new Error("INVALID_COMMAND");
   const year = Number(args.find((a) => a.startsWith("--year="))?.slice(7));
   if (
-    command === "--dry-run=calendar" &&
+    command !== "--reconcile" &&
     (!Number.isInteger(year) || year < 1200 || year > 1700)
   )
     throw new Error("INVALID_YEAR");
@@ -75,6 +87,11 @@ async function main() {
       if (type === "ATTENDANCE_RECONCILE") {
         await stage("RECONCILING");
         await reconcileAttendance(prisma);
+      } else if (command === "--stage-local-calendar") {
+        const pdf = args.find((a) => a.startsWith("--pdf="))?.slice(6);
+        const sha = args.find((a) => a.startsWith("--sha256="))?.slice(9);
+        if (!pdf || !sha) throw new Error("LOCAL_SOURCE_AND_CHECKSUM_REQUIRED");
+        await stageApprovedLocalCalendar(prisma, config, year, pdf, sha, stage);
       } else await synchronizeCalendar(prisma, config, year, stage, true);
     });
     console.log(
