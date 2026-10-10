@@ -73,6 +73,24 @@ Create a dedicated Nextcloud account with access only to the two private directo
 
 Create the Bale bot via the official BotFather, store its token only in the root-managed environment file, ask the single report recipient to start the bot, obtain their private chat ID and run getMe/connection tests from the admin page. The sender checks getChat type=private before every message.
 
+## Bale private-recipient live acceptance (required before merge)
+
+Use the **existing official Bot API**, not Safir or personal-account automation. The single responsible recipient must open the organization's Bale bot and send `/start` once. Obtain the **private conversation's numeric `chat.id`** from the approved Bale update/webhook mechanism and configure `reportRecipient` in `/settings/automations/reporter`. Do not confuse a phone number or a username with this chat ID. Verify the receiver knows and consents to one test message.
+
+On a trusted staging host, using the existing protected automation environment (at least `DATABASE_URL` and `BALE_BOT_TOKEN`) and staging configuration, run:
+
+```bash
+# Readiness: official bot identity and private recipient, sends no messages.
+node --import tsx scripts/check-bale-live.ts
+
+# Sends exactly one distinguishable test message to the configured recipient.
+node --import tsx scripts/check-bale-live.ts --send-once
+```
+
+The second command must be run **only with the recipient's approval**. Verify that its returned `messageId` is present and that the recipient actually sees the matching test marker in their Bale private chat. Record time, test marker, sanitized API status and recipient confirmation in the verification report; never include `BALE_BOT_TOKEN`, raw Authorization headers or token-bearing URLs. A successful `getMe` without an actual received message does **not** close the live-integration gate.
+
+Keep `reporterEnabled=false` while testing so no daily report is accidentally sent. Do not add this opt-in live test to GitHub CI or the minute worker. Re-test a real Reporter delivery/link separately after Nextcloud Public Link Sharing is enabled; its disabled/manual fallback remains mandatory in the meantime.
+
 ## Staging installation (after every merge gate is closed)
 
 Back up DB and spool first; test restore on staging. Keep automation disabled. This example assumes Node 24 and `/opt/storex/current` already contains the reviewed release, and account `storex` exists.
