@@ -1,17 +1,24 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { readFile } from "node:fs/promises";
+import { getCurrentLogo } from "@/lib/branding/logo";
+import { prisma } from "@/lib/prisma";
 import { chromium } from "playwright";
 import type { NextDayMealReport } from "./next-day-report";
 import { reportDocumentHtml } from "./report-document";
 export async function generateReportPdf(report: NextDayMealReport) {
-  const logo = await readFile(
-    path.join(process.cwd(), "public/company-logo.png"),
-  )
-    .then((b) => "data:image/png;base64," + b.toString("base64"))
-    .catch(() => undefined);
+  const currentLogo = await getCurrentLogo(prisma);
+  const logo = currentLogo
+    ? `data:image/png;base64,${currentLogo.bytes.toString("base64")}`
+    : undefined;
   let fontCss = "";
-  if (process.env.REPORT_PDF_FONT_PATH) {
-    const font = await readFile(process.env.REPORT_PDF_FONT_PATH);
+  {
+    const font = await readFile(
+      process.env.REPORT_PDF_FONT_PATH ??
+        path.join(
+          process.cwd(),
+          "app/fonts/vazirmatn/Vazirmatn-VariableFont_wght.ttf",
+        ),
+    );
     fontCss = `@font-face{font-family:ReportPersian;src:url(data:font/ttf;base64,${font.toString("base64")})}.meal-report{font-family:ReportPersian,sans-serif}`;
   }
   const browser = await chromium.launch({

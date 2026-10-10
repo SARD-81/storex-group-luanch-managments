@@ -15,9 +15,12 @@ export async function GET(
   if (!artifact) return new Response("فایل یافت نشد", { status: 404 });
   try {
     const root = await realpath(
-        path.resolve(process.env.AUTOMATION_SPOOL_DIR ?? ".automation-spool"),
+        /* turbopackIgnore: true */ path.resolve(
+          /* turbopackIgnore: true */ process.env.AUTOMATION_SPOOL_DIR ??
+            ".automation-spool",
+        ),
       ),
-      file = await realpath(artifact.spoolPath);
+      file = await realpath(/* turbopackIgnore: true */ artifact.spoolPath);
     if (!file.startsWith(root + path.sep))
       return new Response("دسترسی نامعتبر", { status: 403 });
     const bytes = await readFile(file);

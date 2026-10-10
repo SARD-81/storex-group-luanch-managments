@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { AttendanceSource, MealType, UserRole } from "@/app/generated/prisma/client";
 import { setAdminAttendanceAction } from "@/actions/attendance";
@@ -22,7 +23,8 @@ export default async function DailyAttendancePage({ searchParams }: { searchPara
   ]);
   const map = new Map(rows.map(r=>[`${r.userId}:${r.mealType}`,r]));
   return <main dir="rtl" className="dashboard-aurora-shell min-h-screen p-6 text-foreground"><div className="mx-auto max-w-7xl space-y-6">
-    <header className="dashboard-glass-card space-y-3"><h1 className="text-2xl font-bold">مدیریت حضور و رزرو روزانه</h1><Link href="/">داشبورد</Link><AdminDateFilter key={dateKey} dateKey={dateKey}/>
+    <header className="dashboard-glass-card space-y-3">
+          <CompanyLogo /><h1 className="text-2xl font-bold">مدیریت حضور و رزرو روزانه</h1><Link href="/">داشبورد</Link><AdminDateFilter key={dateKey} dateKey={dateKey}/>
       <p>{day?.dayNameFa} {day?.jalaliDateKey} — {dateKey} — {day ? day.isWorkday ? "روز کاری" : "غیرکاری" : "تقویم این تاریخ موجود نیست"}</p>
       <p>{[day?.isOfficialHoliday && "تعطیل رسمی",day?.isWeeklyOffDay && "تعطیلی هفتگی",day?.isManualHoliday && "تعطیلی دستی",day?.isForcedWorkday && "روز کاری اجباری"].filter(Boolean).join("، ")}</p>
       <p>{day?.holidayTitle}</p>{day?.events.map((e,i)=><p key={i} className="text-sm">{e.title}</p>)}

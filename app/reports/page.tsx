@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -61,6 +62,7 @@ export default async function ReportsPage({
       <div className="dashboard-aurora dashboard-aurora-three" />
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6">
         <header className="dashboard-glass-card">
+          <CompanyLogo />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-bold">گزارش حضور</h1>
             <ThemeToggle />

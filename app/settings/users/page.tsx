@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { UserRole } from "@/app/generated/prisma/client";
@@ -54,6 +55,7 @@ export default async function UsersManagementPage({
 
       <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-6">
         <header className="dashboard-glass-card flex flex-col gap-4">
+          <CompanyLogo />
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm text-muted-foreground">

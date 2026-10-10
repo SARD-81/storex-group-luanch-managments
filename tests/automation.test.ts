@@ -228,6 +228,7 @@ async function fixture(
   process.env.NEXTCLOUD_USERNAME = "service";
   process.env.NEXTCLOUD_APP_PASSWORD = "test-only-password";
   process.env.BALE_BOT_TOKEN = "test-only-token";
+  process.env.STOREX_APP_ORIGIN = "https://storex.example.test";
   const spool = await mkdtemp(path.join(tmpdir(), "automation-test-"));
   process.env.AUTOMATION_SPOOL_DIR = spool;
   const db = new PrismaClient({
@@ -729,6 +730,7 @@ test(
       remote.clock = new Date("2026-10-06T05:50:00Z");
       await workerTick(db, remote.clock, deps);
       assert.ok(bot.messages[0].includes("صبحانه: 1"));
+      assert.ok(bot.messages[0].includes("https://storex.example.test/reporter/next-day"));
       await db.guestMealOrder.updateMany({
         where: { title: "automation-test" },
         data: { count: 2 },

@@ -577,3 +577,35 @@ model AutomationShareLease {
   createdAt DateTime @default(now())
   @@index([expiresAt, revokedAt])
 }
+
+// References change atomically; normalized image bytes live in durable storage.
+model BrandingAsset {
+  hash String @id
+  width Int
+  height Int
+  byteSize Int
+  createdAt DateTime @default(now())
+  activeConfigurations BrandingConfig[] @relation("ActiveBranding")
+  previousConfigurations BrandingConfig[] @relation("PreviousBranding")
+}
+model BrandingConfig {
+  id String @id @default("singleton")
+  activeHash String?
+  activeAsset BrandingAsset? @relation("ActiveBranding", fields: [activeHash], references: [hash], onDelete: Restrict)
+  previousHash String?
+  previousAsset BrandingAsset? @relation("PreviousBranding", fields: [previousHash], references: [hash], onDelete: Restrict)
+  revision Int @default(0)
+  updatedAt DateTime @updatedAt
+}
+model BrandingAudit {
+  id String @id @default(cuid())
+  actorUserId String
+  actorUsername String
+  actorName String
+  action String
+  fromHash String?
+  toHash String?
+  revision Int
+  occurredAt DateTime @default(now())
+  @@index([occurredAt])
+}

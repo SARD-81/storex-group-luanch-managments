@@ -1,7 +1,11 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { attendanceTransaction, reconcileAttendanceTx, configureAutomaticMeals } from "@/lib/attendance/reconciliation";
+import {
+  attendanceTransaction,
+  reconcileAttendanceTx,
+  configureAutomaticMeals,
+} from "@/lib/attendance/reconciliation";
 import { getAttendanceReservationWindow } from "@/lib/attendance/month";
 import { getDateKey } from "@/lib/date/date-key";
 import { revalidatePath } from "next/cache";
@@ -35,6 +39,13 @@ export async function createUserAction(formData: FormData) {
     redirect("/settings/users?error=missing");
   }
 
+  if (
+    password.length < 8 ||
+    password.length > 256 ||
+    username.length > 64 ||
+    name.length > 128
+  )
+    redirect("/settings/users?error=invalid-user-input");
   const existingUser = await prisma.user.findUnique({ where: { username } });
 
   if (existingUser) {
@@ -91,14 +102,24 @@ export async function updateUserStatusAction(formData: FormData) {
 
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, username: true, name: true, role: true, isActive: true },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      role: true,
+      isActive: true,
+    },
   });
 
   if (!targetUser) {
     redirect("/settings/users?error=user-not-found");
   }
 
-  if (!nextActive && targetUser.role === UserRole.ADMIN && targetUser.isActive) {
+  if (
+    !nextActive &&
+    targetUser.role === UserRole.ADMIN &&
+    targetUser.isActive
+  ) {
     const activeAdminsCount = await prisma.user.count({
       where: { role: UserRole.ADMIN, isActive: true },
     });
@@ -108,11 +129,33 @@ export async function updateUserStatusAction(formData: FormData) {
     }
   }
 
-  const updatedUser = await attendanceTransaction(prisma, async tx => {
-    const updated = await tx.user.update({ where: { id: userId }, data: { isActive: nextActive } });
+  const updatedUser = await attendanceTransaction(prisma, async (tx) => {
+    if (
+      !nextActive &&
+      targetUser.role === UserRole.ADMIN &&
+      (await tx.user.count({
+        where: { role: UserRole.ADMIN, isActive: true },
+      })) <= 1
+    )
+      redirect("/settings/users?error=last-admin");
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: { isActive: nextActive },
+    });
+    if (!nextActive) await tx.session.deleteMany({ where: { userId } });
     const window = getAttendanceReservationWindow();
-    const last = await tx.mealAttendance.findFirst({ where: { userId, source: "AUTO_RESERVATION" }, orderBy: { date: "desc" } });
-    await reconcileAttendanceTx(tx, { userId, from: window.todayDateKey, to: last && getDateKey(last.date) > window.maxDateKey ? getDateKey(last.date) : window.maxDateKey });
+    const last = await tx.mealAttendance.findFirst({
+      where: { userId, source: "AUTO_RESERVATION" },
+      orderBy: { date: "desc" },
+    });
+    await reconcileAttendanceTx(tx, {
+      userId,
+      from: window.todayDateKey,
+      to:
+        last && getDateKey(last.date) > window.maxDateKey
+          ? getDateKey(last.date)
+          : window.maxDateKey,
+    });
     return updated;
   });
 
@@ -150,6 +193,8 @@ export async function resetUserPasswordAction(formData: FormData) {
     redirect("/settings/users?error=missing");
   }
 
+  if (password.length < 8 || password.length > 256)
+    redirect("/settings/users?error=invalid-password");
   const targetUser = await prisma.user.findUnique({
     where: { id: userId },
     select: { id: true, username: true, name: true },
@@ -161,9 +206,9 @@ export async function resetUserPasswordAction(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: { passwordHash },
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+    await tx.session.deleteMany({ where: { userId } });
   });
 
   await writeAuditLog(prisma, {
@@ -185,7 +230,20 @@ export async function resetUserPasswordAction(formData: FormData) {
 
 export async function updateAutomaticMealsAction(formData: FormData) {
   const admin = await requireAdmin();
-  await configureAutomaticMeals(prisma, admin, String(formData.get("userId")), formData.get("autoBreakfast") === "on", formData.get("autoLunch") === "on");
-  for (const p of ["/", "/settings/users", "/settings/attendance", "/reports", "/reporter/next-day"]) revalidatePath(p);
+  await configureAutomaticMeals(
+    prisma,
+    admin,
+    String(formData.get("userId")),
+    formData.get("autoBreakfast") === "on",
+    formData.get("autoLunch") === "on",
+  );
+  for (const p of [
+    "/",
+    "/settings/users",
+    "/settings/attendance",
+    "/reports",
+    "/reporter/next-day",
+  ])
+    revalidatePath(p);
   redirect("/settings/users?saved=auto");
 }

@@ -1,7 +1,9 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomBytes, createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { spawn } from "node:child_process";
 import bcrypt from "bcryptjs";
 import ExcelJS from "exceljs";
@@ -30,6 +32,10 @@ async function main() {
   );
   if (process.env.TEST_PGLITE !== "true")
     assert.match(new URL(process.env.TEST_DATABASE_URL!).pathname, /_test$/);
+  const brandingDirectory = await mkdtemp(
+    path.join(tmpdir(), "web-branding-test-"),
+  );
+  process.env.BRANDING_STORAGE_DIR = brandingDirectory;
   const cookies = new Map<string, string>();
   const server = spawn(
     process.execPath,
@@ -47,6 +53,7 @@ async function main() {
         ...process.env,
         NODE_ENV: "production",
         AUTH_COOKIE_SECURE: "false",
+        AUTOMATION_ALLOWED_NEXTCLOUD_HOSTS: "cloud.example.test",
       },
     },
   );
@@ -118,6 +125,7 @@ async function main() {
       "/settings/automations",
       "/settings/automations/reporter",
       "/settings/automations/calendar?year=1406",
+      "/settings/branding",
       "/reporter/next-day",
     ]) {
       const response = await request(route),
@@ -133,6 +141,7 @@ async function main() {
         "/settings/attendance",
         "/settings/automations",
         "/settings/automations/calendar",
+        "/settings/branding",
       ]) {
         const r = await request(route, role);
         if (![303, 307].includes(r.status)) {
@@ -225,6 +234,33 @@ async function main() {
       200,
     );
     assert.equal((await request("/profile", "USER")).status, 200);
+    for (const role of ["USER", "REPORTER", "NONE"])
+      assert.equal(
+        (await request(`/settings/branding/preview/${"a".repeat(64)}`, role))
+          .status,
+        role === "NONE" ? 401 : 403,
+      );
+    const brandingHtml = await (await request("/settings/branding")).text();
+    const brandingAction = brandingHtml.match(/name="(\$ACTION_ID_[^"]+)"/);
+    assert.ok(brandingAction);
+    const denied = new FormData();
+    denied.set(brandingAction[1], "");
+    denied.set(
+      "logo",
+      new Blob(["not an image"], { type: "image/png" }),
+      "image.png",
+    );
+    for (const role of ["USER", "REPORTER"])
+      await assertRedirect(
+        await fetch(base + "/settings/branding", {
+          method: "POST",
+          headers: { Cookie: cookies.get(role)!, Origin: base },
+          body: denied,
+          redirect: "manual",
+        }),
+        "/",
+      );
+    assert.equal(await prisma.brandingAsset.count(), 0);
     await mkdir("verification-output", { recursive: true });
     await writeFile(
       "verification-output/web-regression.json",
@@ -239,6 +275,10 @@ async function main() {
       await checkBrowser(base, cookies.get("ADMIN")!);
   } finally {
     server.kill("SIGTERM");
+    await prisma.brandingConfig.deleteMany();
+    await prisma.brandingAudit.deleteMany();
+    await prisma.brandingAsset.deleteMany();
+    await rm(brandingDirectory, { recursive: true, force: true });
     await prisma.user.deleteMany({
       where: { username: { startsWith: prefix } },
     });

@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -94,6 +95,7 @@ export default async function Home({
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-8">
         <header className="dashboard-glass-card flex flex-col gap-4">
+          <CompanyLogo />
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="mb-2 text-sm text-muted-foreground">
@@ -245,6 +247,7 @@ export default async function Home({
                   >
                     لاگ ممیزی
                   </Link>
+                  <Link href="/settings/branding" className="dashboard-action-button">مدیریت لوگوی شرکت</Link>
                   <Link href="/settings/automations" className="dashboard-action-button">مرکز مدیریت اتوماسیون</Link>
                   <Link href="/reports" className="dashboard-action-button">
                     گزارش‌ها

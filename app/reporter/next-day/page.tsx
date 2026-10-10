@@ -1,5 +1,6 @@
-import { existsSync } from "fs";
-import path from "path";
+import { getCurrentLogo } from "@/lib/branding/logo";
+import { prisma } from "@/lib/prisma";
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { logoutAction } from "@/actions/auth";
@@ -39,9 +40,8 @@ export default async function NextDayReporterPage({
   const currentUser = await requireReporterAccess();
   const params = await searchParams;
   const report = await getNextDayMealReport();
-  const companyLogoExists = existsSync(
-    path.join(process.cwd(), "public", "company-logo.png"),
-  );
+  const companyLogo = await getCurrentLogo(prisma);
+  const companyLogoData = companyLogo ? `data:image/png;base64,${companyLogo.bytes.toString("base64")}` : undefined;
 
   return (
     <main
@@ -55,6 +55,7 @@ export default async function NextDayReporterPage({
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col gap-6">
         <header className="dashboard-glass-card reporter-no-print flex flex-col gap-4">
+          <CompanyLogo />
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -203,7 +204,7 @@ export default async function NextDayReporterPage({
             dangerouslySetInnerHTML={{
               __html: reportDocumentMarkup(
                 report,
-                companyLogoExists ? "/company-logo.png" : undefined,
+                companyLogoData,
               ),
             }}
           />

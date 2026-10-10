@@ -1,3 +1,4 @@
+import { checkLegacyBrowserFlows } from "./check-legacy-browser-flows";
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
@@ -122,6 +123,7 @@ export async function checkBrowser(base: string, cookie: string) {
       .click();
     await page.getByRole("button", { name: "اعمال فیلتر" }).click();
     assert.deepEqual(errors, [], "browser must have no runtime errors");
+    await checkLegacyBrowserFlows(context,base);
     const report = await getNextDayMealReport();
     for (const [label, count, guests] of [
       ["normal", report.peopleRows.length, 2],

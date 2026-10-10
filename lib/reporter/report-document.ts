@@ -11,7 +11,7 @@ const number = (n: number) =>
   new Intl.NumberFormat("fa-IR", { useGrouping: false }).format(n);
 export const REPORT_DOCUMENT_CSS = `
 @page { size: A5 portrait; margin: 7mm; }
-.meal-report { direction:rtl; background:white; color:black; font-family:Tahoma,"DejaVu Sans",Arial,sans-serif; width:100%; box-sizing:border-box; font-size:10pt; }
+.meal-report { direction:rtl; background:white; color:black; font-family:var(--font-app),Tahoma,"DejaVu Sans",Arial,sans-serif; width:100%; box-sizing:border-box; font-size:10pt; }
 .meal-report header { display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:2mm; align-items:center; margin-bottom:4mm; border-bottom:1px solid black; padding-bottom:3mm; break-inside:avoid; }
 .meal-report h2 { font-size:12pt; line-height:1.6; text-align:center; margin:0; }
 .meal-report img { display:block; max-width:100%; max-height:17mm; object-fit:contain; }

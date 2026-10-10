@@ -97,5 +97,6 @@ export function credentialStatus() {
       process.env.NEXTCLOUD_USERNAME && process.env.NEXTCLOUD_APP_PASSWORD
     ),
     bale: !!process.env.BALE_BOT_TOKEN,
+    reporterAppOrigin: !!process.env.STOREX_APP_ORIGIN,
   };
 }

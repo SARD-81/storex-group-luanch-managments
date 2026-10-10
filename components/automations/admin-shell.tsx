@@ -1,6 +1,7 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import type { ReactNode } from "react";
-export function AutomationShell({
+export async function AutomationShell({
   title,
   children,
 }: {
@@ -14,6 +15,7 @@ export function AutomationShell({
     >
       <div className="relative mx-auto flex max-w-7xl flex-col gap-6">
         <header className="dashboard-glass-card">
+          <CompanyLogo />
           <h1 className="text-2xl font-bold">{title}</h1>
           <nav className="mt-4 flex flex-wrap gap-3">
             <Link href="/" className="dashboard-action-button">

@@ -176,11 +176,21 @@ export async function storeArtifact(
   },
 ) {
   const sha256 = createHash("sha256").update(input.bytes).digest("hex");
+  if (
+    process.env.NODE_ENV === "production" &&
+    (!process.env.AUTOMATION_SPOOL_DIR ||
+      !path.isAbsolute(process.env.AUTOMATION_SPOOL_DIR))
+  )
+    throw new AutomationError("DURABLE_SPOOL_NOT_CONFIGURED");
   const root = path.resolve(
-    process.env.AUTOMATION_SPOOL_DIR ?? ".automation-spool",
+    /* turbopackIgnore: true */ process.env.AUTOMATION_SPOOL_DIR ??
+      ".automation-spool",
   );
   await mkdir(root, { recursive: true, mode: 0o700 });
-  const spoolPath = path.join(root, `${sha256}.${input.extension}`);
+  const spoolPath = path.join(
+    /* turbopackIgnore: true */ root,
+    `${sha256}.${input.extension}`,
+  );
   const temporary = spoolPath + ".tmp";
   await writeFile(temporary, input.bytes, { mode: 0o600 });
   await rename(temporary, spoolPath);

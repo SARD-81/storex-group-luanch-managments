@@ -20,6 +20,8 @@ async function main() {
   if (!["--check", "--send-once"].includes(mode) || process.argv.length > 3) {
     throw new Error("INVALID_TEST_ARGUMENT");
   }
+  if (mode === "--send-once" && process.env.STOREX_ENVIRONMENT !== "staging")
+    throw new Error("CONTROLLED_STAGING_REQUIRED");
   if (!process.env.BALE_BOT_TOKEN) {
     throw new Error("BALE_NOT_CONFIGURED");
   }
@@ -33,8 +35,14 @@ async function main() {
   }
 
   const client = new BaleClient();
-  const me = (await client.call("getMe")) as { id?: unknown; is_bot?: unknown };
-  if (!me?.id) throw new Error("BALE_GET_ME_INVALID");
+  const me = (await client.call("getMe")) as {
+    id?: unknown;
+    is_bot?: unknown;
+    username?: unknown;
+  };
+  if (!me?.id || me.is_bot !== true) throw new Error("BALE_GET_ME_INVALID");
+  if (String(me.username).toLowerCase() !== "storex_lunch_notify_bot")
+    throw new Error("BALE_BOT_IDENTITY_MISMATCH");
   const chat = (await client.call("getChat", { chat_id: recipient })) as {
     id?: unknown;
     type?: unknown;
@@ -42,13 +50,17 @@ async function main() {
   if (chat.type !== "private" || String(chat.id) !== recipient) {
     throw new Error("BALE_CHAT_NOT_PRIVATE_OR_MISMATCHED");
   }
-  console.log(JSON.stringify({
-    stage: "BOT_AND_PRIVATE_CHAT_VERIFIED",
-    mode,
-    success: true,
-  }));
+  console.log(
+    JSON.stringify({
+      stage: "BOT_AND_PRIVATE_CHAT_VERIFIED",
+      mode,
+      success: true,
+    }),
+  );
   if (mode === "--check") {
-    console.log("No message sent. To send exactly one test, rerun with --send-once.");
+    console.log(
+      "No message sent. To send exactly one test, rerun with --send-once.",
+    );
     return;
   }
 
@@ -58,19 +70,22 @@ async function main() {
     "این پیام فقط برای تأیید ارتباط Bot API است و گزارش واقعی نیست.\n" +
     `کد تأیید آزمون: ${marker}`;
   const messageId = await client.send(recipient, text);
-  console.log(JSON.stringify({
-    stage: "TEST_MESSAGE_ACCEPTED_BY_BALE",
-    success: true,
-    messageId,
-    marker,
-    manualVerificationRequired: "Recipient must confirm that the message appeared in Bale.",
-  }));
+  console.log(
+    JSON.stringify({
+      stage: "TEST_MESSAGE_ACCEPTED_BY_BALE",
+      success: true,
+      messageId,
+      marker,
+      manualVerificationRequired:
+        "Recipient must confirm that the message appeared in Bale.",
+    }),
+  );
 }
 
 main()
   .catch((error: unknown) => {
-    const code = error instanceof Error &&
-      /^[A-Z][A-Z0-9_]+$/.test(error.message)
+    const code =
+      error instanceof Error && /^[A-Z][A-Z0-9_]+$/.test(error.message)
         ? error.message
         : cleanError(error).code;
     console.error(JSON.stringify({ success: false, code }));

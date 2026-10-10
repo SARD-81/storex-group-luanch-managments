@@ -1,3 +1,4 @@
+import { reporterReviewUrl } from "./reminder-link";
 import type {
   AutomationConfig,
   PrismaClient,
@@ -168,12 +169,13 @@ export async function sendGuestReminder(
   const report = await getMealReportForDate(dateKey, now);
   if (report.policy.isWorkday !== true)
     throw new AutomationError("REPORT_DATE_NOT_WORKDAY");
+  const reviewUrl = reporterReviewUrl();
   await stage("REMINDER_SENDING");
   let messageId: string;
   try {
     messageId = await bale.send(
       config.reportRecipient,
-      `یادآوری بررسی مهمان‌ها برای ${report.reportDateLabel}\nصبحانه: ${report.guestCounts.breakfast}\nناهار: ${report.guestCounts.lunch}\nدر صورت نیاز تعداد را در سامانه تغییر دهید. بدون تغییر، مقادیر فعلی پذیرفته می‌شود.`,
+      `یادآوری بررسی مهمان‌ها برای ${report.reportDateLabel}\nصبحانه: ${report.guestCounts.breakfast}\nناهار: ${report.guestCounts.lunch}\nبرای بررسی یا اصلاح، وارد حساب مجاز گزارش‌گیر شوید:\n${reviewUrl}\nدر صورت نیاز تعداد را در سامانه تغییر دهید. بدون تغییر، مقادیر فعلی پذیرفته می‌شود.`,
     );
   } catch (e) {
     if (e instanceof AutomationError && !e.uncertain) {
