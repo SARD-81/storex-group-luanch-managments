@@ -308,7 +308,7 @@ export async function checkLegacyBrowserFlows(
     }),
     0,
   );
-  await page.locator('[name="confirmed"]:visible').check();
+  await page.locator('[name="confirmDiff"]:visible').check();
   await submit(page, "اعمال مجموعهٔ تأییدشده", /saved=applied/);
   assert.equal(
     (

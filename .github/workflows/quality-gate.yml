@@ -47,6 +47,29 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --include=dev
+      - name: Compare dependency audit against main without force upgrades
+        run: |
+          mkdir -p verification-output
+          node --input-type=module <<'JS'
+          import {execFileSync,spawnSync} from 'node:child_process';
+          import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+          import {tmpdir} from 'node:os';
+          import path from 'node:path';
+          const temporary=mkdtempSync(path.join(tmpdir(),'main-audit-'));
+          for(const file of ['package.json','package-lock.json'])
+            writeFileSync(path.join(temporary,file),execFileSync('git',['show','origin/main:'+file]));
+          const audits={};
+          for(const [name,cwd] of [['main',temporary],['current',process.cwd()]]) {
+            const result=spawnSync('npm',['audit','--package-lock-only','--json'],{cwd,encoding:'utf8'});
+            const parsed=JSON.parse(result.stdout);
+            if(parsed.error || !parsed.metadata?.vulnerabilities) throw new Error('AUDIT_UNAVAILABLE');
+            writeFileSync('verification-output/npm-audit-'+name+'.json',JSON.stringify(parsed,null,2));
+            audits[name]=parsed.metadata.vulnerabilities;
+          }
+          rmSync(temporary,{recursive:true,force:true});
+          console.log(JSON.stringify({dependencyAudit:audits}));
+          if(audits.current.total!==0) throw new Error('DEPENDENCY_AUDIT_REGRESSION');
+          JS
       - run: npx prisma validate && npx prisma generate
       - run: npx prisma migrate deploy
       - run: python3 -m pip install -r scripts/requirements-calendar.txt
@@ -60,6 +83,8 @@ jobs:
       - run: node --import tsx scripts/check-web-regression.ts
         env:
           RUN_BROWSER_TESTS: "true"
+      - name: Rendered synthetic PDF and browser review images
+        run: node --import tsx scripts/emit-browser-review-images.ts
       - name: Existing calendar smoke checks
         run: |
           for check in service overrides attendance-policy dashboard-integration weekly-plan reports; do
