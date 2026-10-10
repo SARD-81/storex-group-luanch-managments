@@ -401,7 +401,17 @@ export async function checkLegacyBrowserFlows(
       });
     }
     await page.locator(".meal-report img").waitFor();
+    await page.waitForFunction(() => {
+      const image = document.querySelector<HTMLImageElement>(".meal-report img");
+      return image?.complete && image.naturalWidth > 0;
+    });
     await page.emulateMedia({ media: "print" });
+    const printLogo = await page.locator(".meal-report img").evaluate((image: HTMLImageElement) => {
+      const box = image.getBoundingClientRect();
+      return { width: box.width, height: box.height, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
+    });
+    assert.ok(Math.abs(printLogo.height - printLogo.width * printLogo.naturalHeight / printLogo.naturalWidth) < 1, "print logo must retain its aspect ratio before PDF rasterization");
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "dark UI must print on white paper");
     await page.pdf({
       path: `verification-output/manual-logo-${label}.pdf`,
       preferCSSPageSize: true,

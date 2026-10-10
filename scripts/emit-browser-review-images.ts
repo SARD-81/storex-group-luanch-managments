@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import {readFile,writeFile} from "node:fs/promises";
 import sharp from "sharp";
+async function main() {
 assert.equal(process.env.GITHUB_ACTIONS,"true");
 assert.equal(process.env.TEST_DATABASE_URL,process.env.DATABASE_URL);
 assert.match(new URL(process.env.TEST_DATABASE_URL!).hostname,/^(localhost|127\.0\.0\.1)$/);
@@ -19,3 +20,8 @@ for(const name of names){
  const bytes=await sharp("verification-output/"+name).resize({width:1050,height:1050,fit:"inside",withoutEnlargement:true}).png().toBuffer();
  console.log("STOREX_REVIEW_IMAGE "+JSON.stringify({name,data:bytes.toString("base64")}));
 }
+}
+main().catch((error) => {
+ console.error(error instanceof Error ? error.message : "REVIEW_IMAGES_FAILED");
+ process.exitCode=1;
+});

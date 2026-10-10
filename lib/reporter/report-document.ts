@@ -23,8 +23,8 @@ export const REPORT_DOCUMENT_CSS = `
 .meal-report footer { margin-top:5mm; break-inside:avoid; font-size:9pt; line-height:2; }
 .meal-report .total { font-weight:bold; }
 @media print {
-html,body { background:white!important; margin:0!important; padding:0!important; color:black!important; }
-.dashboard-aurora,.reporter-no-print { display:none!important; }
+html,body { color-scheme:light!important; background:white!important; margin:0!important; padding:0!important; color:black!important; }
+.dashboard-aurora,.dashboard-aurora-shell::before,.reporter-no-print { display:none!important; }
 main,.reporter-print-area { position:static!important; width:100%!important; height:auto!important; min-height:0!important; margin:0!important; padding:0!important; border:0!important; background:white!important; box-shadow:none!important; overflow:visible!important; }
 main > div { display:block!important; max-width:none!important; margin:0!important; }
 .meal-report { max-width:134mm; margin:0 auto; }
