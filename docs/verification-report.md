@@ -107,7 +107,7 @@ No Safir, personal-account automation, or new Bale sender identity is required.
   login/logout, profile/avatar/change/reset, guest create/update/delete, ordinary
   attendance, admin override/clear, company calendar override, emergency twelve
   months/CSV/apply, automation pause/resume/queue, and branding on all surfaces.
-  Final-head CI must certify the completed suite before closing the regression gate.
+  The corrected suite passed the recorded native CI run below.
 - PDF acceptance now distinguishes actual header logos from background tiles,
   verifies embedded Type3 glyph streams plus ToUnicode instead of requiring only
   TTF streams, and allows at most one CSS pixel of placement quantization.
@@ -122,21 +122,50 @@ No Safir, personal-account automation, or new Bale sender identity is required.
   CI stores main/current audit snapshots; the recovered 2026-10-10 main snapshot
   has 34 findings (2 critical), not an immutable historical count.
 
+## Recorded engineering acceptance (2026-10-10)
+
+[Quality gate run 38038462350](https://github.com/SARD-81/storex-group-luanch-managments/actions/runs/38038462350)
+is **PASS** on implementation commit `f14f543e7486df212b8ffde1f3c2c85881d1a38e`:
+
+- PostgreSQL 17: 28 domain/security/migration/lock tests passed, zero failures and
+  zero skips. Python parser: 26 passed. Prisma validation/generation/migrations,
+  TypeScript and production build passed.
+- Existing-feature browser suite, six repeated date changes and navigation,
+  desktop/mobile filters, UI/Excel ranges of 1/7/31/90/180/365 days, global branding
+  with three image fixtures and rollback, 11 PDF scenarios, and all six existing
+  calendar service checks passed.
+- Manual-print/server-PDF images were visually reviewed: readable Persian and
+  wrapped names, repeated table headings on the last long-name page, totals,
+  signature, light margins and undistorted logos. Branding previews and desktop
+  report were reviewed. The full-height mobile screenshot was inspected at its
+  original width: the RTL date picker stays within the 390px viewport.
+- CI lockfile snapshots: current zero findings; same-run main 34 findings,
+  including 2 critical. These are advisory-database snapshots, not permanent counts.
+- `verification-output` artifact ID `11665166481`, retained for 14 days. Downloaded
+  archive SHA-256 matches GitHub's digest:
+  `64745728c1aef9b8d5539c5e08e940b1ba36b0ce83afb9c984f4b811343c31f3`.
+  It contains only isolated synthetic acceptance fixtures, not the supplied source
+  PDF or real service credentials. Its long mobile screenshot should be viewed at
+  original size rather than shrunk to the image-log thumbnail's 1050px height.
+
+Prior runs `38036552817` and `38037853789` exposed PDF-inspection and cached-hidden
+logo-selector errors, respectively; both were fixed and rerun. Their failed states
+are not acceptance. The final documentation commit must also have a green Quality
+gate; the PR body and Checks contain the exact final head/run without requiring a
+self-referential commit hash in this file.
+
 ## Open gates
 
-1. **Final-head regression and visual acceptance:** latest corrected CI must pass.
-   Prior runs `38036552817` and `38037853789` exposed PDF-inspection and cached-hidden
-   logo-selector errors, respectively. Their failed states are not acceptance.
-2. **Live staging integrations:** workstation Bale send-and-receive is confirmed
+1. **Live staging integrations:** workstation Bale send-and-receive is confirmed
    by the owner, but actual StoreX BaleClient, Nextcloud anonymous PDF/share cleanup
    and Talk group delivery remain unperformed. No credentials/staging access are
    supplied to this runtime. Use the opt-in live scripts and runbook; no live sends
    belong in CI.
-3. **Source download provenance and future certification:** the supplied file is
+2. **Source download provenance and future certification:** the supplied file is
    certified; the live university site still returns a transfer page, preventing
    independent download/hash comparison here. Different years/editions fail closed
    until reviewed certification, even if their structure parses successfully.
-4. **Operational staging:** prepare the service account, StoreX Automation Alerts
+3. **Operational staging:** prepare the service account, StoreX Automation Alerts
    group, durable shared spool/branding, credentials, worker timer, backup/restore
    and monitoring, then verify controlled reminders, delivery and outage recovery.
    The owner has accepted first-tick revocation at/after exact stored 24-hour expiry
