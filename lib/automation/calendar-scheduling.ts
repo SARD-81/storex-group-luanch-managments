@@ -10,7 +10,7 @@ export async function scheduleCalendarImports(
   now: Date,
 ) {
   const sourceName = `tehran-university-official-calendar-${jalali.year}`;
-  const [verified, days] = await Promise.all([
+  const [verified, days, emergency] = await Promise.all([
     db.calendarDataset.count({
       where: {
         year: jalali.year,
@@ -22,9 +22,10 @@ export async function scheduleCalendarImports(
     db.calendarDay.count({
       where: { jalaliYear: jalali.year, verifiedAt: { not: null } },
     }),
+    db.calendarEvent.count({where:{sourceName:"manual-official-calendar-fallback",calendarDay:{jalaliYear:jalali.year}}}),
   ]);
   const years = new Set<number>();
-  if (!verified || days !== buildBaseJalaliYearDays(jalali.year).length)
+  if (!verified || emergency || days !== buildBaseJalaliYearDays(jalali.year).length)
     years.add(jalali.year);
   if (jalali.month === 12) years.add(jalali.year + 1);
   for (const year of years) {

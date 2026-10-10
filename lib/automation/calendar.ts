@@ -12,6 +12,7 @@ import {
   AnnualDataset,
   applyAnnualDataset,
   stageAnnualDataset,
+  isAnnualDatasetApplied,
 } from "@/lib/calendar/datasets";
 import { AutomationError, boundedBytes, safeFetch } from "./http";
 import { queueAlert, storeArtifact } from "./jobs";
@@ -94,7 +95,8 @@ export async function synchronizeCalendar(
   });
   if (
     prior?.status === "VERIFIED" &&
-    prior.parserVersion === CALENDAR_PARSER_VERSION
+    prior.parserVersion === CALENDAR_PARSER_VERSION &&
+    (await isAnnualDatasetApplied(db, prior.payload))
   )
     return;
   const pdf = await storeArtifact(db, {

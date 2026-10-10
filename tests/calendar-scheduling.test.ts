@@ -105,6 +105,13 @@ test(
         }),
         0,
       );
+
+      const emergencyDay=await db.calendarDay.findUniqueOrThrow({where:{dateKey:buildBaseJalaliYearDays(year)[0].dateKey}});
+      await db.calendarEvent.create({data:{calendarDayId:emergencyDay.id,eventKey:"catch-up-emergency-test",title:"تعطیلی اضطراری",type:"OTHER",calendarType:"JALALI",isHoliday:true,isOfficial:true,sourceName:"manual-official-calendar-fallback"}});
+      await scheduleCalendarImports(db,{year,month:5},now);
+      assert.equal(await db.automationJobRun.count({where:{executionKey:first.executionKey}}),1,"Emergency events reopen current-year official review even after a prior certification");
+      await db.calendarEvent.deleteMany({where:{eventKey:"catch-up-emergency-test"}});
+      await db.automationJobRun.deleteMany({where:{executionKey:first.executionKey}});
       await db.calendarDay.delete({
         where: { dateKey: buildBaseJalaliYearDays(year)[0].dateKey },
       });

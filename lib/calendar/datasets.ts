@@ -225,6 +225,24 @@ export async function calendarReviewFingerprint(
     .update(JSON.stringify({ days, events }))
     .digest("hex");
 }
+
+/** Confirm an already reviewed source is still present; emergency events require renewed promotion. */
+export async function isAnnualDatasetApplied(db: PrismaClient, raw: unknown) {
+  const data = validateAnnualDataset(raw);
+  const [current, count, fallback] = await Promise.all([
+    db.calendarEvent.findMany({where:{sourceName:data.sourceName,calendarDay:{jalaliYear:data.year}},include:{calendarDay:{select:{jalaliDateKey:true}}}}),
+    db.calendarDay.count({where:{jalaliYear:data.year}}),
+    data.mode === "OFFICIAL" ? db.calendarEvent.count({where:{sourceName:MANUAL_CALENDAR_SOURCE,calendarDay:{jalaliYear:data.year}}}) : Promise.resolve(0),
+  ]);
+  if (fallback || count !== buildBaseJalaliYearDays(data.year).length || current.length !== data.events.length) return false;
+  const expected = new Map(data.events.map(e=>[`${data.sourceName}:${data.year}:${e.eventKey}`,e]));
+  return current.every(item=>{
+    const event=expected.get(item.eventKey ?? "");
+    return event && item.calendarDay.jalaliDateKey===event.jalaliDateKey &&
+      (["title","type","calendarType","isHoliday","sourcePage","sourceSection","displayOrder"] as const).every(key=>item[key]===event[key]);
+  });
+}
+
 export async function stageAnnualDataset(
   db: PrismaClient,
   raw: unknown,
@@ -318,7 +336,7 @@ export async function stageAnnualDataset(
       payload: data as unknown as Prisma.InputJsonValue,
       parserVersion: data.parserVersion,
       ...(previous?.status === "VERIFIED" &&
-      previous.parserVersion !== data.parserVersion
+      (previous.parserVersion !== data.parserVersion || !(await isAnnualDatasetApplied(db, data)))
         ? { status: "REVIEW_REQUIRED", approvedById: null, verifiedAt: null }
         : {}),
     },

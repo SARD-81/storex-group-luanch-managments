@@ -114,6 +114,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import {
   stageAnnualDataset,
   applyAnnualDataset,
+  parseEmergencyCalendar,
+  MANUAL_CALENDAR_SOURCE,
 } from "../lib/calendar/datasets";
 test(
   "certified source stages without active mutation, requires active-year review and imports idempotently with past attendance intact",
@@ -194,6 +196,21 @@ test(
         }),
         459,
       );
+
+      // Reusing the exact previously certified source must still review emergency promotion.
+      for (let round=0; round<2; round++) {
+        const emergency=await stageAnnualDataset(db,parseEmergencyCalendar(1405,`1405-04-05 | تعطیلی اضطراری آزمون ${round}`).dataset);
+        await applyAnnualDataset(db,emergency.id,actor);
+        const review=await stageAnnualDataset(db,golden());
+        assert.equal(review.status,"REVIEW_REQUIRED");
+        await assert.rejects(applyAnnualDataset(db,review.id,null),/ADMIN_SOURCE_REVIEW_REQUIRED/);
+        await assert.rejects(applyAnnualDataset(db,review.id,actor),/FALLBACK_PROMOTION_CONFIRMATION_REQUIRED/);
+        await applyAnnualDataset(db,review.id,actor,true);
+        assert.equal(await db.calendarEvent.count({where:{sourceName:MANUAL_CALENDAR_SOURCE,calendarDay:{jalaliYear:1405}}}),0);
+        assert.equal(await db.calendarEvent.count({where:{sourceName:golden().sourceName,calendarDay:{jalaliYear:1405}}}),459);
+        assert.deepEqual(await db.mealAttendance.findUnique({where:{id:historical.id}}),historical);
+        await db.calendarDataset.delete({where:{id:emergency.id}});
+      }
     } finally {
       if (id) await db.calendarDataset.delete({ where: { id } });
       await db.user.delete({ where: { id: actor.id } });
