@@ -537,11 +537,9 @@ test(
       const final = await db.reportDelivery.findUniqueOrThrow({
         where: { id: first.id },
       });
-      assert.equal(final.deletionStatus, "SCHEDULED");
-      assert.equal(
-        final.deleteDueAt!.getTime() - final.sentAt!.getTime(),
-        86400000,
-      );
+      assert.equal(final.deletionStatus, "NOT_APPLICABLE");
+      assert.equal(final.deleteDueAt, null);
+      assert.equal(final.deleteBeforeAt, null);
       assert.equal(
         (
           await db.automationArtifact.findUniqueOrThrow({
