@@ -342,39 +342,6 @@ export async function applyCalendarDatasetAction(form: FormData) {
   redirect(`${ROOT}/calendar?year=${dataset.year}&saved=applied`);
 }
 
-export async function retryBaleDeletionAction(form: FormData) {
-  const actor = await requireAdmin(),
-    id = string(form, "deliveryId");
-  if (!form.has("confirmRetry"))
-    redirect(`${ROOT}/reporter?error=confirmation-required`);
-  const result = await withWorkerLock(() =>
-    attendanceTransaction(prisma, async (tx) => {
-      const d = await tx.reportDelivery.findUniqueOrThrow({ where: { id } });
-      if (
-        d.deliveryKind !== "BALE_DOCUMENT" ||
-        !["UNCERTAIN", "RETRYING", "MANUAL_ACTION_REQUIRED"].includes(
-          d.deletionStatus,
-        ) ||
-        !d.deleteBeforeAt ||
-        d.deleteBeforeAt <= new Date()
-      )
-        throw new Error("DELETION_NOT_RETRYABLE");
-      await tx.reportDelivery.update({
-        where: { id },
-        data: { deletionStatus: "SCHEDULED", deletionNextRetryAt: null },
-      });
-      await attendanceAudit(tx, "AUTOMATION_RUN_REQUESTED", actor, {
-        deliveryId: id,
-        operation: "retry-bale-deletion",
-      });
-    }),
-  );
-  if (result && "skipped" in result)
-    redirect(`${ROOT}/reporter?error=already-running`);
-  refresh();
-  redirect(`${ROOT}/reporter?saved=queued`);
-}
-
 export async function resolveTechnicalAlertAction(form: FormData) {
   const actor = await requireAdmin(),
     id = string(form, "alertId"),
