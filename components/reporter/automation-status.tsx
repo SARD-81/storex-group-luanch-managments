@@ -38,16 +38,7 @@ export async function ReporterAutomationStatus({
           </p>
           {delivery.deliveryKind === "BALE_DOCUMENT" ? (
             <>
-              <p>
-                حذف برنامه‌ریزی‌شده:{" "}
-                {delivery.deleteDueAt
-                  ? formatPersianDateTime(delivery.deleteDueAt)
-                  : "—"}
-              </p>
-              <p>وضعیت حذف: {STATUS_LABELS[delivery.deletionStatus]}</p>
-              {delivery.deletedAt ? (
-                <p>حذف تأییدشده: {formatPersianDateTime(delivery.deletedAt)}</p>
-              ) : null}
+              <p>پیام PDF بدون محدودیت زمانی از سمت StoreX باقی می‌ماند.</p>
               {delivery.deleteDueAt &&
               delivery.deleteDueAt <= new Date() &&
               delivery.deletionStatus !== "DELETED" ? (
