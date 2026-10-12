@@ -4,6 +4,7 @@ import { BaleClient } from "../lib/automation/integrations";
 import {
   latestPrivateBaleSender,
   discoverLatestBaleSender,
+  pendingBaleCandidate,
 } from "../lib/automation/bale-recipient-discovery";
 
 const NOW = 1_791_800_000;
@@ -85,4 +86,29 @@ test("webhook-active discovery does not touch updates or remove the webhook", as
   });
   await assert.rejects(() => discoverLatestBaleSender(bale, NOW), /BALE_WEBHOOK_ACTIVE/);
   assert.deepEqual(calls, ["getMe", "getWebhookInfo"]);
+});
+
+test("server-rendered candidate is admin-bound and expires after ten minutes", () => {
+  const now = 1791800000000;
+  const health = {
+    baleRecipientCandidate: {
+      chatId: "123456",
+      updateId: 41,
+      messageDate: 1791799990,
+      actorId: "test-admin",
+      discoveredAt: now - 1000,
+    },
+  };
+  assert.deepEqual(pendingBaleCandidate(health, "test-admin", now), {
+    chatId: "123456",
+    updateId: 41,
+    messageDate: 1791799990,
+    actorId: "test-admin",
+    discoveredAt: now - 1000,
+  });
+  assert.equal(pendingBaleCandidate(health, "different-admin", now), null);
+  assert.equal(pendingBaleCandidate(health, "test-admin", now + 600001), null);
+  assert.equal(pendingBaleCandidate({
+    baleRecipientCandidate: { ...health.baleRecipientCandidate, chatId: "-10" },
+  }, "test-admin", now), null);
 });
