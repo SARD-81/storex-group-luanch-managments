@@ -167,6 +167,11 @@ async function main() {
         if (r.status !== 200) assert.equal(r.headers.get("location"), "/");
       }
     }
+    // The recipient discovery control must be present in server-rendered HTML,
+    // not dependent on client-side hydration or HMR.
+    const reporterHtml = await (await request("/settings/automations/reporter")).text();
+    assert.ok(reporterHtml.includes("شناسایی آخرین فرستنده خصوصی"));
+    assert.ok(reporterHtml.includes("گیرنده فعلی") || reporterHtml.includes("شناسه فعلی"));
     const legacy = await request("/settings/weekly-plan");
     await assertRedirect(legacy, "/settings/attendance");
     const anonymous = await request("/reports", "ANONYMOUS");
