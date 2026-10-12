@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { AutomationConfig } from "@/app/generated/prisma/client";
 import { AutomationError, boundedBytes, safeFetch } from "./http";
+import { buildBaleDocumentMultipart } from "./bale-multipart";
 type Fetcher = (url: string, init?: RequestInit) => Promise<Response>;
 export type PublicShare = { id: string; url: string; createdAt: Date };
 export class NextcloudClient {
@@ -296,6 +297,13 @@ export type BaleDocumentReceipt = {
   receivedAt: Date;
   apiSentAt: Date | null;
 };
+type BaleMultipartRequest = ReturnType<typeof buildBaleDocumentMultipart>;
+
+function isBaleMultipartRequest(payload: unknown): payload is BaleMultipartRequest {
+  return typeof payload === "object" && payload !== null &&
+    "kind" in payload && payload.kind === "bale-multipart";
+}
+
 export class BaleClient {
   private transport: Fetcher;
   constructor(
@@ -307,7 +315,7 @@ export class BaleClient {
   async call(
     method:
       "getMe" | "getChat" | "getUpdates" | "getWebhookInfo" | "sendMessage" | "sendDocument" | "deleteMessage",
-    payload: Record<string, unknown> | FormData = {},
+    payload: Record<string, unknown> | FormData | BaleMultipartRequest = {},
   ) {
     const token = process.env.BALE_BOT_TOKEN;
     if (!token) throw new AutomationError("BALE_NOT_CONFIGURED");
@@ -320,12 +328,20 @@ export class BaleClient {
         `https://tapi.bale.ai/bot${token}/${method}`,
         {
           method: "POST",
-          ...(payload instanceof FormData
-            ? { body: payload }
-            : {
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              }),
+          ...(isBaleMultipartRequest(payload)
+            ? {
+                headers: {
+                  "Content-Type": payload.contentType,
+                  "Content-Length": String(payload.contentLength),
+                },
+                body: new Uint8Array(payload.body),
+              }
+            : payload instanceof FormData
+              ? { body: payload }
+              : {
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                }),
         },
       );
     } catch (e) {
@@ -418,15 +434,15 @@ export class BaleClient {
       throw new AutomationError("BALE_CAPTION_TOO_LONG");
     await this.health();
     await this.privateChat(recipient);
-    const body = new FormData();
-    body.set("chat_id", recipient);
-    body.set("caption", input.caption);
-    body.set(
-      "document",
-      new Blob([new Uint8Array(input.bytes)], { type: input.mimeType }),
+    // The confirmed Bale transport requires a known-length multipart body.
+    // Keep the original PDF bytes and the complete Persian caption intact.
+    const multipart = buildBaleDocumentMultipart(
+      recipient,
+      input.bytes,
       input.filename,
+      input.caption,
     );
-    const r = await this.call("sendDocument", body),
+    const r = await this.call("sendDocument", multipart),
       receivedAt = this.clock();
     if (
       !/^[1-9]\d{0,15}$/.test(String(r?.message_id)) ||
