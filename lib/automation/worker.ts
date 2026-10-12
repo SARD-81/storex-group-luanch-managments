@@ -262,7 +262,9 @@ async function executeJob(
             !retry && updated.status !== "MANUAL_ACTION_REQUIRED"
               ? "FAILED"
               : updated.status,
-          stage: updated.stage === "DELIVERING" ? "DELIVERING" : updated.stage,
+          // deliverReport already classified the transport outcome. Preserve
+          // GENERATED on an explicit API rejection and DELIVERING only for a
+          // genuinely ambiguous outcome; the job stage is not authoritative.
           nextRetryAt:
             updated.status === "MANUAL_ACTION_REQUIRED"
               ? null
