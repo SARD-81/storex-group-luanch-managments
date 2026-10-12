@@ -367,11 +367,9 @@ export async function checkLegacyBrowserFlows(
     where: { id: uncertain.id },
   });
   assert.equal(resolved.status, "SUCCESS");
-  assert.equal(resolved.deletionStatus, "SCHEDULED");
-  assert.equal(
-    resolved.deleteDueAt!.getTime() - resolved.sentAt!.getTime(),
-    86400000,
-  );
+  assert.equal(resolved.deletionStatus, "NOT_APPLICABLE");
+  assert.equal(resolved.deleteDueAt, null);
+  assert.equal(resolved.deleteBeforeAt, null);
   assert.equal(resolved.baleChatId, "123456");
   await page.screenshot({
     path: "verification-output/reporter-direct-receipt.png",
