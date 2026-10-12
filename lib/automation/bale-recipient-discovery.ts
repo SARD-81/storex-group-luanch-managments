@@ -6,6 +6,47 @@ import { AutomationError } from "./http";
  * acknowledge another consumer's pending updates), never changes webhooks,
  * and never stores message text or sender profile data.
  */
+export type PendingBaleCandidate = {
+  chatId: string;
+  updateId: number;
+  messageDate: number;
+  actorId: string;
+  discoveredAt: number;
+};
+
+export function pendingBaleCandidate(
+  health: unknown,
+  actorId: string,
+  now = Date.now(),
+): PendingBaleCandidate | null {
+  const outer = health && typeof health === "object" && !Array.isArray(health)
+    ? (health as Record<string, unknown>)
+    : {};
+  const raw = outer.baleRecipientCandidate;
+  const entry = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? (raw as Record<string, unknown>)
+    : {};
+  if (
+    entry.actorId !== actorId ||
+    typeof entry.chatId !== "string" ||
+    !/^[1-9]\d{0,15}$/.test(entry.chatId) ||
+    !Number.isSafeInteger(Number(entry.chatId)) ||
+    !Number.isSafeInteger(entry.updateId) ||
+    Number(entry.updateId) < 0 ||
+    !Number.isSafeInteger(entry.messageDate) ||
+    !Number.isSafeInteger(entry.discoveredAt) ||
+    Number(entry.discoveredAt) > now ||
+    now - Number(entry.discoveredAt) > 600000
+  ) return null;
+  return {
+    chatId: entry.chatId,
+    updateId: Number(entry.updateId),
+    messageDate: Number(entry.messageDate),
+    actorId,
+    discoveredAt: Number(entry.discoveredAt),
+  };
+}
+
 export type BaleSenderCandidate = {
   chatId: string;
   updateId: number;
