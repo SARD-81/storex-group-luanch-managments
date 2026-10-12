@@ -3,6 +3,7 @@ import "dotenv/config";
 import { randomUUID, createHash } from "node:crypto";
 import { prisma } from "../lib/prisma";
 import { BaleClient } from "../lib/automation/integrations";
+import { AutomationError } from "../lib/automation/http";
 import { getAutomationConfig } from "../lib/automation/config";
 import { cleanError, storeArtifact } from "../lib/automation/jobs";
 import { probePdf } from "../lib/automation/capability-probe";
@@ -63,13 +64,26 @@ async function main() {
         sendAttemptedAt: attemptedAt,
       },
     });
-    const receipt = await bale.sendDocument(c.reportRecipient, {
-      bytes,
-      sha256,
-      mimeType: "application/pdf",
-      filename: `storex-test-${marker}.pdf`,
-      caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان؛ کد ${marker}. پیام آزمایشی به‌صورت خودکار حذف نمی‌شود.`,
-    });
+    let receipt;
+    try {
+      receipt = await bale.sendDocument(c.reportRecipient, {
+        bytes,
+        sha256,
+        mimeType: "application/pdf",
+        filename: `storex-test-${marker}.pdf`,
+        caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان؛ کد ${marker}. پیام آزمایشی به‌صورت خودکار حذف نمی‌شود.`,
+      });
+    } catch (error) {
+      // An explicit API rejection is not an ambiguous delivery. Only uncertain
+      // failures require human receipt review before sending another probe.
+      if (error instanceof AutomationError && !error.uncertain) {
+        await prisma.reportDelivery.update({
+          where: { id: d.id },
+          data: { stage: "GENERATED", status: "FAILED" },
+        });
+      }
+      throw error;
+    }
     const sentAt = receipt.apiSentAt ?? receipt.receivedAt;
     await prisma.reportDelivery.update({
       where: { id: d.id },
@@ -107,6 +121,8 @@ main()
           e instanceof Error && /^[A-Z_]+$/.test(e.message)
             ? e.message
             : cleanError(e).code,
+        httpStatus: e instanceof AutomationError ? e.httpStatus : null,
+        uncertain: e instanceof AutomationError ? e.uncertain : true,
       }),
     );
     process.exitCode = 1;
