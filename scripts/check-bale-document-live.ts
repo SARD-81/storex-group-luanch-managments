@@ -6,7 +6,7 @@ import { BaleClient } from "../lib/automation/integrations";
 import { AutomationError } from "../lib/automation/http";
 import { getAutomationConfig } from "../lib/automation/config";
 import { cleanError, storeArtifact } from "../lib/automation/jobs";
-import { probePdf } from "../lib/automation/capability-probe";
+import { createSyntheticBalePdf } from "../lib/automation/bale-synthetic-pdf";
 import { withWorkerLock } from "../lib/automation/worker";
 async function main() {
   const mode = process.argv[2] ?? "--check";
@@ -42,7 +42,7 @@ async function main() {
       throw Error("AMBIGUOUS_PROBE_REQUIRES_REVIEW");
     const marker = randomUUID().slice(0, 8),
       key = `live-probe:${randomUUID()}`,
-      bytes = probePdf(),
+      bytes = await createSyntheticBalePdf(),
       sha256 = createHash("sha256").update(bytes).digest("hex"),
       attemptedAt = new Date();
     const artifact = await storeArtifact(prisma, {
