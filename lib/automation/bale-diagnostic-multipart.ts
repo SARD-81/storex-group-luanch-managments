@@ -16,12 +16,6 @@ export function buildKnownLengthBaleDocumentMultipart(
   if (caption !== undefined && (caption.length > 4096 || /[\u0000-\u001F\u007F]/.test(caption)))
     throw new Error("BALE_DIAGNOSTIC_CAPTION_INVALID");
   const boundary = "----storex-" + randomBytes(16).toString("hex");
-  const captionPart = caption === undefined
-    ? Buffer.alloc(0)
-    : Buffer.from(
-        `--${boundary}\\r\\nContent-Disposition: form-data; name="caption"\\r\\n\\r\\n${caption}\\r\\n`,
-        "utf8",
-      );
   const prefix = Buffer.from(
     `--${boundary}\r\n` +
     'Content-Disposition: form-data; name="chat_id"\r\n\r\n' +
@@ -30,8 +24,16 @@ export function buildKnownLengthBaleDocumentMultipart(
     "Content-Type: application/pdf\r\n\r\n",
     "utf8",
   );
+  const captionPart = caption === undefined
+    ? Buffer.alloc(0)
+    : Buffer.from(
+        `\r\n--${boundary}\r\n` +
+        'Content-Disposition: form-data; name="caption"\r\n\r\n' +
+        caption,
+        "utf8",
+      );
   const suffix = Buffer.from(`\r\n--${boundary}--\r\n`, "utf8");
-  const body = Buffer.concat([prefix, captionPart, filePrefix, pdf, suffix]);
+  const body = Buffer.concat([prefix, pdf, captionPart, suffix]);
   return {
     body,
     contentType: `multipart/form-data; boundary=${boundary}`,
