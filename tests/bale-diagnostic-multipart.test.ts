@@ -36,3 +36,22 @@ test("known-length multipart rejects invalid recipient, filename and oversize fi
     /BALE_DIAGNOSTIC_SIZE_INVALID/,
   );
 });
+
+test("optional Persian caption is a separately framed UTF-8 part after the PDF", () => {
+  const pdf = probePdf();
+  const caption = "گزارش آزمایشی صبحانه و ناهار";
+  const result = buildKnownLengthBaleDocumentMultipart("123456", pdf, "storex-diagnostic.pdf", caption);
+  const boundary = result.contentType.split("boundary=")[1];
+  assert.equal(result.contentLength, result.body.byteLength);
+  const pdfStart = result.body.indexOf(pdf);
+  assert.ok(pdfStart > 0);
+  assert.deepEqual(result.body.subarray(pdfStart, pdfStart + pdf.length), pdf);
+  const trailing = result.body.subarray(pdfStart + pdf.length).toString("utf8");
+  assert.equal(trailing,
+    `\r\n--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n--${boundary}--\r\n`,
+  );
+  assert.throws(
+    () => buildKnownLengthBaleDocumentMultipart("123456", pdf, "storex-diagnostic.pdf", "x".repeat(4097)),
+    /BALE_DIAGNOSTIC_CAPTION_INVALID/,
+  );
+});
