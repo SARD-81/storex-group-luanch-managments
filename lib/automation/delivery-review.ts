@@ -41,14 +41,10 @@ export async function resolveAmbiguousReport(
             ...(delivery.deliveryKind === "BALE_DOCUMENT"
               ? {
                   sentTimeSource: "ADMIN_VERIFIED_RECEIPT",
-                  deleteDueAt: new Date(sentAt!.getTime() + 86400000),
-                  deleteBeforeAt: new Date(
-                    Math.min(
-                      sentAt!.getTime(),
-                      delivery.sendAttemptedAt?.getTime() ?? sentAt!.getTime(),
-                    ) + 172800000,
-                  ),
-                  deletionStatus: "SCHEDULED",
+                  // A verified Bale receipt must never re-arm cancelled PDF deletion.
+                  deleteDueAt: null,
+                  deleteBeforeAt: null,
+                  deletionStatus: "NOT_APPLICABLE",
                   deletionNextRetryAt: null,
                 }
               : {}),
