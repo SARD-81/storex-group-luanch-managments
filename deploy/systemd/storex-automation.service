@@ -12,7 +12,7 @@ Environment=NODE_ENV=production
 Environment=TZ=Asia/Tehran
 EnvironmentFile=/etc/storex/automation.env
 ExecStart=/usr/bin/node --import tsx scripts/automation-worker.ts --once
-TimeoutStartSec=180
+TimeoutStartSec=600
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true

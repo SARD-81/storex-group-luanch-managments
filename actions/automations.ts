@@ -19,6 +19,11 @@ import {
   stageAnnualDataset,
 } from "@/lib/calendar/datasets";
 import { getTehranDateKey } from "@/lib/date/tehran-time";
+import { withWorkerLock } from "@/lib/automation/worker";
+import {
+  resolveAmbiguousReport,
+  resolveAmbiguousAlert,
+} from "@/lib/automation/delivery-review";
 const ROOT = "/settings/automations";
 const allowedJobs = new Set([
   "REPORT_DELIVERY",
@@ -27,6 +32,7 @@ const allowedJobs = new Set([
   "NEXTCLOUD_HEALTH",
   "BALE_HEALTH",
   "TALK_TEST",
+  "TALK_HEALTH",
   "PUBLIC_CAPABILITY",
   "ATTENDANCE_RECONCILE",
 ]);
@@ -39,6 +45,7 @@ function refresh() {
     ROOT,
     `${ROOT}/reporter`,
     `${ROOT}/calendar`,
+    `${ROOT}/talk`,
     "/reporter/next-day",
     "/settings/attendance",
     "/reports",
@@ -70,21 +77,55 @@ export async function updateAutomationConfigAction(form: FormData) {
     raw.reporterEnabled = form.has("reporterEnabled");
   if (scope === "calendar" || scope === "all")
     raw.calendarEnabled = form.has("calendarEnabled");
-  const result = automationConfigSchema.safeParse(raw);
+  if (scope === "talk" || scope === "all")
+    raw.talkEnabled = form.has("talkEnabled");
+  // Reporter edits cannot be blocked by an unused/stale optional Talk host policy.
+  const result = automationConfigSchema.safeParse(
+    scope === "reporter"
+      ? {
+          ...raw,
+          talkEnabled: false,
+          nextcloudBaseUrl: "",
+          technicalConversation: "",
+        }
+      : raw,
+  );
   if (!result.success) redirect(`${ROOT}?error=invalid-config`);
-  const data = result.data;
-  if (
-    data.reporterEnabled &&
-    (!data.nextcloudBaseUrl ||
-      !data.reportRecipient ||
-      !data.technicalConversation)
-  )
+  const data =
+    scope === "reporter"
+      ? {
+          ...result.data,
+          talkEnabled: current.talkEnabled,
+          nextcloudBaseUrl: current.nextcloudBaseUrl,
+          technicalConversation: current.technicalConversation,
+        }
+      : result.data;
+  if (data.reporterEnabled && !data.reportRecipient)
     redirect(`${ROOT}?error=incomplete-config`);
   await attendanceTransaction(prisma, async (tx) => {
     await tx.automationConfig.update({
       where: { id: current.id },
       data: {
         ...data,
+        ...(data.talkEnabled && !current.talkEnabled
+          ? { talkActivatedAt: new Date() }
+          : {}),
+        ...(data.reportRecipient !== current.reportRecipient ||
+        data.nextcloudBaseUrl !== current.nextcloudBaseUrl ||
+        data.technicalConversation !== current.technicalConversation
+          ? {
+              health: {
+                ...((current.health as object) ?? {}),
+                ...(data.reportRecipient !== current.reportRecipient
+                  ? { bale: { state: "UNKNOWN" } }
+                  : {}),
+                ...(data.nextcloudBaseUrl !== current.nextcloudBaseUrl ||
+                data.technicalConversation !== current.technicalConversation
+                  ? { talk: { state: "UNKNOWN" } }
+                  : {}),
+              },
+            }
+          : {}),
         ...(data.nextcloudBaseUrl !== current.nextcloudBaseUrl
           ? { publicSharingState: "UNKNOWN", capabilityCheckedAt: null }
           : {}),
@@ -93,6 +134,7 @@ export async function updateAutomationConfigAction(form: FormData) {
     await attendanceAudit(tx, "AUTOMATION_CONFIG_CHANGED", actor, {
       reporterEnabled: data.reporterEnabled,
       calendarEnabled: data.calendarEnabled,
+      talkEnabled: data.talkEnabled,
       fields: Object.keys(data),
     });
   });
@@ -103,6 +145,8 @@ export async function queueAutomationJobAction(form: FormData) {
   const actor = await requireAdmin(),
     jobType = string(form, "jobType");
   if (!allowedJobs.has(jobType)) redirect(`${ROOT}?error=invalid-job`);
+  if (jobType === "TALK_TEST" && !form.has("confirmSend"))
+    redirect(`${ROOT}?error=confirmation-required`);
   let target = getTehranDateKey();
   if (jobType.startsWith("CALENDAR")) {
     const year = Number(string(form, "year"));
@@ -157,7 +201,11 @@ export async function retryAutomationJobAction(form: FormData) {
   const actor = await requireAdmin(),
     id = string(form, "jobId"),
     job = await prisma.automationJobRun.findUnique({ where: { id } });
-  if (!job || ["SUCCESS", "RUNNING"].includes(job.status))
+  if (
+    !job ||
+    job.jobType === "BALE_MESSAGE_DELETE" ||
+    ["SUCCESS", "RUNNING"].includes(job.status)
+  )
     redirect(`${ROOT}?error=invalid-retry`);
   if (job.status === "MANUAL_ACTION_REQUIRED")
     redirect(`${ROOT}/reporter?error=delivery-review`);
@@ -193,51 +241,31 @@ export async function resolveReportDeliveryAction(form: FormData) {
     (resolution === "DELIVERED" && !/^\d{1,30}$/.test(receipt))
   )
     redirect(`${ROOT}/reporter?error=invalid-resolution`);
-  await attendanceTransaction(prisma, async (tx) => {
-    const delivery = await tx.reportDelivery.findUniqueOrThrow({
-      where: { id },
-    });
-    if (delivery.stage !== "DELIVERING" || delivery.status === "SUCCESS")
-      throw new Error("DELIVERY_NOT_AMBIGUOUS");
-    await tx.reportDelivery.update({
-      where: { id },
-      data:
-        resolution === "DELIVERED"
-          ? {
-              status: "SUCCESS",
-              stage: "DELIVERED",
-              sentAt: new Date(),
-              baleMessageId: receipt,
-              nextRetryAt: null,
-            }
-          : { status: "RETRYING", stage: "PUBLIC_READY" },
-    });
-    const jobs = await tx.automationJobRun.findMany({
-      where: { jobType: "REPORT_DELIVERY", target: delivery.reportDateKey },
-    });
-    for (const job of jobs)
-      await tx.automationJobRun.update({
-        where: { id: job.id },
-        data: {
-          status: resolution === "DELIVERED" ? "SUCCESS" : "PENDING",
-          stage: resolution === "DELIVERED" ? "COMPLETE" : "PUBLIC_READY",
-          nextRetryAt: null,
-          metadata: {
-            requestedBy: actor.id,
-            resolution,
-            receipt: receipt || null,
-            note,
-          },
-        },
-      });
-    await attendanceAudit(tx, "AUTOMATION_RUN_REQUESTED", actor, {
-      deliveryId: id,
-      operation: "resolve-ambiguous-delivery",
-      resolution,
-      receipt: receipt || null,
-      note,
-    });
-  });
+  let rejected = false;
+  let skipped = false;
+  try {
+    const result = await withWorkerLock(() =>
+      attendanceTransaction(prisma, async (tx) => {
+        await resolveAmbiguousReport(tx, id, {
+          resolution,
+          receipt,
+          sentAt: string(form, "sentAt"),
+        });
+        await attendanceAudit(tx, "AUTOMATION_RUN_REQUESTED", actor, {
+          deliveryId: id,
+          operation: "resolve-ambiguous-delivery",
+          resolution,
+          receipt: receipt || null,
+          note,
+        });
+      }),
+    );
+    skipped = !!result && "skipped" in result;
+  } catch {
+    rejected = true;
+  }
+  if (skipped) redirect(`${ROOT}/reporter?error=already-running`);
+  if (rejected) redirect(`${ROOT}/reporter?error=invalid-resolution`);
   refresh();
   redirect(`${ROOT}/reporter?saved=resolved`);
 }
@@ -312,4 +340,70 @@ export async function applyCalendarDatasetAction(form: FormData) {
     );
   refresh();
   redirect(`${ROOT}/calendar?year=${dataset.year}&saved=applied`);
+}
+
+export async function retryBaleDeletionAction(form: FormData) {
+  const actor = await requireAdmin(),
+    id = string(form, "deliveryId");
+  if (!form.has("confirmRetry"))
+    redirect(`${ROOT}/reporter?error=confirmation-required`);
+  const result = await withWorkerLock(() =>
+    attendanceTransaction(prisma, async (tx) => {
+      const d = await tx.reportDelivery.findUniqueOrThrow({ where: { id } });
+      if (
+        d.deliveryKind !== "BALE_DOCUMENT" ||
+        !["UNCERTAIN", "RETRYING", "MANUAL_ACTION_REQUIRED"].includes(
+          d.deletionStatus,
+        ) ||
+        !d.deleteBeforeAt ||
+        d.deleteBeforeAt <= new Date()
+      )
+        throw new Error("DELETION_NOT_RETRYABLE");
+      await tx.reportDelivery.update({
+        where: { id },
+        data: { deletionStatus: "SCHEDULED", deletionNextRetryAt: null },
+      });
+      await attendanceAudit(tx, "AUTOMATION_RUN_REQUESTED", actor, {
+        deliveryId: id,
+        operation: "retry-bale-deletion",
+      });
+    }),
+  );
+  if (result && "skipped" in result)
+    redirect(`${ROOT}/reporter?error=already-running`);
+  refresh();
+  redirect(`${ROOT}/reporter?saved=queued`);
+}
+
+export async function resolveTechnicalAlertAction(form: FormData) {
+  const actor = await requireAdmin(),
+    id = string(form, "alertId"),
+    resolution = string(form, "resolution"),
+    receipt = string(form, "receipt"),
+    note = string(form, "note");
+  if (!form.has("confirmReview") || note.length < 10 || note.length > 500)
+    redirect(`${ROOT}/talk?error=invalid-resolution`);
+  let rejected = false,
+    skipped = false;
+  try {
+    const result = await withWorkerLock(() =>
+      attendanceTransaction(prisma, async (tx) => {
+        await resolveAmbiguousAlert(tx, id, { resolution, receipt });
+        await attendanceAudit(tx, "AUTOMATION_RUN_REQUESTED", actor, {
+          alertId: id,
+          operation: "resolve-technical-alert",
+          resolution,
+          receipt: receipt || null,
+          note,
+        });
+      }),
+    );
+    skipped = !!result && "skipped" in result;
+  } catch {
+    rejected = true;
+  }
+  if (skipped) redirect(`${ROOT}/talk?error=already-running`);
+  if (rejected) redirect(`${ROOT}/talk?error=invalid-resolution`);
+  refresh();
+  redirect(`${ROOT}/talk?saved=resolved`);
 }

@@ -22,6 +22,12 @@ export async function AutomationShell({
               داشبورد
             </Link>
             <Link
+              href="/settings/automations/talk"
+              className="dashboard-action-button"
+            >
+              اعلان‌های فنی اختیاری
+            </Link>
+            <Link
               href="/settings/automations"
               className="dashboard-action-button"
             >
@@ -67,6 +73,11 @@ export const STATUS_LABELS: Record<string, string> = {
   STAGED: "پیش‌نمایش",
   REVIEW_REQUIRED: "نیاز به تأیید مدیر",
   VERIFIED: "تأیید و وارد شده",
+  SCHEDULED: "حذف برنامه‌ریزی‌شده",
+  UNCERTAIN: "حذف تأیید نشده؛ نتیجه نامشخص",
+  DELETED: "حذف با رسید API تأیید شده",
+  WINDOW_EXPIRED: "فرصت ۴۸ساعته گذشته؛ اقدام انسانی لازم است",
+  NOT_APPLICABLE: "روش قدیمی؛ حذف پیام ندارد",
 };
 export const JOB_LABELS: Record<string, string> = {
   REPORT_DELIVERY: "تحویل گزارش",
@@ -77,6 +88,8 @@ export const JOB_LABELS: Record<string, string> = {
   NEXTCLOUD_HEALTH: "آزمون Nextcloud",
   BALE_HEALTH: "آزمون بله",
   TALK_TEST: "آزمون گروه فنی",
+  TALK_HEALTH: "بررسی دسترسی گروه فنی",
+  BALE_MESSAGE_DELETE: "حذف PDF از بله",
   PUBLIC_CAPABILITY: "بررسی لینک عمومی",
   SHARE_CLEANUP: "لغو لینک‌های منقضی",
   ARTIFACT_SYNC: "همگام‌سازی فایل",
@@ -93,7 +106,7 @@ export function AutomationNotice({
     "invalid-config":
       "نشانی، مسیر یا ترتیب زمان‌ها معتبر نیست. میزبان باید در فهرست مجاز سرور باشد.",
     "incomplete-config":
-      "نشانی Nextcloud، گیرندهٔ گزارش و گروه فنی را کامل کنید.",
+      "شناسهٔ چت خصوصی گیرندهٔ بله را کامل کنید؛ Nextcloud برای گزارش مستقیم لازم نیست.",
     "invalid-job": "درخواست اجرا معتبر نیست.",
     "invalid-year": "سال جلالی معتبر نیست.",
     "missing-calendar": "تقویم روز کاری آینده ندارد.",

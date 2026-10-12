@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { getAutomationConfig } from "@/lib/automation/config";
+import { getAutomationConfig, credentialStatus } from "@/lib/automation/config";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
 import {
   AutomationNotice,
@@ -13,6 +13,7 @@ import {
   queueAutomationJobAction,
   resolveReportDeliveryAction,
   updateAutomationConfigAction,
+  retryBaleDeletionAction,
 } from "@/actions/automations";
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -25,7 +26,12 @@ export default async function Page({
   const [c, jobs, deliveries] = await Promise.all([
     getAutomationConfig(prisma),
     prisma.automationJobRun.findMany({
-      where: { jobType: { startsWith: "REPORT_" } },
+      where: {
+        OR: [
+          { jobType: { startsWith: "REPORT_" } },
+          { jobType: "BALE_MESSAGE_DELETE" },
+        ],
+      },
       orderBy: { updatedAt: "desc" },
       take: 30,
     }),
@@ -35,12 +41,12 @@ export default async function Page({
     }),
   ]);
   const settings = [
-    ["nextcloudBaseUrl", "نشانی HTTPS سرویس Nextcloud"],
-    ["reportsDirectory", "مسیر فایل‌های گزارش"],
-    ["calendarDirectory", "مسیر artifactهای تقویم"],
     ["reportRecipient", "شناسهٔ چت تک‌نفرهٔ گیرندهٔ بله"],
-    ["technicalConversation", "توکن گروه فنی چندنفرهٔ Nextcloud Talk"],
   ] as const;
+  const health = c.health as {
+    credentialsConfigured?: { bale?: boolean };
+    bale?: { state?: string; checkedAt?: string; errorCode?: string };
+  } | null;
   const times = [
     ["reminder1", "یادآوری اول"],
     ["reminder2", "یادآوری دوم"],
@@ -54,15 +60,30 @@ export default async function Page({
       <AutomationNotice {...params} />
       <section className="dashboard-glass-card">
         <p>
-          قابلیت لینک عمومی:{" "}
-          {STATUS_LABELS[c.publicSharingState] ?? c.publicSharingState}
+          گزارش‌های جدید به‌صورت فایل PDF مستقیماً در چت خصوصی بله ارسال
+          می‌شوند؛ Nextcloud و Talk اختیاری‌اند.
         </p>
-        {c.publicSharingState !== "AVAILABLE" ? (
-          <p className="mt-2 text-amber-500">
-            اشتراک عمومی آماده نیست؛ گردش کار دستی گزارش را ادامه دهید. پس از
-            تأیید قابلیت، تحویل خودکار بدون انتشار نسخهٔ جدید آغاز می‌شود.
-          </p>
-        ) : null}
+        <p className="mt-2">
+          توکن بله:{" "}
+          {(health?.credentialsConfigured?.bale ?? credentialStatus().bale)
+            ? "در سرور تنظیم شده"
+            : "تنظیم نشده"}{" "}
+          — اتصال و گیرندهٔ خصوصی:{" "}
+          {health?.bale?.state === "READY"
+            ? "تأیید شده"
+            : health?.bale?.state === "ERROR"
+              ? `خطا: ${health.bale.errorCode ?? "نامشخص"}`
+              : "بررسی نشده"}
+        </p>
+        <p>
+          گیرندهٔ اصلی باید جداگانه تأیید شود؛ شناسهٔ حساب تست مقصد تولید نیست.
+        </p>
+        <form action={queueAutomationJobAction} className="mt-3">
+          <input type="hidden" name="jobType" value="BALE_HEALTH" />
+          <button className="dashboard-action-button">
+            بررسی بله و گیرندهٔ خصوصی بدون ارسال
+          </button>
+        </form>
         <form
           action={updateAutomationConfigAction}
           className="mt-4 grid gap-4 md:grid-cols-2"
@@ -122,7 +143,12 @@ export default async function Page({
         </div>
       </section>
       <section className="dashboard-glass-card">
-        <h2 className="mb-3 text-lg font-bold">تحویل‌ها و انقضای لینک</h2>
+        <h2 className="mb-3 text-lg font-bold">تحویل‌ها و حذف پیام PDF</h2>
+        <p>
+          حذف در اولین اجرای worker در یا پس از ۲۴ ساعت تلاش می‌شود. قطعی
+          می‌تواند آن را عقب بیندازد؛ فرصت API کمتر از ۴۸ ساعت است. کپی
+          دانلودشدهٔ گیرنده حذف نمی‌شود.
+        </p>
         {deliveries.map((d) => (
           <article key={d.id} className="border-t border-border py-4">
             <p>
@@ -138,6 +164,71 @@ export default async function Page({
               رسید بله: {d.baleMessageId ?? "—"} | خطای لغو:{" "}
               {d.cleanupError ?? "—"}
             </p>
+            {d.deliveryKind === "BALE_DOCUMENT" ? (
+              <div className="mt-2 space-y-1 text-sm">
+                <p>
+                  روش: PDF مستقیم — چت مقصد:{" "}
+                  <span dir="ltr">{d.baleChatId ?? "—"}</span>
+                </p>
+                <p>
+                  حذف برنامه‌ریزی‌شده:{" "}
+                  {d.deleteDueAt
+                    ? formatPersianDateTime(d.deleteDueAt)
+                    : "رسید ارسال هنوز تأیید نشده"}{" "}
+                  — وضعیت: {STATUS_LABELS[d.deletionStatus]}
+                </p>
+                <p>
+                  حذف موفق:{" "}
+                  {d.deletedAt
+                    ? formatPersianDateTime(d.deletedAt)
+                    : "تأیید نشده"}{" "}
+                  — تلاش‌ها: {d.deletionAttempts} — خطا:{" "}
+                  {d.deletionErrorCode ?? "—"}
+                </p>
+                <p>
+                  تلاش بعدی:{" "}
+                  {d.deletionNextRetryAt
+                    ? formatPersianDateTime(d.deletionNextRetryAt)
+                    : "—"}
+                </p>
+                {d.deleteDueAt &&
+                d.deleteDueAt <= new Date() &&
+                d.deletionStatus !== "DELETED" ? (
+                  <p role="alert" className="text-rose-500">
+                    حذف پیام از موعد گذشته و هنوز تأیید نشده است؛ پنجرهٔ API را
+                    بررسی کنید.
+                  </p>
+                ) : null}
+                {d.artifactId ? (
+                  <Link
+                    className="underline"
+                    href={`/settings/automations/artifacts/${d.artifactId}`}
+                  >
+                    دریافت PDF خصوصی ثبت‌شده
+                  </Link>
+                ) : null}
+                {["UNCERTAIN", "RETRYING", "MANUAL_ACTION_REQUIRED"].includes(
+                  d.deletionStatus,
+                ) &&
+                d.deleteBeforeAt &&
+                d.deleteBeforeAt > new Date() ? (
+                  <form action={retryBaleDeletionAction} className="mt-2">
+                    <input type="hidden" name="deliveryId" value={d.id} />
+                    <label>
+                      <input type="checkbox" name="confirmRetry" required />{" "}
+                      بررسی کردم؛ حذف همین پیام دوباره تلاش شود
+                    </label>
+                    <button className="dashboard-action-button">
+                      ثبت درخواست حذف
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            ) : (
+              <p>
+                روش قدیمی Nextcloud — لغو share تاریخی همچنان پیگیری می‌شود.
+              </p>
+            )}
             {d.publicUrl &&
             !d.revokedAt &&
             d.expiresAt &&
@@ -184,6 +275,15 @@ export default async function Page({
                   placeholder="شناسهٔ پیام؛ برای تحویل‌شده لازم است"
                   className="dashboard-muted-panel"
                 />
+                <label>
+                  زمان واقعی پیام با منطقهٔ زمانی؛ برای «تحویل‌شده» لازم است
+                  <input
+                    name="sentAt"
+                    placeholder="2026-10-12T09:30:00+03:30"
+                    dir="ltr"
+                    className="dashboard-muted-panel w-full"
+                  />
+                </label>
                 <textarea
                   name="note"
                   minLength={10}

@@ -32,6 +32,7 @@ async function main() {
         {
           reporterEnabled: c?.reporterEnabled ?? false,
           calendarEnabled: c?.calendarEnabled ?? false,
+          talkEnabled: c?.talkEnabled ?? false,
           publicSharingState: c?.publicSharingState ?? "UNKNOWN",
           capabilityCheckedAt: c?.capabilityCheckedAt,
           health: c?.health,
@@ -41,6 +42,56 @@ async function main() {
         2,
       ),
     );
+    return;
+  }
+  if (command === "--health-check" || command === "--deletions") {
+    const c = await getAutomationConfig(prisma),
+      health = c.health as {
+        workerLastTick?: string;
+        workerLastCleanupTick?: string;
+      } | null;
+    const last =
+      health?.workerLastCleanupTick &&
+      (!health.workerLastTick ||
+        health.workerLastCleanupTick > health.workerLastTick)
+        ? health.workerLastCleanupTick
+        : health?.workerLastTick;
+    const stale = !last || Date.now() - new Date(last).getTime() > 5 * 60000;
+    const pending = await prisma.reportDelivery.findMany({
+      where: {
+        deliveryKind: "BALE_DOCUMENT",
+        deletionStatus: { notIn: ["NOT_APPLICABLE", "DELETED"] },
+      },
+      select: {
+        id: true,
+        reportDateKey: true,
+        deletionStatus: true,
+        deleteDueAt: true,
+        deleteBeforeAt: true,
+        deletionNextRetryAt: true,
+        deletionErrorCode: true,
+        deletionAttempts: true,
+      },
+      orderBy: { deleteDueAt: "asc" },
+      take: 100,
+    });
+    const overdue = pending.filter(
+      (d) => d.deleteDueAt && d.deleteDueAt.getTime() <= Date.now(),
+    );
+    console.log(
+      JSON.stringify(
+        {
+          workerStale: stale,
+          lastTick: last ?? null,
+          overdueCount: overdue.length,
+          ...(command === "--deletions" ? { deletions: pending } : {}),
+        },
+        null,
+        2,
+      ),
+    );
+    if (command === "--health-check" && (stale || overdue.length))
+      process.exitCode = 1;
     return;
   }
   if (command === "--dry-run=reporter") {

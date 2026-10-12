@@ -124,6 +124,7 @@ async function main() {
       "/settings/audit-logs",
       "/settings/automations",
       "/settings/automations/reporter",
+      "/settings/automations/talk",
       "/settings/automations/calendar?year=1406",
       "/settings/branding",
       "/reporter/next-day",
@@ -140,6 +141,7 @@ async function main() {
         "/settings/users",
         "/settings/attendance",
         "/settings/automations",
+        "/settings/automations/talk",
         "/settings/automations/calendar",
         "/settings/branding",
       ]) {
@@ -286,8 +288,6 @@ async function main() {
   }
 }
 main().catch((error) => {
-  console.error(
-    error instanceof Error ? error.stack : "WEB_REGRESSION_FAILED",
-  );
+  console.error(error instanceof Error ? error.stack : "WEB_REGRESSION_FAILED");
   process.exitCode = 1;
 });

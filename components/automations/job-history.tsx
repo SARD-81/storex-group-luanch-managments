@@ -55,7 +55,8 @@ export function JobHistory({ jobs }: { jobs: AutomationJobRun[] }) {
                   <code>{j.errorCode}</code>
                 </td>
                 <td className="p-2">
-                  {["FAILED", "RETRYING", "BLOCKED", "SKIPPED"].includes(
+                  {j.jobType !== "BALE_MESSAGE_DELETE" &&
+                  ["FAILED", "RETRYING", "BLOCKED", "SKIPPED"].includes(
                     j.status,
                   ) ? (
                     <form action={retryAutomationJobAction}>

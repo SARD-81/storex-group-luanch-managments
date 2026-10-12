@@ -50,7 +50,7 @@ export default async function Page({
             تقویم: {config.calendarEnabled ? "فعال" : "مکث"}
           </p>
           <p>
-            اشتراک عمومی:{" "}
+            اشتراک عمومی قدیمی (اختیاری):{" "}
             {STATUS_LABELS[config.publicSharingState] ??
               config.publicSharingState}
             <br />
@@ -74,16 +74,23 @@ export default async function Page({
             همسان‌سازی حضور:{" "}
             {lastReconcile ? STATUS_LABELS[lastReconcile.status] : "—"}
           </p>
+          {!health?.workerLastTick ||
+          Date.now() - new Date(health.workerLastTick).getTime() > 5 * 60000 ? (
+            <p role="alert" className="text-rose-500">
+              فعالیت worker بیش از پنج دقیقه تأیید نشده است؛ timer و حذف‌های
+              معوق را فوراً بررسی کنید.
+            </p>
+          ) : null}
         </div>
         <p className="mt-4">
           اجرای کارها مستقل از باز بودن سایت است. مکث گزارش، کنترل‌های دستی
-          Reporter و لغو لینک‌های منقضی را متوقف نمی‌کند.
+          Reporter، حذف پیام‌های PDF و لغو لینک‌های قدیمی را متوقف نمی‌کند.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           {[
             ["NEXTCLOUD_HEALTH", "آزمون Nextcloud و لینک عمومی"],
             ["BALE_HEALTH", "آزمون بله"],
-            ["TALK_TEST", "ارسال پیام آزمون به گروه فنی"],
+            ["TALK_HEALTH", "بررسی گروه فنی بدون ارسال"],
             ["ATTENDANCE_RECONCILE", "همسان‌سازی حضور اکنون"],
           ].map(([type, label]) => (
             <form key={type} action={queueAutomationJobAction}>
@@ -102,12 +109,20 @@ export default async function Page({
       <JobHistory jobs={jobs} />
       <section className="dashboard-glass-card">
         <h2 className="mb-3 text-lg font-bold">اعلان‌های فنی Nextcloud Talk</h2>
+        <p>
+          کانال اختیاری: {config.talkEnabled ? "فعال" : "غیرفعال"}؛ گزارش و حذف
+          پیام بله مستقل هستند.
+        </p>
+        <Link className="underline" href="/settings/automations/talk">
+          تنظیم، بررسی و آزمون گروه فنی
+        </Link>
         {alerts.map((a) => (
           <div key={a.id} className="border-t border-border py-3">
             <p>{a.message}</p>
             <small>
               {STATUS_LABELS[a.status]} — {formatPersianDateTime(a.createdAt)}
-              {a.remoteMessageId ? ` — پیام ${a.remoteMessageId}` : ""}
+              {a.remoteMessageId ? ` — پیام ${a.remoteMessageId}` : ""} — تلاش{" "}
+              {a.attempt} — {a.errorCode ?? "بدون خطا"}
             </small>
           </div>
         ))}

@@ -25,7 +25,10 @@ async function login(
     page.waitForURL((u) => u.pathname !== "/login", {
       waitUntil: "domcontentloaded",
     }),
-    page.getByRole("button", { name: /^ورود/ }).filter({ visible: true }).click(),
+    page
+      .getByRole("button", { name: /^ورود/ })
+      .filter({ visible: true })
+      .click(),
   ]);
 }
 export async function checkLegacyBrowserFlows(
@@ -72,7 +75,9 @@ export async function checkLegacyBrowserFlows(
   const own = await session.newPage();
   await login(own, base, username, password);
   // Choose an actual editable current-month workday through the attendance UI.
-  const meal = own.locator('input[data-monthly-meal="LUNCH"]:enabled:visible').first();
+  const meal = own
+    .locator('input[data-monthly-meal="LUNCH"]:enabled:visible')
+    .first();
   await meal.waitFor();
   const dateKey = (await meal.getAttribute("name"))!.split(":")[1];
   const card = meal.locator("xpath=ancestor::article");
@@ -189,7 +194,9 @@ export async function checkLegacyBrowserFlows(
     (await own.request.get(base + `/api/users/avatar/${user.id}`)).status(),
     404,
   );
-  await own.locator('[name="newPassword"]:visible').fill("changed-browser-password");
+  await own
+    .locator('[name="newPassword"]:visible')
+    .fill("changed-browser-password");
   await submit(own, "تغییر رمز عبور", /saved=password/);
   await own.goto(base + "/");
   await submit(own, "خروج از حساب", /\/login$/);
@@ -244,11 +251,7 @@ export async function checkLegacyBrowserFlows(
   await reporter.close();
   // Settings pause/resume and queued health checks have no network execution in CI.
   await page.goto(base + "/settings/automations/reporter");
-  await page
-    .locator('[name="nextcloudBaseUrl"]:visible')
-    .fill("https://cloud.example.test");
   await page.locator('[name="reportRecipient"]:visible').fill("123456");
-  await page.locator('[name="technicalConversation"]:visible').fill("testgroup");
   await page.locator('[name="reporterEnabled"]:visible').check();
   await submit(page, "ذخیرهٔ تنظیمات", /saved=config/);
   assert.equal(
@@ -259,9 +262,116 @@ export async function checkLegacyBrowserFlows(
     ).reporterEnabled,
     true,
   );
+  const directSettings = await prisma.automationConfig.findUniqueOrThrow({
+    where: { id: "singleton" },
+  });
+  assert.equal(directSettings.nextcloudBaseUrl, "");
+  assert.equal(directSettings.talkEnabled, false);
+  await page.goto(base + "/settings/automations/talk");
+  await page.getByText("Not Configured", { exact: true }).waitFor();
+  await page
+    .locator('[name="nextcloudBaseUrl"]:visible')
+    .fill("https://cloud.example.test");
+  await page
+    .locator('[name="technicalConversation"]:visible')
+    .fill("testgroup");
+  await submit(page, "ذخیرهٔ تنظیمات کانال فنی", /saved=config/);
+  await page.goto(base + "/settings/automations/talk");
+  await page.getByText("Disabled", { exact: true }).waitFor();
+  const heldAlert = await prisma.automationAlert.create({
+    data: {
+      alertKey: "browser-held-talk",
+      jobType: "TEST",
+      target: "fixture",
+      message: "Synthetic technical browser receipt",
+      status: "MANUAL_ACTION_REQUIRED",
+    },
+  });
+  await page.goto(base + "/settings/automations/talk");
+  const alertReview = page
+    .locator("form:visible")
+    .filter({ has: page.locator(`[name="alertId"][value="${heldAlert.id}"]`) });
+  await alertReview.locator('[name="resolution"][value="DELIVERED"]').check();
+  await alertReview.locator('[name="receipt"]').fill("84");
+  await alertReview
+    .locator('[name="note"]')
+    .fill("Synthetic browser Talk receipt review without remote sends");
+  await alertReview.locator('[name="confirmReview"]').check();
+  await alertReview
+    .getByRole("button", { name: "ثبت بررسی هشدار فنی", exact: true })
+    .click();
+  await page.waitForURL(/saved=resolved/);
+  assert.equal(
+    (
+      await prisma.automationAlert.findUniqueOrThrow({
+        where: { id: heldAlert.id },
+      })
+    ).remoteMessageId,
+    "84",
+  );
+  await page.screenshot({
+    path: "verification-output/talk-optional-admin.png",
+    fullPage: true,
+  });
+  await prisma.automationAlert.delete({ where: { id: heldAlert.id } });
+  await page.goto(base + "/settings/automations/talk");
+  assert.equal(
+    (
+      await prisma.automationConfig.findUniqueOrThrow({
+        where: { id: "singleton" },
+      })
+    ).reporterEnabled,
+    true,
+  );
+  await submit(page, "بررسی اتصال و مجوز بدون ارسال", /saved=queued/);
+  assert.equal(
+    await prisma.automationJobRun.count({ where: { jobType: "TALK_TEST" } }),
+    0,
+  );
   await page.goto(base + "/settings/automations/reporter");
   await page.locator('[name="reporterEnabled"]:visible').uncheck();
   await submit(page, "ذخیرهٔ تنظیمات", /saved=config/);
+  // Real action/DB boundary for a synthetic ambiguous receipt; never call Bale.
+  const receiptTime = new Date(Date.now() - 120000);
+  const uncertain = await prisma.reportDelivery.create({
+    data: {
+      reportDateKey: "2098-01-02",
+      deliveryKind: "BALE_DOCUMENT",
+      baleChatId: "123456",
+      status: "MANUAL_ACTION_REQUIRED",
+      stage: "DELIVERING",
+      sendAttemptedAt: receiptTime,
+    },
+  });
+  await page.goto(base + "/settings/automations/reporter");
+  const review = page.locator("form:visible").filter({
+    has: page.locator(`[name="deliveryId"][value="${uncertain.id}"]`),
+  });
+  await review.locator('[name="resolution"][value="DELIVERED"]').check();
+  await review.locator('[name="receipt"]').fill("42");
+  await review.locator('[name="sentAt"]').fill(receiptTime.toISOString());
+  await review
+    .locator('[name="note"]')
+    .fill("Synthetic browser receipt reviewed without external sends");
+  await review
+    .getByRole("button", { name: "ثبت نتیجهٔ بررسی", exact: true })
+    .click();
+  await page.waitForURL(/saved=resolved/);
+  const resolved = await prisma.reportDelivery.findUniqueOrThrow({
+    where: { id: uncertain.id },
+  });
+  assert.equal(resolved.status, "SUCCESS");
+  assert.equal(resolved.deletionStatus, "SCHEDULED");
+  assert.equal(
+    resolved.deleteDueAt!.getTime() - resolved.sentAt!.getTime(),
+    86400000,
+  );
+  assert.equal(resolved.baleChatId, "123456");
+  await page.screenshot({
+    path: "verification-output/reporter-direct-receipt.png",
+    fullPage: true,
+  });
+  await prisma.reportDelivery.delete({ where: { id: uncertain.id } });
   assert.equal(
     (
       await prisma.automationConfig.findUniqueOrThrow({
@@ -285,7 +395,9 @@ export async function checkLegacyBrowserFlows(
         `[name="selectedDates"][value="1406-${String(m).padStart(2, "0")}-02"]`,
       )
       .check();
-  await page.locator('[name="holidayText"]:visible').fill("۱۴۰۶/۰۱/۰۳ | آزمون تعطیلی");
+  await page
+    .locator('[name="holidayText"]:visible')
+    .fill("۱۴۰۶/۰۱/۰۳ | آزمون تعطیلی");
   await page.locator('[name="csv"]:visible').setInputFiles({
     name: "holidays.csv",
     mimeType: "text/csv",
@@ -407,10 +519,27 @@ export async function checkLegacyBrowserFlows(
     await page.emulateMedia({ media: "print" });
     const printLogo = await reportLogo.evaluate((image: HTMLImageElement) => {
       const box = image.getBoundingClientRect();
-      return { width: box.width, height: box.height, naturalWidth: image.naturalWidth, naturalHeight: image.naturalHeight };
+      return {
+        width: box.width,
+        height: box.height,
+        naturalWidth: image.naturalWidth,
+        naturalHeight: image.naturalHeight,
+      };
     });
-    assert.ok(Math.abs(printLogo.height - printLogo.width * printLogo.naturalHeight / printLogo.naturalWidth) < 1, "print logo must retain its aspect ratio before PDF rasterization");
-    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "dark UI must print on white paper");
+    assert.ok(
+      Math.abs(
+        printLogo.height -
+          (printLogo.width * printLogo.naturalHeight) / printLogo.naturalWidth,
+      ) < 1,
+      "print logo must retain its aspect ratio before PDF rasterization",
+    );
+    assert.equal(
+      await page.evaluate(
+        () => getComputedStyle(document.documentElement).colorScheme,
+      ),
+      "light",
+      "dark UI must print on white paper",
+    );
     await page.pdf({
       path: `verification-output/manual-logo-${label}.pdf`,
       preferCSSPageSize: true,
@@ -423,13 +552,28 @@ export async function checkLegacyBrowserFlows(
     const excel = await page.request.get(base + "/reporter/next-day/export");
     assert.equal(excel.status(), 200);
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(await excel.body() as unknown as Parameters<typeof workbook.xlsx.load>[0]);
+    await workbook.xlsx.load(
+      (await excel.body()) as unknown as Parameters<
+        typeof workbook.xlsx.load
+      >[0],
+    );
     const embedded = workbook.worksheets[0].getImages();
-    assert.equal(embedded.length, 1, "Excel must contain the active company logo");
+    assert.equal(
+      embedded.length,
+      1,
+      "Excel must contain the active company logo",
+    );
     // ExcelJS persists ext in one-cell anchors but omits it from ImageRange's type.
-    const size = (embedded[0].range as ExcelJS.ImageRange & { ext?: { width: number; height: number } }).ext;
+    const size = (
+      embedded[0].range as ExcelJS.ImageRange & {
+        ext?: { width: number; height: number };
+      }
+    ).ext;
     assert.ok(size, "Excel logo must have a bounded one-cell image anchor");
-    assert.ok(Math.abs(size.width / size.height - width / height) < .01, "Excel logo must retain the active image aspect ratio");
+    assert.ok(
+      Math.abs(size.width / size.height - width / height) < 0.01,
+      "Excel logo must retain the active image aspect ratio",
+    );
   }
   await page.goto(base + "/settings/branding");
   await submit(page, "بازگردانی نسخهٔ قبلی", /saved=logo/);
