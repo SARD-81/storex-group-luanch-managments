@@ -71,7 +71,7 @@ async function main() {
         sha256,
         mimeType: "application/pdf",
         filename: `storex-test-${marker}.pdf`,
-        caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان؛ کد ${marker}. پیام آزمایشی به‌صورت خودکار حذف نمی‌شود.`,
+        caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان.\nصبحانه: پرسنل ۳، مهمان ۲، جمع ۵\nناهار: پرسنل ۴، مهمان ۱، جمع ۵\nکد ${marker}. پیام آزمایشی به‌صورت خودکار حذف نمی‌شود.`,
       });
     } catch (error) {
       // An explicit API rejection is not an ambiguous delivery. Only uncertain
