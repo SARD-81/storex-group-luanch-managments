@@ -38,6 +38,14 @@ The `--send-with-caption-once` mode keeps the same Playwright PDF and known-leng
 
 If this variant succeeds and the document appears in Bale, the issue is likely specific to the standard uploader or original tiny test file. Examine these independently before changing the production send path. If it also returns HTTP 400, record only the output's categorical `code`, `httpStatus` and `providerDescriptionGeneric`; never print or submit raw API descriptions, tokens, or the .env file. A success receipt must be checked against the actual private chat. If the response is lost or the result becomes uncertain, inspect the chat before any repeat, to avoid duplicate test documents.
 
+## Verified Bale PDF transport for reports
+
+Live tests in the designated private staging chat established that Bale accepts a normal Chromium-generated A5 PDF with a Persian caption when submitted as a **known-length multipart/form-data** request. Production `BaleClient.sendDocument` now uses `lib/automation/bale-multipart.ts` with the exact framing accepted during the test, explicit `Content-Length`, and the original report bytes, filename, SHA-256 validation and full multiline Persian caption. The HTTPS host remains pinned and allowlisted; bot identity and private-chat preflight remain mandatory; no automatic message deletion occurs.
+
+The former tiny `probePdf()` fixture remains for local/mock integration tests and Nextcloud capability checks. The opt-in live Bale document smoke script now generates a normal synthetic Chromium PDF using `createSyntheticBalePdf()` so the test exercises the same kind of PDF as production. Do not enable a pending real `REPORT_DELIVERY` or retry an ambiguous delivery until its receipt history has been reviewed. After deploying this code, perform exactly one opt-in live smoke send, verify physical arrival and the saved `SUCCESS/DELIVERED` receipt, then separately conduct a controlled real-report send only after authorization.
+
+The **specific** cause of the original HTTP 400 was not isolated because the successful differential test changed several factors together (PDF size/producer, multipart encoding and caption). The replacement uses the combination that has been verified rather than claiming the cause is proven.
+
 ## Bale PDF HTTP 400 diagnostics (no secrets in logs)
 
 If `--check` reports `BOT_AND_PRIVATE_CHAT_VERIFIED` but the first opt-in PDF `--send-document-once` returns HTTP 400, the recipient exists, yet `sendDocument` was rejected. **Do not treat that as delivered.** The API's raw `description` may contain untrusted/private information; StoreX returns only an allowlisted, categorical `BALE_DOCUMENT_*` code and numeric HTTP status. A safe HTTP 400 now sets the synthetic probe record to `FAILED/GENERATED` rather than indefinitely `MANUAL_ACTION_REQUIRED/DELIVERING`; an ambiguous network/receipt error still requires human review.
