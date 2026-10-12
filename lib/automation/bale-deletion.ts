@@ -123,7 +123,7 @@ export async function processBaleDeletions(
     ]);
     let confirmed = false;
     try {
-      await bale.deleteMessage(d.baleChatId, d.baleMessageId);
+      await bale.deleteMessage(d.baleChatId, d.baleMessageId, deadline);
       await db.$transaction([
         db.reportDelivery.update({
           where: { id: d.id },
@@ -160,25 +160,33 @@ export async function processBaleDeletions(
         [60, 120, 300, 900, 1800][Math.min(d.deletionAttempts, 4)],
       );
       const retryAt = new Date(now.getTime() + delay * 1000);
+      const expired = safe.code === "BALE_DELETE_WINDOW_EXPIRED";
       const terminal =
         [
           "BALE_MESSAGE_NOT_FOUND",
           "BALE_FORBIDDEN",
           "BALE_DELETE_IDENTITY_INVALID",
-        ].includes(safe.code) || retryAt >= deadline;
-      const code =
-        retryAt >= deadline ? "BALE_DELETE_RETRY_BEYOND_WINDOW" : safe.code;
+        ].includes(safe.code) ||
+        expired ||
+        retryAt >= deadline;
+      const code = expired
+        ? safe.code
+        : retryAt >= deadline
+          ? "BALE_DELETE_RETRY_BEYOND_WINDOW"
+          : safe.code;
       // A failed DB acknowledgement or ambiguous deletion is safe to retry for this exact ID.
       // "Not found" is not proof of our successful deletion and requires manual review.
       await db.$transaction([
         db.reportDelivery.update({
           where: { id: d.id },
           data: {
-            deletionStatus: terminal
-              ? "MANUAL_ACTION_REQUIRED"
-              : safe.uncertain || !(error instanceof AutomationError)
-                ? "UNCERTAIN"
-                : "RETRYING",
+            deletionStatus: expired
+              ? "WINDOW_EXPIRED"
+              : terminal
+                ? "MANUAL_ACTION_REQUIRED"
+                : safe.uncertain || !(error instanceof AutomationError)
+                  ? "UNCERTAIN"
+                  : "RETRYING",
             deletionErrorCode: code,
             deletionNextRetryAt: terminal ? null : retryAt,
           },
@@ -186,7 +194,11 @@ export async function processBaleDeletions(
         db.automationJobRun.update({
           where: { id: job.id },
           data: {
-            status: terminal ? "MANUAL_ACTION_REQUIRED" : "RETRYING",
+            status: expired
+              ? "FAILED"
+              : terminal
+                ? "MANUAL_ACTION_REQUIRED"
+                : "RETRYING",
             errorCode: code,
             errorMessage: code,
             finishedAt: now,
@@ -195,7 +207,7 @@ export async function processBaleDeletions(
         }),
       ]);
       await alert(
-        terminal ? "manual" : "failure",
+        expired ? "expired" : terminal ? "manual" : "failure",
         `حذف پیام تأیید نشد: ${code}${terminal ? "؛ بررسی دستی لازم است" : "؛ تلاش مجدد برنامه‌ریزی شد"}`,
       );
     }

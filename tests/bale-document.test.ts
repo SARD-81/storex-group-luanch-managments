@@ -218,3 +218,27 @@ test("deleteMessage requires literal confirmed true and sends only the stored id
   );
   assert.equal(await client.deleteMessage("123456", "42"), true);
 });
+
+test("delete deadline is checked again after a slow identity preflight", async () => {
+  let clockValue = new Date(clock.getTime() - 1000),
+    deleted = false;
+  const b = new BaleClient(
+    async (url) => {
+      if (url.endsWith("/getMe")) {
+        clockValue = clock;
+        return Response.json({
+          ok: true,
+          result: { is_bot: true, username: "storex_lunch_notify_bot" },
+        });
+      }
+      deleted = true;
+      return Response.json({ ok: true, result: true });
+    },
+    () => clockValue,
+  );
+  await assert.rejects(
+    () => b.deleteMessage("123456", "42", clock),
+    /BALE_DELETE_WINDOW_EXPIRED/,
+  );
+  assert.equal(deleted, false);
+});

@@ -1,7 +1,7 @@
 import type { AutomationJobRun } from "@/app/generated/prisma/client";
 import { retryAutomationJobAction } from "@/actions/automations";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
-import { JOB_LABELS, STATUS_LABELS } from "./admin-shell";
+import { JOB_LABELS, STATUS_LABELS, ERROR_LABELS } from "./admin-shell";
 export function JobHistory({ jobs }: { jobs: AutomationJobRun[] }) {
   return (
     <section className="dashboard-glass-card">
@@ -53,6 +53,9 @@ export function JobHistory({ jobs }: { jobs: AutomationJobRun[] }) {
                   {j.nextRetryAt ? formatPersianDateTime(j.nextRetryAt) : "—"}
                   <br />
                   <code>{j.errorCode}</code>
+                  {j.errorCode && ERROR_LABELS[j.errorCode] ? (
+                    <p>{ERROR_LABELS[j.errorCode]}</p>
+                  ) : null}
                 </td>
                 <td className="p-2">
                   {j.jobType !== "BALE_MESSAGE_DELETE" &&

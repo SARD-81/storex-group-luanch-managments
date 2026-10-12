@@ -44,19 +44,22 @@ async function fixture(
   delete process.env.NEXTCLOUD_USERNAME;
   delete process.env.NEXTCLOUD_APP_PASSWORD;
   const calls: { chat_id: string; message_id: number }[] = [];
-  const bale = new BaleClient(async (url, init) => {
-    if (url.endsWith("/getMe"))
-      return Response.json({
-        ok: true,
-        result: { is_bot: true, username: "storex_lunch_notify_bot" },
-      });
-    assert.ok(
-      url.endsWith("/deleteMessage"),
-      "cleanup must never send a new message",
-    );
-    calls.push(JSON.parse(String(init?.body)));
-    return answer();
-  });
+  const bale = new BaleClient(
+    async (url, init) => {
+      if (url.endsWith("/getMe"))
+        return Response.json({
+          ok: true,
+          result: { is_bot: true, username: "storex_lunch_notify_bot" },
+        });
+      assert.ok(
+        url.endsWith("/deleteMessage"),
+        "cleanup must never send a new message",
+      );
+      calls.push(JSON.parse(String(init?.body)));
+      return answer();
+    },
+    () => due,
+  );
   const clear = async () => {
     await db.reportDelivery.deleteMany();
     await db.automationJobRun.deleteMany();

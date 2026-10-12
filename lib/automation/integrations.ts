@@ -227,7 +227,12 @@ export class NextcloudClient {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, referenceId }),
+        body: JSON.stringify({
+          message,
+          referenceId: /^[a-f0-9]{64}$/.test(referenceId)
+            ? referenceId
+            : createHash("sha256").update(referenceId).digest("hex"),
+        }),
       },
     );
     if (!result.id)
@@ -365,6 +370,7 @@ export class BaleClient {
     return true;
   }
   async send(recipient: string, text: string) {
+    await this.health();
     await this.privateChat(recipient);
     const r = await this.call("sendMessage", { chat_id: recipient, text });
     if (!/^[1-9]\d{0,15}$/.test(String(r?.message_id)))
@@ -381,6 +387,7 @@ export class BaleClient {
       caption: string;
     },
   ): Promise<BaleDocumentReceipt> {
+    const attemptedAt = this.clock();
     validateBalePdf(input);
     if (input.caption.length > 4096)
       throw new AutomationError("BALE_CAPTION_TOO_LONG");
@@ -407,6 +414,7 @@ export class BaleClient {
     const apiSentAt =
       Number.isSafeInteger(date) &&
       date > 0 &&
+      date * 1000 >= attemptedAt.getTime() - 60000 &&
       date * 1000 <= receivedAt.getTime() + 60000
         ? new Date(date * 1000)
         : null;
@@ -417,7 +425,11 @@ export class BaleClient {
       apiSentAt,
     };
   }
-  async deleteMessage(chatId: string, messageId: string) {
+  async deleteMessage(
+    chatId: string,
+    messageId: string,
+    deleteBeforeAt?: Date,
+  ) {
     if (
       !/^[1-9]\d{0,15}$/.test(chatId) ||
       !/^[1-9]\d{0,15}$/.test(messageId) ||
@@ -425,7 +437,12 @@ export class BaleClient {
       !Number.isSafeInteger(Number(chatId))
     )
       throw new AutomationError("BALE_DELETE_IDENTITY_INVALID");
+    if (deleteBeforeAt && this.clock() >= deleteBeforeAt)
+      throw new AutomationError("BALE_DELETE_WINDOW_EXPIRED");
     await this.health();
+    // Recheck after the read-only preflight; network latency cannot extend the API window.
+    if (deleteBeforeAt && this.clock() >= deleteBeforeAt)
+      throw new AutomationError("BALE_DELETE_WINDOW_EXPIRED");
     const result = await this.call("deleteMessage", {
       chat_id: chatId,
       message_id: Number(messageId),

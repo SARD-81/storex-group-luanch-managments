@@ -95,6 +95,23 @@ export const JOB_LABELS: Record<string, string> = {
   ARTIFACT_SYNC: "همگام‌سازی فایل",
   ATTENDANCE_RECONCILE: "همسان‌سازی حضور",
 };
+export const ERROR_LABELS: Record<string, string> = {
+  BALE_PDF_TOO_LARGE: "PDF بیش از حد مجاز ۵۰ مگابایت است؛ گزارش را بررسی کنید.",
+  BALE_INVALID_PDF: "فرمت یا پایان فایل PDF معتبر نیست؛ فایل ارسال نشد.",
+  ARTIFACT_CHECKSUM_MISMATCH:
+    "محتوای فایل با SHA-256 ثبت‌شده همسان نیست؛ ذخیره‌سازی را بررسی کنید.",
+  BALE_RECIPIENT_NOT_PRIVATE:
+    "مقصد بله چت خصوصی تأییدشده نیست؛ شناسهٔ گیرنده را بررسی کنید.",
+  BALE_AUTH_FAILED: "توکن بات بله معتبر نیست؛ مسئول سرور باید آن را بررسی کند.",
+  BALE_RATE_LIMITED: "محدودیت نرخ API؛ تلاش بعدی زمان‌بندی شده است.",
+  BALE_MESSAGE_NOT_FOUND:
+    "پیام پیدا نشد؛ حذف موفق فرض نشده و بررسی انسانی لازم است.",
+  BALE_FORBIDDEN: "بله اجازهٔ عملیات را نداد؛ مقصد، بات و مجوز را بررسی کنید.",
+  BALE_DELETE_WINDOW_EXPIRED:
+    "بازهٔ کمتر از ۴۸ ساعت گذشته است؛ اقدام انسانی لازم است.",
+  BALE_RECEIPT_PERSIST_FAILED:
+    "رسید ارسال در دیتابیس ثبت نشد؛ چت را بررسی کنید و ارسال را تکرار نکنید.",
+};
 export function AutomationNotice({
   error,
   saved,

@@ -268,7 +268,10 @@ export async function checkLegacyBrowserFlows(
   assert.equal(directSettings.nextcloudBaseUrl, "");
   assert.equal(directSettings.talkEnabled, false);
   await page.goto(base + "/settings/automations/talk");
-  await page.getByText("Not Configured", { exact: true }).waitFor();
+  await page
+    .getByText("Not Configured", { exact: true })
+    .filter({ visible: true })
+    .waitFor();
   await page
     .locator('[name="nextcloudBaseUrl"]:visible')
     .fill("https://cloud.example.test");
@@ -277,7 +280,10 @@ export async function checkLegacyBrowserFlows(
     .fill("testgroup");
   await submit(page, "ذخیرهٔ تنظیمات کانال فنی", /saved=config/);
   await page.goto(base + "/settings/automations/talk");
-  await page.getByText("Disabled", { exact: true }).waitFor();
+  await page
+    .getByText("Disabled", { exact: true })
+    .filter({ visible: true })
+    .waitFor();
   const heldAlert = await prisma.automationAlert.create({
     data: {
       alertKey: "browser-held-talk",
