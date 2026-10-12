@@ -2,11 +2,11 @@
 
 Status: **draft / not approved for production deployment**. Read `verification-report.md` before merging or deploying this branch.
 
-Public Link Sharing is currently disabled in Nextcloud.
-Until DevOps enables it, Reporter automation must remain in MANUAL MODE.
-All existing manual Reporter operations remain available.
-Once Public Link Sharing becomes available and passes capability verification,
-the system should automatically begin public-link delivery without a new deployment.
+Current contract (2026-10-12): new reports are private PDF bytes sent directly
+with Bale sendDocument. Nextcloud Files/Public Sharing and Talk are not Reporter
+prerequisites. Manual Print/Excel/guest operations remain available. Historical
+Nextcloud shares still need their original credentials for cleanup. Talk defaults
+to disabled and has an independent configuration page.
 
 ## Attendance policy
 
@@ -28,15 +28,45 @@ Reporter targets the first final workday strictly after today in Tehran. Guest e
 
 Default Tehran schedule: 09:20 reminder 1, 09:25 reminder 2, 09:30 delivery, 09:40 retry, 09:50 retry, 10:00 final retry/escalation. Each reminder reads current persisted guests. Initial PDF generation reads the latest values again. Repeated ticks reuse `report-send:<Jalali date>` / reminder identities. A successful reportDateKey never sends automatically again. Nonworkday ticks do not schedule duplicate deliveries. Late reminder windows close; failed report execution resumes at the next scheduled retry. After the final attempt it requires admin action.
 
-PDF generation, private upload, share creation/verification and Bale delivery persist independently. Private files are deterministic under year/month paths. Lost share-create responses are adopted by querying the same path. Safe Bale rejection retries the existing artifact/link. An ambiguous send/crash after the send boundary is held for manual review, since Bale provides no transaction tying a send to our DB. Inspect the recipient chat, then record either the actual message ID or explicit evidence that no send occurred in the admin page. This conservative policy prevents automatic duplicate messages; it does not claim an impossible exactly-once guarantee across two services.
+Generate the unchanged A5 PDF, store a protected SHA-256-addressed artifact,
+validate PDF signature/MIME/size (conservative 50,000,000-byte cap), verify the
+existing @storex_lunch_notify_bot and private destination, and upload multipart
+bytes via sendDocument. No new report share/public URL is generated. Generation
+and snapshot commit together; retries reuse the same private bytes. The delivery
+persists chat/message identity, API sent time (or successful receipt time), and
+24-hour deletion due time. Deletion does not change successful delivery status.
+An uncertain send or lost DB acknowledgement stays held for human review; never
+blindly resend. The admin must supply actual message ID and timezone-bearing send
+time when confirming receipt, or explicit evidence that no send occurred.
 
-Public capabilities are checked daily and before delivery. Authentication, permissions, disabled sharing and unavailable remote services stay distinct. A public-safe probe PDF is anonymously downloaded, checked, then its share revoked. Report links are read-only public shares, also verified anonymously against the PDF SHA-256. expiresAt = remote shareCreatedAt + exactly 86,400,000 ms. Nextcloud date-only expiry is a backup; minute-level durable cleanup revokes the share at the first tick at/after expiresAt, retries failures and retains private report PDFs. Network/worker outage can delay physical revocation; the overdue state remains visible and alerts are queued. Monitoring and an always-running timer are therefore mandatory.
+The same locked minute worker processes Bale deletion before ordinary jobs, even
+while Reporter/Talk is disabled, on holidays and after restart. deleteMessage must
+return literal true before DELETED/receipt is committed. Uncertain deletion is
+safe to retry for the same stored IDs; not-found/forbidden are not false success.
+Retries use 1/2/5/15/30-minute backoff (30-minute ceiling) and honor retry_after.
+Overdue, failure, six-hours-before-deadline, expired-window and recovery alerts
+persist internally. The API permits deletion only when message age is less than
+48 hours: at that deadline the worker records WINDOW_EXPIRED and human action.
+For missing API date the deadline starts conservatively from the pre-send intent,
+while due time uses the response receipt. Worker/network outages can delay
+physical deletion. Deleting the chat message cannot erase downloaded copies,
+forwarded files or screenshots. DeletedAt denotes the confirming worker tick.
 
-Bale sends only to a verified private chat via the official HTTPS API. Technical alerts go to the configured multi-person Nextcloud Talk room through the service account, never to the report recipient. Alerts use durable identities: calendar at most daily per year; reporter first failure/final escalation/recovery; cleanup daily failures. Ambiguous Talk sends are held rather than blindly repeated.
+Legacy public-share and probe cleanup remains separate; it requires the original
+Nextcloud credentials and does not operate on new Bale documents. Public capability
+probes are now explicit operator jobs, not the new delivery prerequisite.
+
+Technical Talk alerts target only a private group (type=2), a service-account
+participant and writable chat permission. Talk is optional; errors do not undo
+independent report/delete/calendar jobs. Activation keeps pre-activation or older
+than 24-hour backlog internal (SKIPPED with a reason); at most three fresh alerts
+are dispatched per tick, with exponential retry up to one hour and ten attempts.
+Ambiguous sends/lost receipt writes require manual review. See the independent
+[Persian setup guide](nextcloud-talk-technical-alerts-setup-fa.md).
 
 ## Admin configuration
 
-Routes: `/settings/automations`, `/settings/automations/reporter`, `/settings/automations/calendar`. Only active ADMIN accounts may view or submit actions. Configure the HTTPS Nextcloud base URL, report/calendar directories, positive numeric Bale recipient chat ID, multi-person Talk conversation token, timings, enabled/pause flags, and optional approved calendar source override. Connections, run now, dry-run and retry controls enqueue durable worker jobs. The web request performs no outbound delivery. Reporter success/expiry/retry status is visible on `/reporter/next-day`.
+Routes: `/settings/automations`, `/settings/automations/reporter`, `/settings/automations/calendar`, `/settings/automations/talk`. Only active ADMIN accounts may view or submit actions. Configure Reporter with its verified private Bale recipient, timings and pause flag. Configure optional Nextcloud/Talk separately; calendar source/archives remain separate settings. Connections, run now, dry-run and retry controls enqueue durable worker jobs. The web request performs no outbound delivery. Reporter delivery/deletion/retry status is visible on `/reporter/next-day`.
 
 Secrets are ENV-only; admin screens display only configured/not-configured flags. Allowlisted URLs must use HTTPS and port 443 without credentials. Credential-bearing redirects are refused. Unapproved hosts, loopback/private metadata addresses and oversized responses are blocked. Every connection is pinned to its checked DNS address while preserving hostname/SNI and TLS certificate verification; each allowed redirect is checked again. An explicitly allowlisted private Nextcloud host is the only private-address exception. Errors persist fixed codes, never remote response bodies, Authorization headers, passwords or token-bearing Bale URLs.
 
@@ -73,9 +103,10 @@ fails may be inspected using the protected PDF/parser evidence and company
 emergency tools, while no unsafe import is performed. Future published PDF
 layouts are not guaranteed. An active-year revised official calendar or an
 existing emergency import still requires explicit admin diff approval, exactly
-as before. Final live acceptance needs the organization’s real Nextcloud/Talk
-and a verified **different** Bale recipient; the workstation test account does
-not establish this.
+as before. Final direct-delivery acceptance needs the authorized **different** Bale recipient
+and real sendDocument/deleteMessage evidence. Optional Talk live tests remain
+pending until the organization provides its environment. The workstation test
+account does not establish either gate.
 
 ## Calendar and emergency mode
 
@@ -109,9 +140,9 @@ Rows are validated with row errors, identical duplicates deduplicated and confli
 ## Required environment
 
 - DATABASE_URL: production PostgreSQL connection.
-- NEXTCLOUD_USERNAME / NEXTCLOUD_APP_PASSWORD: dedicated automation service account and revocable app password.
+- Optional NEXTCLOUD_USERNAME / NEXTCLOUD_APP_PASSWORD: only for Talk, calendar private archive or historical-share cleanup; not new Reporter delivery.
 - BALE_BOT_TOKEN: official bot token.
-- AUTOMATION_ALLOWED_NEXTCLOUD_HOSTS: comma-separated trusted DNS hostnames.
+- Optional AUTOMATION_ALLOWED_NEXTCLOUD_HOSTS: required only when enabling a Nextcloud integration.
 - AUTOMATION_SPOOL_DIR: durable protected spool directory, writable by worker and readable by admin artifact route if web/worker are separate.
 - BRANDING_STORAGE_DIR: absolute protected durable logo directory shared by web and worker; default is the branding subdirectory of AUTOMATION_SPOOL_DIR.
 - STOREX_APP_ORIGIN: canonical HTTPS application origin for authenticated reminder links.
@@ -122,7 +153,12 @@ Optional: AUTOMATION_ALLOWED_PRIVATE_HOSTS, CALENDAR_APPROVED_SOURCE_HOSTS, CALE
 
 ## DevOps handoff
 
-Create a dedicated Nextcloud account with access only to the two private directories and configured Talk group. Create/revoke its app password separately from personal accounts. Enable public link sharing with read-only anonymous downloads and permission to revoke shares; mandatory password policy blocks this workflow. Ensure the configured base URL and `/s/.../download` are reachable anonymously with valid TLS, no login wall, no credential-bearing redirects. Put multiple technical responders in the Talk group and add the service account. Verify service quota, outbound DNS/HTTPS to Nextcloud, tapi.bale.ai and calendar.ut.ac.ir, access to the protected spool and clock synchronization.
+For direct Reporter, provide PostgreSQL, durable protected spool, Chromium/fonts,
+worker timer, HTTPS egress to tapi.bale.ai and canonical authenticated app origin.
+NTP and an external health monitor are mandatory. Nextcloud Public Sharing is not
+required. For optional Talk use the dedicated Persian guide. Retain old Nextcloud
+access until every historical share/probe has been cleaned up. Calendar private
+archives sync when optional Nextcloud credentials are available.
 
 Use the existing `@storex_lunch_notify_bot` (https://ble.ir/storex_lunch_notify_bot); do not recreate it. Store its token only in the root-managed environment file. The one approved recipient sends `/start` once; configure the verified private chat ID and run readiness checks. The sender checks getChat type=private before every message.
 
@@ -142,7 +178,7 @@ node --import tsx scripts/check-bale-live.ts --send-once
 
 The second command must be run **only with the recipient's approval**. Verify that its returned `messageId` is present and that the recipient actually sees the matching test marker in their Bale private chat. Record time, test marker, sanitized API status and recipient confirmation in the verification report; never include `BALE_BOT_TOKEN`, raw Authorization headers or token-bearing URLs. A successful `getMe` without an actual received message does **not** close the live-integration gate.
 
-Keep `reporterEnabled=false` while testing so no daily report is accidentally sent. Do not add this opt-in live test to GitHub CI or the minute worker. Re-test a real Reporter delivery/link separately after Nextcloud Public Link Sharing is enabled; its disabled/manual fallback remains mandatory in the meantime.
+Keep `reporterEnabled=false` while testing so no daily report is accidentally sent. Do not add this opt-in live test to GitHub CI or the minute worker. Use the synthetic PDF probe below, then separately verify a controlled real Reporter schedule. Public Sharing status does not gate direct delivery.
 
 ## Staging installation (after every merge gate is closed)
 
@@ -188,11 +224,62 @@ npm run automation:admin -- --dry-run=calendar --year=1406
 npm run automation:admin -- --reconcile
 ```
 
-The calendar dry-run stores diagnostic artifacts but never imports Calendar data. It never promotes the staged dataset; unsupported/unreviewed sources fail closed. Use admin connection tests, inspect job history, verify a public-safe probe, then leave Reporter manual while sharing is disabled. On staging enable Reporter, set a controlled test recipient, verify both reminders/latest guests, one PDF/link/send, retry resumption and minute cleanup at expiry. Verify USERS cannot access admin routes/override actions and REPORTER keeps manual guest, Print and Excel controls. Compare 1/7/31/90/180/365-day UI/Excel ranges.
+The calendar dry-run never promotes/imports its staged dataset. On controlled
+staging verify 09:20/09:25 reminders with updated guests, 09:30 direct PDF bytes,
+immutable snapshot, receipt, retry and first-tick deletion at/after 24 hours.
+Do not add live scripts to CI. After explicit permission from the configured real
+recipient (different from the old test account), keep Reporter paused and run:
+
+```bash
+node --import tsx scripts/check-bale-document-live.ts --check
+node --import tsx scripts/check-bale-document-live.ts --send-document-once
+# Later the existing minute worker deletes the synthetic probe too.
+npm run automation:admin -- --deletions
+npm run automation:admin -- --health-check
+```
+
+Confirm visible PDF receipt and later visible removal in the intended chat;
+record sanitized probe ID, message ID, times, hash, API result and operator
+confirmation. Failed/ambiguous probe intent blocks blind reruns; resolve it from
+actual chat evidence. Immediate operator deletion is not a 24-hour scheduler test.
+Verify ordinary roles cannot access the new Talk/admin routes and manual Reporter,
+Print/Excel/guests remain usable without any Nextcloud environment.
 
 ## Migrations and rollback
 
-Migrations: 20261006060000_attendance_provenance; 20261006070000_automation_control_plane; 20261010090000_global_branding. Additive tables/columns/enums only; old weekly data retained. Provenance migration backfills preserved legacy/manual decisions using original statuses/timestamps. Pause Reporter/Calendar and stop the timer before rollback, but first manually revoke all outstanding public shares by recorded shareId if the cleanup service cannot run. Keep private PDFs and diagnostic artifacts. Restore the previous application release with new DB tables/columns intact; do not drop AttendanceDecision or reset weekly/manual flags. Old recurring writers must remain disabled during rollback to prevent overwriting new decisions. If restoring a DB snapshot, reconcile/revoke any shares created after that snapshot from Nextcloud before restarting. Take an explicit backup and plan data reconciliation for writes made after the backup; a destructive down migration is not supplied.
+Migrations: 20261006060000_attendance_provenance;
+20261006070000_automation_control_plane; 20261010090000_global_branding;
+20261012070000_bale_document_delivery. All are additive; old weekly/history and
+legacy share IDs/URLs/times remain intact. New kind/deletion enums are separate.
+Existing reports default to LEGACY_NEXTCLOUD/NOT_APPLICABLE; new rows explicitly
+use BALE_DOCUMENT. No destructive down migration is supplied.
+
+Back up PostgreSQL and spool/branding together; protect credentials separately.
+Test a restore on an isolated database and compare hashes/receipt IDs. Restoring a
+snapshot can resurrect old pending intents: pause new sends, compare actual chat
+and legacy shares against external receipts before resuming. Never reuse a stale
+snapshot to blindly send a report again.
+
+For rollback, disable new Reporter/Calendar delivery first, **retain this release's
+worker and migrations** until every direct-message deletion and old-share cleanup
+is complete. Roll back only the web release. Point the existing service to the
+retained worker release (not the rolled-back directory), add --cleanup-only to
+ExecStart through a reviewed systemd override, daemon-reload and restart its timer.
+The cleanup-only path sends no new report/reminder and still processes stored Bale
+identities independently of Talk. Keep bot/DB/spool and old Nextcloud credentials
+available. Do not stop cleanup for 48 hours or install the old worker over it.
+After all pending cleanup is reconciled, retire the retained worker deliberately.
+Do not drop AttendanceDecision or reset weekly/manual flags; keep old recurring
+writers disabled. Plan explicit reconciliation for writes after a backup.
+
+External monitoring must run --health-check at least every minute and alert when
+the last tick is older than five minutes or deletions are overdue. A stopped worker
+cannot send its own Talk alert while stopped: the dashboard shows stale activity,
+and an internal gap alert is queued on recovery. Use an independent monitor/on-call
+channel so disabled Talk or a dead host cannot hide the problem. Escalate before
+six hours remain to the API deadline; WINDOW_EXPIRED requires human action, never
+fake DELETED. A not-found response remains a manual review even after a lost prior
+acknowledgement. Retain the successful delivery status after deletion.
 
 ## Upstream references
 
@@ -228,40 +315,12 @@ BRANDING_STORAGE_DIR at the build directory or a public path. The supplied
 systemd worker permits `/var/lib/storex/automation`; if branding or spool is
 elsewhere, adjust `ReadWritePaths` explicitly for that directory.
 
-## Controlled Nextcloud and Talk acceptance
+## Controlled optional Nextcloud and Talk acceptance
 
-The required group is StoreX Automation Alerts. In approved staging Nextcloud,
-create a multi-person Talk conversation, add the technical responders and the
-dedicated service account, obtain its room token from the conversation link,
-and configure `technicalConversation` in `/settings/automations/reporter`.
-The service account must read/send to that group, upload to the two private
-folders, create read-only anonymous shares and revoke them. An app password must
-belong to that account. Keep Reporter paused during probes.
-
-Load credentials through the protected service environment without printing
-values; set STOREX_ENVIRONMENT=staging only on staging. Run:
-
-```bash
-# Read-only identity, capabilities and group checks; no messages/shares.
-node --import tsx scripts/check-nextcloud-live.ts --check
-# After approval for a public-safe synthetic PDF: verify anonymous download/hash,
-# share revocation and private-probe deletion, using durable cleanup intents.
-node --import tsx scripts/check-nextcloud-live.ts --probe-share
-# After approval for the technical group: send one distinguishable test alert.
-node --import tsx scripts/check-nextcloud-live.ts --talk-once
-```
-
-Confirm the Talk message visibly in the intended group. Capture sanitized code,
-probe stage, job ID, receipt confirmation and cleanup result; never include room
-or private recipient IDs, credentials or raw response bodies in public artifacts.
-If a send outcome is ambiguous, inspect the group before repeating. Resolve a
-pending cleanup intent instead of leaving a test share/file behind.
-
-For Bale, run readiness first and `--send-once` only after approval for its private
-recipient. The owner confirmed workstation send-and-receive; it does not certify
-StoreX staging. Finally verify a controlled 09:20/09:25/09:30 schedule with saved
-guest changes, next-working-day date, one immutable PDF, one link notification,
-retry recovery and first-tick revocation after exactly 24 hours. The owner accepts
-delayed physical revocation during outages: test restart recovery, overdue status
-and Talk escalation; a custom public proxy is not required. Do not enable
-production or merge before live integration and operational gates are recorded.
+Use [nextcloud-talk-technical-alerts-setup-fa.md](nextcloud-talk-technical-alerts-setup-fa.md)
+for the private group, service account, ENV setup, health checks and opt-in test
+receipt. Prefer check-talk-live.ts, which does not require WebDAV/Public Sharing.
+check-nextcloud-live.ts --probe-share remains only an explicitly approved legacy
+capability/cleanup diagnostic; it is not required for new report delivery.
+Optional Talk receipt is pending until company setup/permission is supplied.
+No production enablement, deployment or PR merge is authorized by this runbook.

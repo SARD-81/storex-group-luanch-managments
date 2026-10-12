@@ -1,6 +1,69 @@
+# Current direct Bale PDF delivery verification — 2026-10-12
+
+The new contract supersedes Nextcloud public-link delivery for **new** reports.
+PR #76 remains Draft/unmerged. Start checkpoint: implementation head
+145c5e100a4a264008e2eae5d2afd270adf0509f, base/main
+086662cd72f990b19d2bf9dc155df3fc12e46c52; its CI 38046421136 was green before edits.
+No production access, live sends or deployment are authorized/performed.
+
+## Changes and evidence boundaries
+
+- Reuse unchanged A5 generation, calendar/attendance rules, snapshot/spool, minute
+  scheduler and session advisory lock. New report rows use BALE_DOCUMENT and null
+  nextcloudPath; there is no upload/public-share/new Nextcloud link in delivery.
+- sendDocument uses multipart PDF bytes, 50,000,000-byte cap, filename/MIME/magic/EOF
+  and SHA-256 guards, existing bot identity and matched private chat. Receipt uses
+  valid Message.date or successful receipt time. A lost send acknowledgement holds
+  DELIVERING/MANUAL_ACTION_REQUIRED, preventing blind duplicates.
+- Additive migration 20261012070000_bale_document_delivery retains historical
+  LEGACY_NEXTCLOUD rows and share cleanup. New fields persist original chat/message,
+  send intent, deletion due/deadline/status/attempt/backoff/error/receipt.
+- Deletion executes before ordinary work, independent of Reporter/Talk/holidays,
+  and retries only stored IDs. Literal API true is required for DELETED. Not-found,
+  forbidden and missed 48-hour window stay distinct; overdue/critical/recovery
+  alerts persist even when Talk is disabled. Deleted delivery remains SUCCESS.
+- Talk defaults disabled, checks private type=2/member/read-write/posting bit,
+  has an independent admin page and opt-in test consent. Activation retains old
+  backlog internally and dispatches at most three fresh alerts per tick. Ambiguous
+  alert sends are held; failures cannot undo Reporter/deletion/calendar work.
+- Existing web regression now includes the new role-protected Talk route and
+  activating Reporter with no Nextcloud URL/credentials/technical group.
+- Deployment ENV separates optional Nextcloud. health-check and cleanup-only
+  rollback mode retain pending deletion obligations. External monitoring is needed:
+  a dead worker cannot notify while dead; an internal gap alert is queued on resume.
+
+## Current execution record
+
+Full tests/build/native CI for this changed head are being recorded in the PR.
+Do not use the historical green runs below as evidence for the new contract.
+Local transport tests use mocks; the isolated local DB is PGlite and is not native
+multi-session lock evidence. GitHub Quality gate runs PostgreSQL 17 independently.
+The protected source PDF is not included in public CI artifacts.
+
+## Current remaining acceptance gates
+
+1. Final-head Quality gate and rendered browser/PDF review.
+2. **Live Acceptance Pending:** real sendDocument and visible PDF receipt, then
+   actual deleteMessage/visible removal at the scheduled 24-hour boundary, using
+   the separately authorized production recipient (not the previous test account).
+3. Controlled operational staging: timer/heartbeat, restart/expiry, durable storage,
+   snapshot restore/receipt reconciliation, cleanup-only rollback and external
+   monitor. Keep main untouched until owner explicitly authorizes merge.
+4. Optional Talk live health/post/receipt remains pending until company setup and
+   group consent; neither Talk nor Public Sharing gates direct report delivery.
+   Historical shares, if any, still require their original cleanup credentials.
+
+Detailed [Persian acceptance report](acceptance-report-fa.md),
+[Talk setup handoff](nextcloud-talk-technical-alerts-setup-fa.md), and
+[deployment/rollback runbook](automation-runbook.md).
+
+---
+
+# Historical acceptance record (preserved for traceability)
+
 # Verification and remaining merge gates
 
-Status updated 2026-10-10: draft PR #76; **not approved for production or merge**.
+Status updated 2026-10-12: draft PR #76; **not approved for production or merge**.
 
 Current requirement matrix and Persian acceptance report: [acceptance-report-fa.md](acceptance-report-fa.md).
 The calendar/logo/full-browser additions supersede the historical 2026-10-06 checkpoint below.
@@ -154,7 +217,7 @@ are not acceptance. The final documentation commit must also have a green Qualit
 gate; the PR body and Checks contain the exact final head/run without requiring a
 self-referential commit hash in this file.
 
-## Open gates
+## Historical open gates (superseded by the 2026-10-12 contract)
 
 1. **Live staging integrations:** workstation Bale send-and-receive is confirmed
    by the owner, but actual StoreX BaleClient, Nextcloud anonymous PDF/share cleanup
