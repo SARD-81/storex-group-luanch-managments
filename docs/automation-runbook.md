@@ -19,6 +19,19 @@ The Reporter settings page (`/settings/automations/reporter`) contains a **read-
 
 **Limitations:** If an external listener has consumed updates, the queue is empty, the newest private message is older than ten minutes, the unread queue has 100+ updates or the bot uses a webhook, lookup does not produce a new recipient. Do not delete production webhooks, set a negative offset or discard pending updates to force this tool to work. The manual numeric-recipient input remains available for administrators. Never paste a bot token into the web form.
 
+## Bale PDF HTTP 400 diagnostics (no secrets in logs)
+
+If `--check` reports `BOT_AND_PRIVATE_CHAT_VERIFIED` but the first opt-in PDF `--send-document-once` returns HTTP 400, the recipient exists, yet `sendDocument` was rejected. **Do not treat that as delivered.** The API's raw `description` may contain untrusted/private information; StoreX returns only an allowlisted, categorical `BALE_DOCUMENT_*` code and numeric HTTP status. A safe HTTP 400 now sets the synthetic probe record to `FAILED/GENERATED` rather than indefinitely `MANUAL_ACTION_REQUIRED/DELIVERING`; an ambiguous network/receipt error still requires human review.
+
+Troubleshooting order:
+1. Keep Reporter paused and refrain from running Worker while admin `REPORT_DELIVERY` jobs are pending. Run `node --import tsx scripts/check-bale-document-live.ts --check` for bot and private destination verification.
+2. With explicit consent of that private recipient, send exactly one *text-only* test: `node --import tsx scripts/check-bale-live.ts --send-once`. Verify physical reception, not just an API response. This isolates all-message delivery from multipart/PDF delivery.
+3. If text succeeds, inspect the categorized code of **one** newly opted-in synthetic PDF attempt, `node --import tsx scripts/check-bale-document-live.ts --send-document-once`, after ensuring no previous ambiguous probe remains. A full `BALE_DOCUMENT_BAD_REQUEST` code means the provider error did not match known patterns, **not** that its reason is proven.
+4. Previously created ambiguous synthetic probe rows (from pre-fix versions) do not become unambiguous merely by upgrading. Confirm non-reception and a definitive HTTP rejection before manually marking a specific old `live-probe:` record as rejected. Never change real `REPORT_DELIVERY` records with probe maintenance commands.
+5. Real reports' `REPORT_DELIVERY` jobs and Talk health jobs remain independent. `NEXTCLOUD_NOT_CONFIGURED` is expected when trying optional Talk without credentials and does not explain a Bale PDF 400.
+
+Never paste `BALE_BOT_TOKEN`, the raw `.env`, or a token-bearing URL into bug reports or screenshots.
+
 # Attendance, Reporter and Calendar operations
 
 Status: **draft / not approved for production deployment**. Read `verification-report.md` before merging or deploying this branch.
