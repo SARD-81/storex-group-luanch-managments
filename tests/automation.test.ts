@@ -205,10 +205,22 @@ class BaleFake {
       this.deleted.push(JSON.parse(String(init.body)).message_id);
       return Response.json({ ok: true, result: true });
     }
-    const p =
-      init.body instanceof FormData
-        ? { chat_id: init.body.get("chat_id"), text: init.body.get("caption") }
-        : JSON.parse(String(init.body));
+    let p: { chat_id: string; text: string };
+    if (input.endsWith("/sendDocument")) {
+      assert.ok(init.body instanceof Uint8Array, "production sends fixed-length multipart");
+      const bytes = Buffer.from(init.body);
+      const headers = new Headers(init.headers);
+      const ct = headers.get("Content-Type")!;
+      assert.match(ct, /^multipart\\/form-data; boundary=----storex-[a-f0-9]{32}$/);
+      assert.equal(headers.get("Content-Length"), String(bytes.byteLength));
+      const raw = bytes.toString("utf8");
+      const chat = raw.match(/name="chat_id"\\r\\n\\r\\n([0-9]+)/);
+      const caption = raw.match(/name="caption"\\r\\n\\r\\n([\\s\\S]*?)\\r\\n--/);
+      assert.ok(raw.includes('name="document"; filename="next-workday-'));
+      p = { chat_id: chat?.[1] ?? "", text: caption?.[1] ?? "" };
+    } else {
+      p = JSON.parse(String(init.body));
+    }
     assert.equal(p.chat_id, "123456");
     if (this.failures-- > 0)
       return Response.json({
