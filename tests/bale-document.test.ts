@@ -9,6 +9,7 @@ import {
 } from "../lib/automation/integrations";
 import { AutomationError } from "../lib/automation/http";
 import { probePdf } from "../lib/automation/capability-probe";
+import { buildBaleDocumentMultipart } from "../lib/automation/bale-multipart";
 import { readPrivateArtifact } from "../lib/automation/jobs";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -124,6 +125,25 @@ test("Bale 400 document errors are classified without ever exposing remote descr
   }
 });
 
+test("production multipart preserves multiline Persian report totals and original PDF bytes", () => {
+  const pdf = probePdf();
+  const caption = "گزارش روز کاری بعد: ۲۱ مهر\nصبحانه: پرسنل ۳، مهمان ۲\nناهار: پرسنل ۴، مهمان ۱";
+  const m = buildBaleDocumentMultipart("123456", pdf, "next-workday-1405-07-21.pdf", caption);
+  assert.equal(m.kind, "bale-multipart");
+  assert.equal(m.body.length, m.contentLength);
+  const pdfStart = m.body.indexOf(pdf);
+  assert.ok(pdfStart > 0);
+  assert.deepEqual(m.body.subarray(pdfStart, pdfStart + pdf.length), pdf);
+  const tail = m.body.subarray(pdfStart + pdf.length).toString("utf8");
+  const boundary = m.contentType.split("boundary=")[1];
+  assert.equal(tail,
+    "\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"caption\"\r\n\r\n" + caption + "\r\n--" + boundary + "--\r\n",
+  );
+  assert.throws(
+    () => buildBaleDocumentMultipart("123456", pdf, "next-workday-1405-07-21.pdf", "evil\r\nheader"),
+    /BALE_CAPTION_INVALID/,
+  );
+});
 test("missing Bale date uses the response-receipt timestamp", async () => {
   const b = bot(() =>
     Response.json({
