@@ -150,7 +150,7 @@ test(
     }),
 );
 test(
-  "restart after due and Reporter/Talk disabled with no Nextcloud still deletes on a holiday tick",
+  "normal worker never deletes legacy queued Bale messages after retention policy cancellation",
   dbTest,
   () =>
     fixture(async (db, bale, calls) => {
@@ -160,17 +160,10 @@ test(
         deleteBeforeAt: new Date("2026-10-10T06:00:00Z"),
       });
       await workerTick(db, new Date("2026-10-09T06:01:00Z"), { bale });
-      assert.equal(calls.length, 1);
-      const final = await db.reportDelivery.findUniqueOrThrow({
-        where: { id: d.id },
-      });
-      assert.equal(final.deletionStatus, "DELETED");
-      assert.ok(final.deletionOverdueAt);
-      assert.ok(
-        (await db.automationAlert.findMany()).some((a) =>
-          a.alertKey.startsWith("bale-delete-overdue:"),
-        ),
-      );
+      assert.equal(calls.length, 0);
+      const final = await db.reportDelivery.findUniqueOrThrow({ where: { id: d.id } });
+      assert.equal(final.deletionStatus, "SCHEDULED");
+      assert.equal(final.deletedAt, null);
     }),
 );
 test(
