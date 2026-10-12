@@ -4,45 +4,17 @@
  * Never runs under the worker, never retries, never stores business data.
  */
 import "dotenv/config";
-import { chromium } from "playwright";
+import { createSyntheticBalePdf } from "../lib/automation/bale-synthetic-pdf";
 import { prisma } from "../lib/prisma";
 import { getAutomationConfig } from "../lib/automation/config";
 import { BaleClient, classifyBaleDocumentBadRequest } from "../lib/automation/integrations";
-import { validateBalePdf } from "../lib/automation/integrations";
 import { safeFetch, AutomationError } from "../lib/automation/http";
 import { buildKnownLengthBaleDocumentMultipart } from "../lib/automation/bale-diagnostic-multipart";
-import { createHash } from "node:crypto";
 
 type BaleResult = { ok?: unknown; result?: {
   message_id?: unknown;
   chat?: { id?: unknown; type?: unknown };
 }; error_code?: unknown; description?: unknown };
-
-async function makeSyntheticPdf(): Promise<Buffer> {
-  const browser = await chromium.launch({ headless: true });
-  try {
-    const page = await browser.newPage();
-    await page.setContent(
-      '<!doctype html><html><head><meta charset="UTF-8"></head>' +
-      '<body style="font:18px Arial,sans-serif; padding:24px">' +
-      '<h1>StoreX PDF transport test</h1>' +
-      '<p>Synthetic diagnostic PDF. No company or employee data.</p>' +
-      '<p>Used only to diagnose Bale sendDocument file delivery.</p>' +
-      '</body></html>',
-      { waitUntil: "load" },
-    );
-    const pdf = Buffer.from(await page.pdf({ format: "A5", printBackground: true }));
-    validateBalePdf({
-      bytes: pdf,
-      filename: "storex-diagnostic.pdf",
-      mimeType: "application/pdf",
-      sha256: createHash("sha256").update(pdf).digest("hex"),
-    });
-    return pdf;
-  } finally {
-    await browser.close();
-  }
-}
 
 async function main() {
   const mode = process.argv[2] ?? "--check";
@@ -57,7 +29,7 @@ async function main() {
   const bale = new BaleClient();
   await bale.health();
   await bale.privateChat(config.reportRecipient);
-  const pdf = await makeSyntheticPdf();
+  const pdf = await createSyntheticBalePdf();
   console.log(JSON.stringify({
     stage: "KNOWN_LENGTH_UPLOAD_READY",
     success: true,
