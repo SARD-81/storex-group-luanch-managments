@@ -285,7 +285,7 @@ export class BaleClient {
   }
   async call(
     method:
-      "getMe" | "getChat" | "sendMessage" | "sendDocument" | "deleteMessage",
+      "getMe" | "getChat" | "getUpdates" | "getWebhookInfo" | "sendMessage" | "sendDocument" | "deleteMessage",
     payload: Record<string, unknown> | FormData = {},
   ) {
     const token = process.env.BALE_BOT_TOKEN;
