@@ -148,9 +148,11 @@ export const BAHMAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "APPENDIX_TABLE",
   },
   {
-    eventKey: "1405-11-21-appendix-01-martial-law-broken-by-imam-khomeini-order",
+    eventKey:
+      "1405-11-21-appendix-01-martial-law-broken-by-imam-khomeini-order",
     jalaliDateKey: "1405-11-21",
-    title: "شکسته شدن حکومت نظامی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
+    title:
+      "شکسته شدن حکومت نظامی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -172,7 +174,8 @@ export const BAHMAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-11-25-appendix-01-salman-rushdie-apostasy-ruling",
     jalaliDateKey: "1405-11-25",
-    title: "صدور حکم تاریخی حضرت امام خمینی (رحمة‌الله علیه) مبنی بر ارتداد سلمان رشدی نویسنده خائن کتاب آیات شیطانی (۱۳۶۷ هـ ش)",
+    title:
+      "صدور حکم تاریخی حضرت امام خمینی (رحمة‌الله علیه) مبنی بر ارتداد سلمان رشدی نویسنده خائن کتاب آیات شیطانی (۱۳۶۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -213,5 +216,16 @@ export const BAHMAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 2,
     sourcePage: 13,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-11-11-occupations-31",
+    jalaliDateKey: "1405-11-11",
+    title: "روز ویراستار",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

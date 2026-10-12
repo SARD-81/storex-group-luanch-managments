@@ -133,9 +133,7 @@ export function formatUserAdminWeeklyPlan({
       .join(" | ");
   }
 
-  const enabledPreferences = weeklyPreferences.filter(
-    (preference) => preference.isEnabled,
-  );
+  const enabledPreferences: WeeklyPreference[] = []; // Legacy preferences are history only.
 
   if (enabledPreferences.length === 0 && !hasCalendarPlanDays) {
     return "برنامه‌ای ثبت نشده است";

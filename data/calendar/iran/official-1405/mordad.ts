@@ -26,7 +26,8 @@ export const MORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-05-05-appendix-02-first-friday-prayer-after-revolution",
     jalaliDateKey: "1405-05-05",
-    title: "اقامه اولین نماز جمعه با حکم حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    title:
+      "اقامه اولین نماز جمعه با حکم حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
     type: "RELIGIOUS",
     calendarType: "JALALI",
     isHoliday: false,
@@ -35,7 +36,8 @@ export const MORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "APPENDIX_TABLE",
   },
   {
-    eventKey: "1405-05-06-appendix-01-entrepreneurship-and-technical-vocational-training-day",
+    eventKey:
+      "1405-05-06-appendix-01-entrepreneurship-and-technical-vocational-training-day",
     jalaliDateKey: "1405-05-06",
     title: "روز کارآفرینی و آموزش‌های فنی و حرفه‌ای",
     type: "NATIONAL",
@@ -138,7 +140,8 @@ export const MORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-05-15-appendix-01-hiroshima-atomic-bombing",
     jalaliDateKey: "1405-05-15",
-    title: "انفجار بمب اتمی آمریکا در هیروشیما با بیش از ۱۶۰ هزار کشته و مجروح (۱۹۴۵ میلادی)",
+    title:
+      "انفجار بمب اتمی آمریکا در هیروشیما با بیش از ۱۶۰ هزار کشته و مجروح (۱۹۴۵ میلادی)",
     type: "INTERNATIONAL",
     calendarType: "GREGORIAN",
     isHoliday: false,
@@ -305,9 +308,11 @@ export const MORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-05-28-appendix-02-assembly-of-experts-constitutional-review-opening",
+    eventKey:
+      "1405-05-28-appendix-02-assembly-of-experts-constitutional-review-opening",
     jalaliDateKey: "1405-05-28",
-    title: "گشایش مجلس خبرگان برای بررسی نهایی قانون اساسی جمهوری اسلامی ایران (۱۳۵۸ هـ ش)",
+    title:
+      "گشایش مجلس خبرگان برای بررسی نهایی قانون اساسی جمهوری اسلامی ایران (۱۳۵۸ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,

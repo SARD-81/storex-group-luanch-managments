@@ -196,7 +196,8 @@ export const FARVARDIN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-01-19-appendix-01-shahid-sadr-and-bint-al-huda",
     jalaliDateKey: "1405-01-19",
-    title: "شهادت آیت‌الله سیدمحمدباقر صدر و خواهر ایشان بنت‌الهدی به دست حکومت بعث عراق (۱۳۵۹ هـ ش)",
+    title:
+      "شهادت آیت‌الله سیدمحمدباقر صدر و خواهر ایشان بنت‌الهدی به دست حکومت بعث عراق (۱۳۵۹ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -251,7 +252,8 @@ export const FARVARDIN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-01-21-main-02-account-100",
     jalaliDateKey: "1405-01-21",
-    title: "سالروز افتتاح حساب شماره ۱۰۰ به فرمان حضرت امام خمینی (رحمة‌الله علیه)",
+    title:
+      "سالروز افتتاح حساب شماره ۱۰۰ به فرمان حضرت امام خمینی (رحمة‌الله علیه)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -359,6 +361,17 @@ export const FARVARDIN_1405_EVENTS: OfficialCalendarEvent1405[] = [
     isHoliday: false,
     displayOrder: 1,
     sourcePage: 15,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-01-30-occupations-01",
+    jalaliDateKey: "1405-01-30",
+    title: "روز آزمایشگاهیان",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 4,
+    sourcePage: 17,
     sourceSection: "APPENDIX_TABLE",
   },
 ];

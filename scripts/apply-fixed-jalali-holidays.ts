@@ -1,4 +1,9 @@
 import "dotenv/config";
+import {
+  attendanceTransaction,
+  reconcileCalendarAttendanceTx,
+  attendanceAudit,
+} from "../lib/attendance/reconciliation";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
   CalendarDateSystem,
@@ -43,7 +48,9 @@ function toJalaliDateKey(year: number, month: number, day: number): string {
 async function main() {
   const year = parseYearArg();
   const isDryRun = process.argv.includes("--dry-run");
-  const sourceName = parseArgValue("--source-name=") ?? "internal-fixed-jalali-official-holidays";
+  const sourceName =
+    parseArgValue("--source-name=") ??
+    "internal-fixed-jalali-official-holidays";
   const sourceVersion = parseArgValue("--source-version=") ?? "fixed-jalali-v1";
 
   const targets = FIXED_JALALI_OFFICIAL_HOLIDAYS.map((holiday) => ({
@@ -73,7 +80,7 @@ async function main() {
   try {
     const dateKeys = targets.map((target) => target.jalaliDateKey);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await attendanceTransaction(prisma, async (tx) => {
       const calendarDays = await tx.calendarDay.findMany({
         where: {
           jalaliDateKey: {
@@ -85,15 +92,22 @@ async function main() {
           jalaliDateKey: true,
           isWeeklyOffDay: true,
           isManualHoliday: true,
+          holidayTitle: true,
           isForcedWorkday: true,
         },
       });
 
-      const dayByJalaliDateKey = new Map(calendarDays.map((day) => [day.jalaliDateKey, day]));
-      const missingDateKeys = dateKeys.filter((key) => !dayByJalaliDateKey.has(key));
+      const dayByJalaliDateKey = new Map(
+        calendarDays.map((day) => [day.jalaliDateKey, day]),
+      );
+      const missingDateKeys = dateKeys.filter(
+        (key) => !dayByJalaliDateKey.has(key),
+      );
 
       if (missingDateKeys.length > 0) {
-        throw new Error(`Missing CalendarDay rows for jalaliDateKeys: ${missingDateKeys.join(", ")}`);
+        throw new Error(
+          `Missing CalendarDay rows for jalaliDateKeys: ${missingDateKeys.join(", ")}`,
+        );
       }
 
       let updatedCalendarDayRows = 0;
@@ -114,7 +128,9 @@ async function main() {
           where: { id: calendarDay.id },
           data: {
             isOfficialHoliday: true,
-            holidayTitle: target.title,
+            holidayTitle: calendarDay.isManualHoliday
+              ? calendarDay.holidayTitle
+              : target.title,
             sourceName,
             sourceVersion,
             isWorkday,
@@ -165,6 +181,13 @@ async function main() {
         }
       }
 
+      await reconcileCalendarAttendanceTx(tx);
+      await attendanceAudit(tx, "CALENDAR_DATASET_APPLIED", null, {
+        year,
+        sourceName,
+        sourceVersion,
+        mode: "LEGACY_IMPORT",
+      });
       return {
         updatedCalendarDayRows,
         createdCalendarEventRows,
@@ -175,8 +198,12 @@ async function main() {
     console.log(`Applied fixed Jalali official holidays for year: ${year}`);
     console.log(`Target holidays: ${targets.length}`);
     console.log(`Updated CalendarDay rows: ${result.updatedCalendarDayRows}`);
-    console.log(`Created CalendarEvent rows: ${result.createdCalendarEventRows}`);
-    console.log(`Updated CalendarEvent rows: ${result.updatedCalendarEventRows}`);
+    console.log(
+      `Created CalendarEvent rows: ${result.createdCalendarEventRows}`,
+    );
+    console.log(
+      `Updated CalendarEvent rows: ${result.updatedCalendarEventRows}`,
+    );
   } finally {
     await prisma.$disconnect();
   }

@@ -53,6 +53,7 @@ export async function getUserCurrentMonthAttendanceData(userId: string) {
       date: true,
       mealType: true,
       status: true,
+      source: true,
     },
   });
 
@@ -81,6 +82,8 @@ export async function getUserCurrentMonthAttendanceData(userId: string) {
       isSelectable: policy.isSelectable,
       deadline: getAttendanceDeadline(date),
       isToday: getTehranDateKey(now) === policy.dateKey,
+      breakfastLocked: attendances.some(a => getDateKey(a.date) === policy.dateKey && a.mealType === MealType.BREAKFAST && a.source === "ADMIN_OVERRIDE"),
+      lunchLocked: attendances.some(a => getDateKey(a.date) === policy.dateKey && a.mealType === MealType.LUNCH && a.source === "ADMIN_OVERRIDE"),
       breakfastStatus: meals?.get(MealType.BREAKFAST) ?? AttendanceStatus.ABSENT,
       lunchStatus: meals?.get(MealType.LUNCH) ?? AttendanceStatus.ABSENT,
       isWorkDay: policy.isWorkday === true,

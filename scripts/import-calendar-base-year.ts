@@ -1,4 +1,9 @@
 import "dotenv/config";
+import {
+  attendanceTransaction,
+  reconcileCalendarAttendanceTx,
+  attendanceAudit,
+} from "../lib/attendance/reconciliation";
 import { PrismaPg } from "@prisma/adapter-pg";
 import {
   CalendarDateSystem,
@@ -6,7 +11,10 @@ import {
   PrismaClient,
 } from "../app/generated/prisma/client";
 import { buildBaseJalaliYearDays } from "../lib/calendar/calendar-date";
-import { isBaseWeeklyOffDay, resolveCalendarWorkday } from "../lib/calendar/calendar-workday";
+import {
+  isBaseWeeklyOffDay,
+  resolveCalendarWorkday,
+} from "../lib/calendar/calendar-workday";
 
 function parseArgValue(prefix: string): string | undefined {
   const arg = process.argv.find((value) => value.startsWith(prefix));
@@ -39,7 +47,8 @@ function parseYearArg(): number {
 async function main() {
   const targetYear = parseYearArg();
   const isDryRun = process.argv.includes("--dry-run");
-  const sourceName = parseArgValue("--source-name=") ?? "internal-base-jalali-calendar";
+  const sourceName =
+    parseArgValue("--source-name=") ?? "internal-base-jalali-calendar";
   const sourceVersion = parseArgValue("--source-version=") ?? "base-v1";
 
   const generatedRows = buildBaseJalaliYearDays(targetYear);
@@ -84,7 +93,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await attendanceTransaction(prisma, async (tx) => {
       const batch = await tx.calendarImportBatch.create({
         data: {
           year: targetYear,
@@ -114,7 +123,9 @@ async function main() {
         },
       });
 
-      const existingByDateKey = new Map(existingRows.map((row) => [row.dateKey, row]));
+      const existingByDateKey = new Map(
+        existingRows.map((row) => [row.dateKey, row]),
+      );
 
       for (const row of generatedRows) {
         const existing = existingByDateKey.get(row.dateKey);
@@ -172,6 +183,13 @@ async function main() {
         });
       }
 
+      await reconcileCalendarAttendanceTx(tx);
+      await attendanceAudit(tx, "CALENDAR_DATASET_APPLIED", null, {
+        year: targetYear,
+        sourceName,
+        sourceVersion,
+        mode: "LEGACY_IMPORT",
+      });
       return {
         batchId: batch.id,
       };

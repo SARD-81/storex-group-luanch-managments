@@ -49,7 +49,8 @@ export const ABAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-08-04-main-01-imam-khomeini-capitulation-protest",
     jalaliDateKey: "1405-08-04",
-    title: "اعتراض و افشاگری حضرت امام خمینی (رحمة‌الله علیه) علیه پذیرش کاپیتولاسیون (۱۳۴۳ هـ ش)",
+    title:
+      "اعتراض و افشاگری حضرت امام خمینی (رحمة‌الله علیه) علیه پذیرش کاپیتولاسیون (۱۳۴۳ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -115,7 +116,8 @@ export const ABAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-08-10-main-01-first-mihrab-martyr-ghazi-tabatabaei",
     jalaliDateKey: "1405-08-10",
-    title: "شهادت اولین شهید محراب، آیت‌الله قاضی طباطبایی به دست منافقان (۱۳۵۸ هـ ش)",
+    title:
+      "شهادت اولین شهید محراب، آیت‌الله قاضی طباطبایی به دست منافقان (۱۳۵۸ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -159,7 +161,8 @@ export const ABAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-08-13-appendix-04-imam-khomeini-exile-to-turkey",
     jalaliDateKey: "1405-08-13",
-    title: "تبعید حضرت امام خمینی (رحمة‌الله علیه) از ایران به ترکیه (۱۳۴۳ هـ ش)",
+    title:
+      "تبعید حضرت امام خمینی (رحمة‌الله علیه) از ایران به ترکیه (۱۳۴۳ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -247,7 +250,8 @@ export const ABAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-08-24-main-02-allameh-seyyed-mohammad-hossein-tabatabaei-day",
+    eventKey:
+      "1405-08-24-main-02-allameh-seyyed-mohammad-hossein-tabatabaei-day",
     jalaliDateKey: "1405-08-24",
     title: "روز بزرگداشت آیت‌الله علامه سیدمحمدحسین طباطبایی (۱۳۶۰ هـ ش)",
     type: "CULTURAL",
@@ -311,5 +315,38 @@ export const ABAN_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 3,
     sourcePage: 10,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-08-01-occupations-19",
+    jalaliDateKey: "1405-08-01",
+    title: "روز صنعت ساختمان",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 4,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-08-08-occupations-20",
+    jalaliDateKey: "1405-08-08",
+    title: "روز محیط‌بان",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 4,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-08-25-occupations-21",
+    jalaliDateKey: "1405-08-25",
+    title: "روز صنعت نوشت‌افزار",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

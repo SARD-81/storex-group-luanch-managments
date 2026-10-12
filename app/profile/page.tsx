@@ -1,3 +1,4 @@
+import { CompanyLogo } from "@/components/branding/company-logo";
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
@@ -52,6 +53,7 @@ export default async function ProfilePage({
 
       <div className="relative z-10 mx-auto flex max-w-5xl flex-col gap-6">
         <header className="dashboard-glass-card flex flex-col gap-5">
+          <CompanyLogo />
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <p className="mb-2 text-sm text-muted-foreground">

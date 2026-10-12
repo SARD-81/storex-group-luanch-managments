@@ -1,5 +1,4 @@
-import { existsSync } from "fs";
-import path from "path";
+import { getCurrentLogo } from "@/lib/branding/logo";
 import ExcelJS from "exceljs";
 import {
   AuditAction,
@@ -190,15 +189,19 @@ export async function GET() {
   worksheet.mergeCells("G2:H3");
   styleRange(worksheet, 2, 7, 8, { font: { bold: true } });
   styleRange(worksheet, 3, 7, 8, { font: { bold: true } });
-  const logoPath = path.join(process.cwd(), "public", "company-logo.png");
-  if (existsSync(logoPath)) {
+  const companyLogo = await getCurrentLogo(prisma);
+  if (companyLogo) {
+    const logoScale = Math.min(70 / companyLogo.width, 35 / companyLogo.height);
     const logoId = workbook.addImage({
-      filename: logoPath,
+      base64: `data:image/png;base64,${companyLogo.bytes.toString("base64")}`,
       extension: "png",
     });
     worksheet.addImage(logoId, {
       tl: { col: 6.15, row: 1.2 },
-      ext: { width: 70, height: 35 },
+      ext: {
+        width: companyLogo.width * logoScale,
+        height: companyLogo.height * logoScale,
+      },
     });
   }
 

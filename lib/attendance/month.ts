@@ -39,8 +39,9 @@ function addUtcDays(date: Date, days: number) {
 }
 
 export function getCurrentJalaliMonthRange(now = new Date()) {
+  const tehranDate = parseDateKey(getTehranDateKey(now))!;
   const nowInPersian = new DateObject({
-    date: now,
+    date: new Date(tehranDate.getUTCFullYear(), tehranDate.getUTCMonth(), tehranDate.getUTCDate()),
     calendar: persian,
   });
 

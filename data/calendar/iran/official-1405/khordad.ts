@@ -2,7 +2,8 @@ import type { OfficialCalendarEvent1405 } from "./types";
 
 export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
-    eventKey: "1405-03-01-main-01-productivity-and-consumption-optimization-day",
+    eventKey:
+      "1405-03-01-main-01-productivity-and-consumption-optimization-day",
     jalaliDateKey: "1405-03-01",
     title: "روز بهره‌وری و بهینه‌سازی مصرف",
     type: "NATIONAL",
@@ -26,7 +27,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-03-02-main-01-hajj-pilgrims-martyrdom-by-saudi-agents",
     jalaliDateKey: "1405-03-02",
-    title: "شهادت مظلومانه زائران خانه خدا به دست مأموران آل سعود (۱۳۶۶ هـ ش و برابر با ۶ ذی‌الحجه ۱۴۰۷ هـ ق)",
+    title:
+      "شهادت مظلومانه زائران خانه خدا به دست مأموران آل سعود (۱۳۶۶ هـ ش و برابر با ۶ ذی‌الحجه ۱۴۰۷ هـ ق)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -137,7 +139,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-03-07-appendix-01-first-islamic-consultative-assembly-opening",
+    eventKey:
+      "1405-03-07-appendix-01-first-islamic-consultative-assembly-opening",
     jalaliDateKey: "1405-03-07",
     title: "افتتاح اولین دوره مجلس شورای اسلامی (۱۳۵۹ هـ ش)",
     type: "OFFICIAL",
@@ -186,7 +189,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-03-14-main-02-imam-khomeini-demise",
     jalaliDateKey: "1405-03-14",
-    title: "رحلت حضرت امام خمینی رهبر کبیر انقلاب و بنیانگذار جمهوری اسلامی ایران (۱۳۶۸ هـ ش)",
+    title:
+      "رحلت حضرت امام خمینی رهبر کبیر انقلاب و بنیانگذار جمهوری اسلامی ایران (۱۳۶۸ هـ ش)",
     type: "NATIONAL",
     calendarType: "JALALI",
     isHoliday: true,
@@ -230,7 +234,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-03-15-appendix-03-imam-khomeini-imprisonment",
     jalaliDateKey: "1405-03-15",
-    title: "زندانی شدن حضرت امام خمینی (رحمة‌الله علیه) به دست مأموران ستم‌شاهی پهلوی (۱۳۴۲ هـ ش)",
+    title:
+      "زندانی شدن حضرت امام خمینی (رحمة‌الله علیه) به دست مأموران ستم‌شاهی پهلوی (۱۳۴۲ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -352,9 +357,11 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
     sourceSection: "MAIN_MONTH_TABLE",
   },
   {
-    eventKey: "1405-03-26-main-04-bokharaei-amani-saffar-herandi-niknejad-martyrdom",
+    eventKey:
+      "1405-03-26-main-04-bokharaei-amani-saffar-herandi-niknejad-martyrdom",
     jalaliDateKey: "1405-03-26",
-    title: "شهادت سربازان دلیر اسلام: بخارایی، امانی، صفار هرندی و نیک‌نژاد (۱۳۴۴ هـ ش)",
+    title:
+      "شهادت سربازان دلیر اسلام: بخارایی، امانی، صفار هرندی و نیک‌نژاد (۱۳۴۴ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -376,7 +383,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-03-27-main-02-jahad-keshavarzi-day",
     jalaliDateKey: "1405-03-27",
-    title: "روز جهاد کشاورزی (تشکیل جهاد سازندگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) در ۱۳۵۸ هـ ش)",
+    title:
+      "روز جهاد کشاورزی (تشکیل جهاد سازندگی به فرمان حضرت امام خمینی (رحمة‌الله علیه) ۱۳۵۸ هـ ش)",
     type: "NATIONAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -410,7 +418,8 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-03-30-appendix-01-razavi-shrine-pilgrims-martyrdom",
     jalaliDateKey: "1405-03-30",
-    title: "شهادت زائران حرم رضوی علیه‌السلام به دست ایادی آمریکا (عاشورای ۱۳۷۳ هـ ش)",
+    title:
+      "شهادت زائران حرم رضوی علیه‌السلام به دست ایادی آمریکا (عاشورای ۱۳۷۳ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -439,5 +448,38 @@ export const KHORDAD_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 2,
     sourcePage: 5,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-03-07-occupations-07",
+    jalaliDateKey: "1405-03-07",
+    title: "روز نقشه‌برداری",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-03-08-occupations-08",
+    jalaliDateKey: "1405-03-08",
+    title: "روز مشاور املاک",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-03-30-occupations-09",
+    jalaliDateKey: "1405-03-30",
+    title: "روز صنعت موتورسیکلت",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

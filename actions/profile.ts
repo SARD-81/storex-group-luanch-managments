@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { normalizeLogo } from "@/lib/branding/logo";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
@@ -80,7 +81,7 @@ export async function updateMyPasswordAction(formData: FormData) {
   const auditContext = await getAuditRequestContext();
   const newPassword = formData.get("newPassword")?.toString() ?? "";
 
-  if (newPassword.length < 8) {
+  if (newPassword.length < 8 || newPassword.length > 256) {
     redirect("/profile?error=invalid-password");
   }
 
@@ -125,13 +126,20 @@ export async function updateMyAvatarAction(formData: FormData) {
     redirect("/profile?error=avatar-size");
   }
 
-  const avatarImage = Buffer.from(await avatar.arrayBuffer());
+  let avatarImage: Buffer;
+  try {
+    avatarImage = (await normalizeLogo(Buffer.from(await avatar.arrayBuffer())))
+      .bytes;
+  } catch {
+    redirect("/profile?error=avatar-type");
+  }
+  if (avatarImage.length > 512 * 1024) redirect("/profile?error=avatar-size");
 
   await prisma.user.update({
     where: { id: currentUser.id },
     data: {
-      avatarImage,
-      avatarMimeType: avatar.type,
+      avatarImage: new Uint8Array(avatarImage),
+      avatarMimeType: "image/png",
       avatarUpdatedAt: new Date(),
     },
   });
@@ -148,8 +156,8 @@ export async function updateMyAvatarAction(formData: FormData) {
       avatarUpdatedAt: currentUser.avatarUpdatedAt,
     },
     after: {
-      avatarMimeType: avatar.type,
-      avatarSize: avatar.size,
+      avatarMimeType: "image/png",
+      avatarSize: avatarImage.length,
     },
     ...auditContext,
   });

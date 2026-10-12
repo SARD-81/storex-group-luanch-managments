@@ -12,10 +12,8 @@ function createPrismaClient() {
 
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "production"
-        ? ["error", "warn"]
-        : ["query", "error", "warn"],
+    // Integration metadata and public URLs must never enter SQL logs.
+    log: [],
   });
 }
 

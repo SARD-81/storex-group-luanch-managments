@@ -71,7 +71,8 @@ export const MEHR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-07-07-main-01-commanders-martyrdom",
     jalaliDateKey: "1405-07-07",
-    title: "شهادت سرداران اسلام: فلاحی، فکوری، نامجو، کلاهدوز و جهان‌آرا (۱۳۶۰ هـ ش)",
+    title:
+      "شهادت سرداران اسلام: فلاحی، فکوری، نامجو، کلاهدوز و جهان‌آرا (۱۳۶۰ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -297,7 +298,8 @@ export const MEHR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-07-23-main-01-fifth-mihrab-martyr-ashrafi-esfahani",
     jalaliDateKey: "1405-07-23",
-    title: "شهادت پنجمین شهید محراب، آیت‌الله اشرفی اصفهانی به دست منافقان (۱۳۶۱ هـ ش)",
+    title:
+      "شهادت پنجمین شهید محراب، آیت‌الله اشرفی اصفهانی به دست منافقان (۱۳۶۱ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -365,7 +367,8 @@ export const MEHR_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-07-24-appendix-05-kerman-jameh-mosque-burning",
     jalaliDateKey: "1405-07-24",
-    title: "سالروز واقعه به آتش کشیدن مسجد جامع شهر کرمان به دست دژخیمان حکومت پهلوی (۱۳۵۷ هـ ش)",
+    title:
+      "سالروز واقعه به آتش کشیدن مسجد جامع شهر کرمان به دست دژخیمان حکومت پهلوی (۱۳۵۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -417,5 +420,16 @@ export const MEHR_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 1,
     sourcePage: 9,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-07-24-occupations-18",
+    jalaliDateKey: "1405-07-24",
+    title: "روز صنعت آسانسور و پله برقی",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 7,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];

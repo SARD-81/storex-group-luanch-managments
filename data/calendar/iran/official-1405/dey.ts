@@ -106,7 +106,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-07-main-01-literacy-movement-formation",
     jalaliDateKey: "1405-10-07",
-    title: "تشکیل نهضت سوادآموزی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
+    title:
+      "تشکیل نهضت سوادآموزی به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۸ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -117,7 +118,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-07-appendix-02-shahid-hossein-ghaffari",
     jalaliDateKey: "1405-10-07",
-    title: "شهادت آیت‌الله حسین غفاری به دست مأموران ستم‌شاهی پهلوی (۱۳۵۳ هـ ش)",
+    title:
+      "شهادت آیت‌الله حسین غفاری به دست مأموران ستم‌شاهی پهلوی (۱۳۵۳ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -195,7 +197,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-13-main-02-soleimani-martyrdom",
     jalaliDateKey: "1405-10-13",
-    title: "شهادت الگوی اخلاص و عمل سردار سپهبد قاسم سلیمانی به دست استکبار جهانی",
+    title:
+      "شهادت الگوی اخلاص و عمل سردار سپهبد قاسم سلیمانی به دست استکبار جهانی",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -206,7 +209,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-13-appendix-03-imam-khomeini-message-to-gorbachev",
     jalaliDateKey: "1405-10-13",
-    title: "ابلاغ پیام تاریخی حضرت امام خمینی (رحمة‌الله علیه) به گورباچف رهبر شوروی سابق (۱۳۶۷ هـ ش)",
+    title:
+      "ابلاغ پیام تاریخی حضرت امام خمینی (رحمة‌الله علیه) به گورباچف رهبر شوروی سابق (۱۳۶۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -341,7 +345,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-22-main-03-revolutionary-council-formation",
     jalaliDateKey: "1405-10-22",
-    title: "تشکیل شورای انقلاب به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
+    title:
+      "تشکیل شورای انقلاب به فرمان حضرت امام خمینی (رحمة‌الله علیه) (۱۳۵۷ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -420,7 +425,8 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
   {
     eventKey: "1405-10-27-main-01-fadayan-e-islam-martyrs",
     jalaliDateKey: "1405-10-27",
-    title: "شهادت نواب صفوی، طهماسبی، برادران واحدی و ذوالقدر از فداییان اسلام (۱۳۳۴ هـ ش)",
+    title:
+      "شهادت نواب صفوی، طهماسبی، برادران واحدی و ذوالقدر از فداییان اسلام (۱۳۳۴ هـ ش)",
     type: "OFFICIAL",
     calendarType: "JALALI",
     isHoliday: false,
@@ -450,5 +456,60 @@ export const DEY_1405_EVENTS: OfficialCalendarEvent1405[] = [
     displayOrder: 2,
     sourcePage: 12,
     sourceSection: "MAIN_MONTH_TABLE",
+  },
+  {
+    eventKey: "1405-10-01-occupations-26",
+    jalaliDateKey: "1405-10-01",
+    title: "روز آرایشگر",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-10-06-occupations-27",
+    jalaliDateKey: "1405-10-06",
+    title: "روز دفاتر اسناد رسمی",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-10-08-occupations-28",
+    jalaliDateKey: "1405-10-08",
+    title: "روز صنعت سیمان",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-10-20-occupations-29",
+    jalaliDateKey: "1405-10-20",
+    title: "روز قناد، صنعت شیرینی و شکلات",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 2,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
+  },
+  {
+    eventKey: "1405-10-29-occupations-30",
+    jalaliDateKey: "1405-10-29",
+    title: "روز معاینه فنی خودرو",
+    type: "ORGANIZATIONAL",
+    calendarType: "JALALI",
+    isHoliday: false,
+    displayOrder: 1,
+    sourcePage: 17,
+    sourceSection: "APPENDIX_TABLE",
   },
 ];
