@@ -778,6 +778,65 @@ test(
 );
 
 test(
+  "worker preserves GENERATED after definite Bale rejection and resumes the same report once",
+  dbTest,
+  () =>
+    fixture(async (db, c, cloud, _remote, bale, bot) => {
+      await db.automationConfig.create({
+        data: { ...c, id: "singleton", reporterEnabled: false, talkEnabled: false, health: undefined },
+      });
+      const current = new Date("2026-10-06T11:00:00Z"); // 14:30 Tehran, past final retry.
+      const future = await db.calendarDay.findFirstOrThrow({
+        where: { dateKey: { gt: "2026-10-06" }, isWorkday: true },
+        orderBy: { date: "asc" },
+      });
+      const job = await ensureJob(
+        db, "REPORT_DELIVERY", `report-send:${future.jalaliDateKey}`,
+        future.dateKey, { requestedBy: "ADMIN_TEST" },
+      );
+      let renders = 0;
+      const deps = {
+        bale, cloud,
+        pdf: async () => { renders++; return probePdf(); },
+      };
+      bot.failures = 1; // Explicit remote rejection, not an ambiguous receipt.
+      await workerTick(db, current, deps);
+      const failed = await db.reportDelivery.findUniqueOrThrow({
+        where: { reportDateKey: future.dateKey },
+      });
+      assert.equal(failed.status, "FAILED");
+      assert.equal(failed.stage, "GENERATED");
+      assert.ok(failed.artifactId);
+      assert.equal(failed.baleMessageId, null);
+      const firstJob = await db.automationJobRun.findUniqueOrThrow({ where: { id: job.id } });
+      assert.equal(firstJob.status, "FAILED");
+      assert.equal(firstJob.errorCode, "BALE_REJECTED");
+      assert.equal(firstJob.attempt, 1);
+      assert.equal(bot.messages.length, 0);
+      // Simulate an authorized manual retry after confirming the provider refused the send.
+      await db.automationJobRun.update({
+        where: { id: job.id },
+        data: { status: "PENDING", nextRetryAt: null, metadata: { requestedBy: "ADMIN_TEST" } },
+      });
+      await workerTick(db, new Date(current.getTime() + 60000), deps);
+      await workerTick(db, new Date(current.getTime() + 120000), deps);
+      const delivered = await db.reportDelivery.findUniqueOrThrow({
+        where: { reportDateKey: future.dateKey },
+      });
+      assert.equal(delivered.status, "SUCCESS");
+      assert.equal(delivered.stage, "DELIVERED");
+      assert.equal(delivered.artifactId, failed.artifactId);
+      assert.equal(delivered.deletionStatus, "NOT_APPLICABLE");
+      assert.equal(delivered.deleteDueAt, null);
+      assert.equal(delivered.deleteBeforeAt, null);
+      assert.equal(renders, 1);
+      assert.equal(bot.messages.length, 1);
+      const finalJob = await db.automationJobRun.findUniqueOrThrow({ where: { id: job.id } });
+      assert.equal(finalJob.status, "SUCCESS");
+      assert.equal(finalJob.attempt, 2);
+    }),
+);
+test(
   "separate PostgreSQL connections enforce a single worker",
   {
     skip: !process.env.TEST_DATABASE_URL || process.env.TEST_PGLITE === "true",
