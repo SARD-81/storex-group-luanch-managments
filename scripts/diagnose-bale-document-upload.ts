@@ -46,7 +46,7 @@ async function makeSyntheticPdf(): Promise<Buffer> {
 
 async function main() {
   const mode = process.argv[2] ?? "--check";
-  if (!["--check", "--send-once"].includes(mode) || process.argv.length > 3)
+  if (!["--check", "--send-once", "--send-with-caption-once"].includes(mode) || process.argv.length > 3)
     throw new Error("INVALID_DIAGNOSTIC_ARGUMENT");
   if (process.env.STOREX_ENVIRONMENT !== "staging")
     throw new Error("CONTROLLED_STAGING_REQUIRED");
@@ -74,6 +74,10 @@ async function main() {
   const input = buildKnownLengthBaleDocumentMultipart(
     config.reportRecipient,
     pdf,
+    "storex-diagnostic.pdf",
+    mode === "--send-with-caption-once"
+      ? "آزمون فایل PDF استورکس؛ این متن صرفاً کپشن آزمایشی است و هیچ اطلاعاتی از کارکنان ندارد."
+      : undefined,
   );
   // Use the same pinned-host HTTPS transport as production, but write a
   // fixed-length multipart body instead of the standard FormData encoder.
@@ -123,6 +127,7 @@ async function main() {
     messageId: String(result.message_id),
     manualReceptionConfirmationRequired: true,
     automaticDeletion: false,
+    includedCaption: mode === "--send-with-caption-once",
   }));
 }
 
