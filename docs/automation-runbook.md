@@ -1,3 +1,7 @@
+## Current policy (2026-10-12): no automatic deletion of Bale PDF messages
+
+The owner removed the 24-hour retention requirement. New direct Bale PDF reports and opt-in synthetic test documents remain in the private chat without an application-enforced expiry. The worker does not invoke Bale deleteMessage, including for previously queued deletion records. Existing deletion metadata is retained as historical evidence, never interpreted as a new deletion requirement. The previous deletion instructions below are obsolete and preserved only for migration history. Do not enable manual retry/deletion on the basis of those instructions. Nextcloud legacy share cleanup is independent and remains supported. Successful deliveries remain idempotent. To live-test, pause Reporter, configure the authorized recipient private chat, run `node --import tsx scripts/check-bale-document-live.ts --check` and then, with recipient consent, `node --import tsx scripts/check-bale-document-live.ts --send-document-once`; confirm the PDF arrives and verify it remains available after 24 hours. No deletion is expected.
+
 # Attendance, Reporter and Calendar operations
 
 Status: **draft / not approved for production deployment**. Read `verification-report.md` before merging or deploying this branch.
