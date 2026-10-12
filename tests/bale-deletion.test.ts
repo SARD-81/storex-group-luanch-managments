@@ -489,7 +489,7 @@ test(
 );
 
 test(
-  "cleanup-only rollback mode deletes pending messages without executing queued delivery",
+  "cleanup-only rollback mode never deletes Bale messages or runs queued delivery",
   dbTest,
   () =>
     fixture(async (db, bale, calls) => {
@@ -502,7 +502,7 @@ test(
         { requestedBy: "CLI" },
       );
       await workerCleanupTick(db, due, { bale });
-      assert.equal(calls.length, 1);
+      assert.equal(calls.length, 0);
       assert.equal(
         (await db.automationJobRun.findUniqueOrThrow({ where: { id: j.id } }))
           .status,
