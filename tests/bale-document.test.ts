@@ -5,6 +5,7 @@ import {
   BaleClient,
   validateBalePdf,
   BALE_DOCUMENT_MAX_BYTES,
+  classifyBaleDocumentBadRequest,
 } from "../lib/automation/integrations";
 import { AutomationError } from "../lib/automation/http";
 import { probePdf } from "../lib/automation/capability-probe";
@@ -88,6 +89,33 @@ test("Bale document is multipart private PDF bytes and persists the official tim
   assert.equal(r.apiSentAt!.toISOString(), clock.toISOString());
   assert.equal(b.sent(), 1);
 });
+
+test("Bale 400 document errors are classified without ever exposing remote descriptions", async () => {
+  const cases = [
+    ["Bad Request: missing document", "BALE_DOCUMENT_MISSING_FILE"],
+    ["Bad Request: invalid multipart boundary", "BALE_DOCUMENT_MULTIPART_REJECTED"],
+    ["Bad Request: chat_id is invalid", "BALE_DOCUMENT_CHAT_REJECTED"],
+    ["Bad Request: caption too long", "BALE_DOCUMENT_CAPTION_REJECTED"],
+    ["Bad Request: unsupported file format", "BALE_DOCUMENT_FILE_REJECTED"],
+    ["Bad Request: not allowed", "BALE_DOCUMENT_PERMISSION_REJECTED"],
+    ["opaque provider rejection with confidential-token-x", "BALE_DOCUMENT_BAD_REQUEST"],
+  ] as const;
+  for (const [description, expected] of cases) {
+    assert.equal(classifyBaleDocumentBadRequest(description), expected);
+    const b = bot(() =>
+      Response.json({ ok: false, error_code: 400, description }, { status: 400 }),
+    );
+    await assert.rejects(
+      () => b.client.sendDocument("123456", input()),
+      (error) => error instanceof AutomationError &&
+        error.code === expected &&
+        error.httpStatus === 400 &&
+        error.uncertain === false &&
+        !error.message.includes("confidential-token-x"),
+    );
+  }
+});
+
 test("missing Bale date uses the response-receipt timestamp", async () => {
   const b = bot(() =>
     Response.json({
