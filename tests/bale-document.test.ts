@@ -62,7 +62,7 @@ function bot(
         const body = Buffer.from(init.body);
         const headers = new Headers(init.headers);
         const contentType = headers.get("Content-Type")!;
-        assert.match(contentType, /^multipart\\/form-data; boundary=----storex-[a-f0-9]{32}$/);
+        assert.match(contentType, /^multipart\/form-data; boundary=----storex-[a-f0-9]{32}$/);
         assert.equal(headers.get("Content-Length"), String(body.length));
         const boundary = contentType.split("boundary=")[1];
         assert.ok(body.toString("latin1").startsWith("--" + boundary + "\\r\\n"));
