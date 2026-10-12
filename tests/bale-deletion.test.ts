@@ -324,7 +324,7 @@ test(
     }),
 );
 test(
-  "ambiguous document resolution requires actual receipt/time and schedules cleanup without permitting another delivery",
+  "ambiguous document resolution validates receipt and never schedules canceled Bale deletion",
   dbTest,
   () =>
     fixture(async (db) => {
@@ -365,8 +365,9 @@ test(
         where: { id: d.id },
       });
       assert.equal(final.status, "SUCCESS");
-      assert.equal(final.deletionStatus, "SCHEDULED");
-      assert.equal(final.deleteDueAt!.toISOString(), due.toISOString());
+      assert.equal(final.deletionStatus, "NOT_APPLICABLE");
+      assert.equal(final.deleteDueAt, null);
+      assert.equal(final.deleteBeforeAt, null);
     }),
 );
 test(
