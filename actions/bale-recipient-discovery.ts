@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -11,47 +12,100 @@ import { getAutomationConfig } from "@/lib/automation/config";
 import { withWorkerLock } from "@/lib/automation/worker";
 import { attendanceAudit, attendanceTransaction } from "@/lib/attendance/reconciliation";
 
+const PAGE = "/settings/automations/reporter";
+const TEN_MINUTES = 600000;
+export type PendingBaleCandidate = {
+  chatId: string;
+  updateId: number;
+  messageDate: number;
+  actorId: string;
+  discoveredAt: number;
+};
+
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
 function errorCode(e: unknown): string {
   return e instanceof AutomationError ? e.code : "BALE_DISCOVERY_FAILED";
 }
-
-/** Admin-only and read-only. Do not return message contents, token or user profile. */
-export async function discoverBaleRecipientAction(): Promise<
-  | { ok: true; chatId: string; updateId: number; messageDate: number }
-  | { ok: false; code: string }
-> {
-  await requireAdmin();
-  try {
-    const candidate = await discoverLatestBaleSender();
-    return { ok: true, ...candidate };
-  } catch (e) {
-    return { ok: false, code: errorCode(e) };
-  }
+function fail(code: string): never {
+  redirect(`${PAGE}?discoveryError=${encodeURIComponent(code)}`);
 }
 
-/**
- * A read-only lookup is never authorization to redirect company PDFs.
- * Pause the reporter, explicitly confirm, re-check latest message and private
- * chat inside the worker lock, then atomically save and audit the new ID.
- */
-export async function confirmBaleRecipientAction(
-  candidateId: string,
-  candidateUpdateId: number,
-  confirmed: boolean,
-): Promise<{ ok: true } | { ok: false; code: string }> {
-  const actor = await requireAdmin();
+export function pendingBaleCandidate(
+  health: unknown,
+  actorId: string,
+  now = Date.now(),
+): PendingBaleCandidate | null {
+  const entry = object(object(health).baleRecipientCandidate);
   if (
-    !confirmed ||
-    !/^[1-9]\d{0,15}$/.test(candidateId) ||
-    !Number.isSafeInteger(Number(candidateId)) ||
-    !Number.isSafeInteger(candidateUpdateId) ||
-    candidateUpdateId < 0
-  ) return { ok: false, code: "BALE_RECIPIENT_CONFIRM_REQUIRED" };
+    entry.actorId !== actorId ||
+    typeof entry.chatId !== "string" ||
+    !/^[1-9]\d{0,15}$/.test(entry.chatId) ||
+    !Number.isSafeInteger(Number(entry.chatId)) ||
+    !Number.isSafeInteger(entry.updateId) ||
+    Number(entry.updateId) < 0 ||
+    !Number.isSafeInteger(entry.messageDate) ||
+    !Number.isSafeInteger(entry.discoveredAt) ||
+    Number(entry.discoveredAt) > now ||
+    now - Number(entry.discoveredAt) > TEN_MINUTES
+  ) return null;
+  return {
+    chatId: entry.chatId,
+    updateId: Number(entry.updateId),
+    messageDate: Number(entry.messageDate),
+    actorId,
+    discoveredAt: Number(entry.discoveredAt),
+  };
+}
+
+/** Progressive-enhancement Server Action: works without client-side hydration. */
+export async function discoverBaleRecipientFormAction(_form: FormData) {
+  const actor = await requireAdmin();
+  const config = await getAutomationConfig(prisma);
+  if (config.reporterEnabled) fail("BALE_PAUSE_REPORTER_FIRST");
+
+  let candidate;
+  try {
+    candidate = await discoverLatestBaleSender();
+  } catch (e) {
+    fail(errorCode(e));
+  }
+
+  await prisma.automationConfig.update({
+    where: { id: config.id },
+    data: {
+      health: {
+        ...object(config.health),
+        baleRecipientCandidate: {
+          ...candidate,
+          actorId: actor.id,
+          discoveredAt: Date.now(),
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+  revalidatePath(PAGE);
+  redirect(`${PAGE}?discovery=ready`);
+}
+
+/** The suggestion cannot redirect reports until an authorized admin confirms it. */
+export async function confirmBaleRecipientFormAction(form: FormData) {
+  const actor = await requireAdmin();
+  if (form.get("confirmRecipient") !== "yes")
+    fail("BALE_RECIPIENT_CONFIRM_REQUIRED");
+
+  let rejected = "";
   try {
     const result = await withWorkerLock(async () => {
       const current = await getAutomationConfig(prisma);
       if (current.reporterEnabled)
         throw new AutomationError("BALE_PAUSE_REPORTER_FIRST");
+      const candidate = pendingBaleCandidate(current.health, actor.id);
+      if (!candidate)
+        throw new AutomationError("BALE_RECIPIENT_EXPIRED_RECHECK");
       const pending = await prisma.automationJobRun.count({
         where: {
           jobType: { startsWith: "REPORT_" },
@@ -66,25 +120,26 @@ export async function confirmBaleRecipientAction(
 
       const bale = new BaleClient();
       const latest = await discoverLatestBaleSender(bale);
-      if (latest.chatId !== candidateId || latest.updateId !== candidateUpdateId)
+      if (latest.chatId !== candidate.chatId || latest.updateId !== candidate.updateId)
         throw new AutomationError("BALE_RECIPIENT_CHANGED_RECHECK");
-      await bale.privateChat(latest.chatId);
-      if (current.reportRecipient === candidateId) return;
+      await bale.privateChat(candidate.chatId);
+
+      const health = { ...object(current.health) };
+      delete health.baleRecipientCandidate;
+      if (current.reportRecipient !== candidate.chatId)
+        health.bale = { state: "UNKNOWN" };
+
       await attendanceTransaction(prisma, async (tx) => {
-        // Compare-and-set: reject configuration changed by another administrator.
         const updated = await tx.automationConfig.updateMany({
           where: {
             id: current.id,
+            updatedAt: current.updatedAt,
             reportRecipient: current.reportRecipient,
             reporterEnabled: false,
           },
           data: {
-            reportRecipient: candidateId,
-            health: {
-              ...(current.health && typeof current.health === "object" &&
-              !Array.isArray(current.health) ? current.health : {}),
-              bale: { state: "UNKNOWN" },
-            } as Prisma.InputJsonValue,
+            reportRecipient: candidate.chatId,
+            health: health as Prisma.InputJsonValue,
           },
         });
         if (updated.count !== 1)
@@ -92,17 +147,17 @@ export async function confirmBaleRecipientAction(
         await attendanceAudit(tx, "AUTOMATION_CONFIG_CHANGED", actor, {
           operation: "confirm-recent-bale-private-sender",
           oldRecipient: current.reportRecipient || null,
-          newRecipient: candidateId,
-          updateId: candidateUpdateId,
+          newRecipient: candidate.chatId,
+          updateId: candidate.updateId,
         });
       });
     });
-    if (result && "skipped" in result)
-      return { ok: false, code: "BALE_WORKER_BUSY" };
-    revalidatePath("/settings/automations/reporter");
-    revalidatePath("/reporter/next-day");
-    return { ok: true };
+    if (result && "skipped" in result) rejected = "BALE_WORKER_BUSY";
   } catch (e) {
-    return { ok: false, code: errorCode(e) };
+    rejected = errorCode(e);
   }
+  if (rejected) fail(rejected);
+  revalidatePath(PAGE);
+  revalidatePath("/reporter/next-day");
+  redirect(`${PAGE}?discovery=confirmed`);
 }
