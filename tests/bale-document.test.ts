@@ -65,15 +65,15 @@ function bot(
         assert.match(contentType, /^multipart\/form-data; boundary=----storex-[a-f0-9]{32}$/);
         assert.equal(headers.get("Content-Length"), String(body.length));
         const boundary = contentType.split("boundary=")[1];
-        assert.ok(body.toString("latin1").startsWith("--" + boundary + "\\r\\n"));
-        assert.ok(body.toString("latin1").endsWith("\\r\\n--" + boundary + "--\\r\\n"));
-        assert.ok(body.toString("utf8").includes('name="chat_id"\\r\\n\\r\\n123456'));
+        assert.ok(body.toString("latin1").startsWith("--" + boundary + "\r\n"));
+        assert.ok(body.toString("latin1").endsWith("\r\n--" + boundary + "--\r\n"));
+        assert.ok(body.toString("utf8").includes('name="chat_id"\r\n\r\n123456'));
         assert.ok(body.toString("utf8").includes('name="document"; filename="' + input().filename + '"'));
         assert.ok(body.toString("utf8").includes('Content-Type: application/pdf'));
         const start = body.indexOf(input().bytes);
         assert.ok(start > 0, "original PDF bytes must be passed unmodified");
         assert.deepEqual(body.subarray(start, start + input().bytes.length), input().bytes);
-        assert.ok(body.toString("utf8").includes('name="caption"\\r\\n\\r\\n' + input().caption));
+        assert.ok(body.toString("utf8").includes('name="caption"\r\n\r\n' + input().caption));
       }
       return final();
     },
