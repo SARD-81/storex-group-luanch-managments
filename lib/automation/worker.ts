@@ -28,7 +28,6 @@ import {
 import { generateReportPdf } from "@/lib/reporter/generate-pdf";
 import { synchronizeCalendar } from "./calendar";
 import { nextReportRetry, reporterSlots, tehranClock } from "./schedule";
-import { processBaleDeletions } from "./bale-deletion";
 const WORKER_LOCK = 641706;
 export async function withWorkerLock<T>(work: () => Promise<T>) {
   const connection = new Client({
@@ -307,7 +306,6 @@ export async function workerTick(
   deps: WorkerDependencies = {},
 ) {
   let config = await getAutomationConfig(db);
-  await processBaleDeletions(db, now, deps.bale);
   const previousTick = (config.health as { workerLastTick?: string } | null)
     ?.workerLastTick;
   if (
@@ -319,7 +317,7 @@ export async function workerTick(
       "WORKER",
       "runtime",
       `worker-gap:${previousTick}`,
-      "وقفهٔ بیش از پنج دقیقه در worker مشاهده شد؛ صف حذف و کارهای معوق بازیابی می‌شوند.",
+      "وقفهٔ بیش از پنج دقیقه در worker مشاهده شد؛ کارهای معوق بررسی می‌شوند.",
     );
   const clock = tehranClock(now),
     jalali = getJalaliPartsFromUtcDate(new Date(clock.dateKey + "T00:00:00Z"));
@@ -523,7 +521,6 @@ export async function workerCleanupTick(
   deps: WorkerDependencies = {},
 ) {
   const config = await getAutomationConfig(db);
-  await processBaleDeletions(db, now, deps.bale);
   if (credentialStatus().nextcloud && config.nextcloudBaseUrl)
     await revokeExpiredShares(
       db,
