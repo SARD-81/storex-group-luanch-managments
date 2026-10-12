@@ -57,14 +57,22 @@ function bot(
         return Response.json({ ok: true, result: chat });
       if (url.endsWith("/sendDocument")) {
         sent++;
-        assert.ok(init?.body instanceof FormData);
-        const file = init.body.get("document") as File;
-        assert.equal(file.type, "application/pdf");
-        assert.equal(file.name, input().filename);
-        assert.deepEqual(Buffer.from(await file.arrayBuffer()), input().bytes);
-        assert.equal(init.body.get("chat_id"), "123456");
-        assert.equal(init.body.get("caption"), input().caption);
-        assert.equal(new Headers(init.headers).has("Content-Type"), false);
+        assert.ok(init?.body instanceof Uint8Array);
+        const body = Buffer.from(init.body);
+        const headers = new Headers(init.headers);
+        const contentType = headers.get("Content-Type")!;
+        assert.match(contentType, /^multipart\\/form-data; boundary=----storex-[a-f0-9]{32}$/);
+        assert.equal(headers.get("Content-Length"), String(body.length));
+        const boundary = contentType.split("boundary=")[1];
+        assert.ok(body.toString("latin1").startsWith("--" + boundary + "\\r\\n"));
+        assert.ok(body.toString("latin1").endsWith("\\r\\n--" + boundary + "--\\r\\n"));
+        assert.ok(body.toString("utf8").includes('name="chat_id"\\r\\n\\r\\n123456'));
+        assert.ok(body.toString("utf8").includes('name="document"; filename="' + input().filename + '"'));
+        assert.ok(body.toString("utf8").includes('Content-Type: application/pdf'));
+        const start = body.indexOf(input().bytes);
+        assert.ok(start > 0, "original PDF bytes must be passed unmodified");
+        assert.deepEqual(body.subarray(start, start + input().bytes.length), input().bytes);
+        assert.ok(body.toString("utf8").includes('name="caption"\\r\\n\\r\\n' + input().caption));
       }
       return final();
     },
