@@ -269,6 +269,27 @@ export function validateBalePdf(input: {
   if (createHash("sha256").update(input.bytes).digest("hex") !== input.sha256)
     throw new AutomationError("ARTIFACT_CHECKSUM_MISMATCH");
 }
+/** Only categorical, fixed-code diagnostics may escape a third-party error response.
+ * Never expose or persist raw Bale descriptions, which may contain untrusted data.
+ */
+export function classifyBaleDocumentBadRequest(description: string): string {
+  const text = description.toLowerCase().slice(0, 800);
+  if (/chat[_ -]?id|chat not found|invalid chat|chat does not exist|peer not found/.test(text))
+    return "BALE_DOCUMENT_CHAT_REJECTED";
+  if (/multipart|boundary|content.type|content-type|form.data/.test(text))
+    return "BALE_DOCUMENT_MULTIPART_REJECTED";
+  if (/caption/.test(text))
+    return "BALE_DOCUMENT_CAPTION_REJECTED";
+  if (/file.*(?:too (?:big|large)|exceeds?|size)|too (?:big|large).*file/.test(text))
+    return "BALE_DOCUMENT_SIZE_REJECTED";
+  if (/(?:document|file).*(?:empty|missing|required|not found)|(?:empty|missing|required).*(?:document|file)|no file/.test(text))
+    return "BALE_DOCUMENT_MISSING_FILE";
+  if (/(?:file|document).*(?:invalid|corrupt|unsupported|format)|(?:invalid|unsupported).*(?:file|document)/.test(text))
+    return "BALE_DOCUMENT_FILE_REJECTED";
+  if (/permission|not allowed|forbidden|blocked/.test(text))
+    return "BALE_DOCUMENT_PERMISSION_REJECTED";
+  return "BALE_DOCUMENT_BAD_REQUEST";
+}
 export type BaleDocumentReceipt = {
   messageId: string;
   chatId: string;
@@ -345,8 +366,12 @@ export class BaleClient {
                   ? "BALE_DELETE_REJECTED"
                   : "BALE_REJECTED";
       const retry = Number(data.parameters?.retry_after);
+      const safeCode =
+        method === "sendDocument" && status === 400
+          ? classifyBaleDocumentBadRequest(description)
+          : code;
       throw new AutomationError(
-        code,
+        safeCode,
         status,
         data.ok !== false && mutation,
         status === 429 && Number.isFinite(retry) && retry > 0
