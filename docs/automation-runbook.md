@@ -19,6 +19,21 @@ The Reporter settings page (`/settings/automations/reporter`) contains a **read-
 
 **Limitations:** If an external listener has consumed updates, the queue is empty, the newest private message is older than ten minutes, the unread queue has 100+ updates or the bot uses a webhook, lookup does not produce a new recipient. Do not delete production webhooks, set a negative offset or discard pending updates to force this tool to work. The manual numeric-recipient input remains available for administrators. Never paste a bot token into the web form.
 
+## Controlled Bale upload differential diagnostic
+
+An explicit HTTP 400 on `sendDocument` after successful private-chat verification and successfully received `sendMessage` narrows the issue to uploading a document, **not** authentication or chat configuration.
+
+Do not invoke `automation:tick` or enqueue another real `REPORT_DELIVERY` while investigating. With `STOREX_ENVIRONMENT=staging`, Reporter paused, the recipient privately verified, Chromium installed, and operator consent for exactly one test file:
+
+```bash
+node --import tsx scripts/diagnose-bale-document-upload.ts --check
+node --import tsx scripts/diagnose-bale-document-upload.ts --send-once
+```
+
+The `--check` mode uses Playwright to create a regular A5 Chromium PDF containing only English diagnostic text; it performs bot/private-chat checks and prints the size, without sending a message. The `--send-once` mode sends that PDF **once** without a caption using a manually framed `multipart/form-data` body and an explicit `Content-Length` via pinned, allowlisted HTTPS. This intentionally differs from the production `Blob`/`FormData` uploader and tiny 620-byte `probePdf`; it is a *diagnostic*, not an unverified replacement for production. It never writes report delivery records or runs scheduled reports.
+
+If this variant succeeds and the document appears in Bale, the issue is likely specific to the standard uploader or original tiny test file. Examine these independently before changing the production send path. If it also returns HTTP 400, record only the output's categorical `code`, `httpStatus` and `providerDescriptionGeneric`; never print or submit raw API descriptions, tokens, or the .env file. A success receipt must be checked against the actual private chat. If the response is lost or the result becomes uncertain, inspect the chat before any repeat, to avoid duplicate test documents.
+
 ## Bale PDF HTTP 400 diagnostics (no secrets in logs)
 
 If `--check` reports `BOT_AND_PRIVATE_CHAT_VERIFIED` but the first opt-in PDF `--send-document-once` returns HTTP 400, the recipient exists, yet `sendDocument` was rejected. **Do not treat that as delivered.** The API's raw `description` may contain untrusted/private information; StoreX returns only an allowlisted, categorical `BALE_DOCUMENT_*` code and numeric HTTP status. A safe HTTP 400 now sets the synthetic probe record to `FAILED/GENERATED` rather than indefinitely `MANUAL_ACTION_REQUIRED/DELIVERING`; an ambiguous network/receipt error still requires human review.
