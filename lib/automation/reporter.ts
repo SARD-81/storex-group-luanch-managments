@@ -7,14 +7,19 @@ import { getMealReportForDate } from "@/lib/reporter/next-day-report";
 import { generateReportPdf } from "@/lib/reporter/generate-pdf";
 import { formatPersianDateTime } from "@/lib/date/tehran-time";
 import { AutomationError } from "./http";
-import { BaleClient, NextcloudClient } from "./integrations";
+import {
+  BaleClient,
+  NextcloudClient,
+  validateBalePdf,
+  type BaleDocumentReceipt,
+} from "./integrations";
 import { cleanupProbeFile, PROBE_CLEANUP_PENDING } from "./capability-probe";
 import {
   checkPublicCapability,
   cleanError,
   queueAlert,
   storeArtifact,
-  uploadArtifact,
+  readPrivateArtifact,
 } from "./jobs";
 export async function deliverReport(
   db: PrismaClient,
@@ -22,46 +27,38 @@ export async function deliverReport(
   dateKey: string,
   stage: (s: string) => Promise<void>,
   now = new Date(),
-  cloud = new NextcloudClient(config),
+  _legacyCloud?: NextcloudClient,
   bale = new BaleClient(),
   pdf = generateReportPdf,
 ) {
   let delivery = await db.reportDelivery.upsert({
     where: { reportDateKey: dateKey },
-    create: { reportDateKey: dateKey },
+    create: { reportDateKey: dateKey, deliveryKind: "BALE_DOCUMENT" },
     update: {},
   });
-  if (delivery.status === "SUCCESS") return;
+  if (delivery.status === "SUCCESS") return; // Deletion never grants permission to resend.
   if (delivery.stage === "DELIVERING")
     throw new AutomationError("AMBIGUOUS_DELIVERY", null, true);
-  await stage("PUBLIC_CAPABILITY");
-  const capability = await checkPublicCapability(db, config, cloud, now);
-  if (capability !== "AVAILABLE")
-    throw new AutomationError(
-      capability === "DISABLED" ? "PUBLIC_SHARING_DISABLED" : capability,
-    );
+  if (delivery.shareId || delivery.deliveryKind !== "BALE_DOCUMENT")
+    throw new AutomationError("LEGACY_REPORT_REVIEW_REQUIRED", null, true);
   if (!config.reportRecipient)
     throw new AutomationError("REPORT_RECIPIENT_MISSING");
-  // Re-check Calendar even when resuming a persisted artifact.
   const current = await getMealReportForDate(dateKey, now);
   if (current.policy.isWorkday !== true)
     throw new AutomationError("REPORT_DATE_NOT_WORKDAY");
   if (!delivery.artifactId) {
     await stage("GENERATING");
-    const jalali = current.policy.jalaliDateKey!;
-    const [year, month] = jalali.split("-");
-    const bytes = await pdf(current);
-    const artifactInput = {
-      artifactKey: `report:${dateKey}`,
-      type: "REPORT_PDF",
-      target: dateKey,
-      extension: "pdf",
-      bytes,
-      nextcloudPath: `${config.reportsDirectory}/${year}/${month}/next-workday-${jalali}.pdf`,
-    };
-    const deliveryId = delivery.id;
+    const bytes = await pdf(current),
+      deliveryId = delivery.id;
     delivery = await db.$transaction(async (tx) => {
-      const artifact = await storeArtifact(tx, artifactInput);
+      const artifact = await storeArtifact(tx, {
+        artifactKey: `report:${dateKey}`,
+        type: "REPORT_PDF",
+        target: dateKey,
+        extension: "pdf",
+        bytes,
+        nextcloudPath: null,
+      });
       return tx.reportDelivery.update({
         where: { id: deliveryId },
         data: {
@@ -76,71 +73,81 @@ export async function deliverReport(
       });
     });
   }
-  await stage("UPLOADING");
-  const artifact = await uploadArtifact(db, delivery.artifactId!, cloud);
-  if (!delivery.shareId) {
-    await stage("CREATING_PUBLIC_LINK");
-    const share = await cloud.getOrCreateShare(artifact.nextcloudPath!, now);
-    delivery = await db.reportDelivery.update({
-      where: { id: delivery.id },
-      data: {
-        shareId: share.id,
-        publicUrl: share.url,
-        shareCreatedAt: share.createdAt,
-        expiresAt: new Date(share.createdAt.getTime() + 86400000),
-        stage: "PUBLIC_READY",
-      },
-    });
-  }
-  if (!delivery.expiresAt || delivery.expiresAt <= now || delivery.revokedAt)
-    throw new AutomationError("REPORT_SHARE_EXPIRED");
-  await stage("VERIFYING_PUBLIC_LINK");
-  await cloud.verifyPublic(delivery.publicUrl!, artifact.sha256);
+  const artifact = await db.automationArtifact.findUniqueOrThrow({
+    where: { id: delivery.artifactId! },
+  });
+  const bytes = await readPrivateArtifact(artifact);
   const snapshot = delivery.snapshot as {
     label: string;
     totals: typeof current.totals;
     generatedAt: string;
   };
   const t = snapshot.totals;
-  const text = `گزارش روز کاری بعد: ${snapshot.label}\nصبحانه: پرسنل ${t.breakfastEmployees}، مهمان ${t.breakfastGuests}، جمع ${t.breakfastAll}\nناهار: پرسنل ${t.lunchEmployees}، مهمان ${t.lunchGuests}، جمع ${t.lunchAll}\nPDF: ${delivery.publicUrl}\nتولید: ${formatPersianDateTime(new Date(snapshot.generatedAt))}\nارسال: ${formatPersianDateTime(now)}`;
+  const caption = `گزارش روز کاری بعد: ${snapshot.label}\nصبحانه: پرسنل ${t.breakfastEmployees}، مهمان ${t.breakfastGuests}، جمع ${t.breakfastAll}\nناهار: پرسنل ${t.lunchEmployees}، مهمان ${t.lunchGuests}، جمع ${t.lunchAll}\nتولید: ${formatPersianDateTime(new Date(snapshot.generatedAt))}\nحذف برنامه‌ریزی‌شدهٔ پیام: ۲۴ ساعت پس از ارسال؛ نسخه‌های دانلودشده حذف نمی‌شوند.`;
+  const input = {
+    bytes,
+    mimeType: "application/pdf",
+    filename: `next-workday-${current.policy.jalaliDateKey}.pdf`,
+    sha256: artifact.sha256,
+    caption,
+  };
+  validateBalePdf(input);
   await stage("DELIVERING");
   await db.reportDelivery.update({
     where: { id: delivery.id },
-    data: { stage: "DELIVERING", status: "RUNNING" },
+    data: {
+      stage: "DELIVERING",
+      status: "RUNNING",
+      baleChatId: config.reportRecipient,
+      sendAttemptedAt: now,
+    },
   });
-  let id: string;
+  let receipt: BaleDocumentReceipt;
   try {
-    id = await bale.send(config.reportRecipient, text);
+    receipt = await bale.sendDocument(config.reportRecipient, input);
   } catch (e) {
     const uncertain = !(e instanceof AutomationError) || e.uncertain;
     await db.reportDelivery.update({
       where: { id: delivery.id },
       data: {
         status: uncertain ? "MANUAL_ACTION_REQUIRED" : "RETRYING",
-        stage: uncertain ? "DELIVERING" : "PUBLIC_READY",
+        stage: uncertain ? "DELIVERING" : "GENERATED",
       },
     });
     throw uncertain && !(e instanceof AutomationError)
       ? new AutomationError("AMBIGUOUS_DELIVERY", null, true)
       : e;
   }
-  // If this acknowledgement write fails, persisted DELIVERING intent must remain held.
-  await db.reportDelivery.update({
-    where: { id: delivery.id },
-    data: {
-      status: "SUCCESS",
-      stage: "DELIVERED",
-      baleMessageId: id,
-      sentAt: now,
-      nextRetryAt: null,
-    },
-  });
+  // Reject stale/contradictory API timestamps; fallback is the successful receipt time.
+  const apiTime =
+    receipt.apiSentAt && receipt.apiSentAt.getTime() >= now.getTime() - 60000
+      ? receipt.apiSentAt
+      : null;
+  const sentAt = apiTime ?? receipt.receivedAt;
+  try {
+    await db.reportDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        status: "SUCCESS",
+        stage: "DELIVERED",
+        baleChatId: receipt.chatId,
+        baleMessageId: receipt.messageId,
+        sentAt,
+        sentTimeSource: apiTime ? "BALE_MESSAGE_DATE" : "API_RECEIPT_TIME",
+        deleteDueAt: new Date(sentAt.getTime() + 86400000),
+        // Conservative deadline when the API omits date: never extend the real window by network latency.
+        deleteBeforeAt: new Date(
+          Math.min(sentAt.getTime(), now.getTime()) + 2 * 86400000,
+        ),
+        deletionStatus: "SCHEDULED",
+        nextRetryAt: null,
+      },
+    });
+  } catch {
+    throw new AutomationError("BALE_RECEIPT_PERSIST_FAILED", null, true);
+  }
   const failures = await db.automationJobRun.count({
-    where: {
-      jobType: "REPORT_DELIVERY",
-      target: dateKey,
-      attempt: { gt: 1 },
-    },
+    where: { jobType: "REPORT_DELIVERY", target: dateKey, attempt: { gt: 1 } },
   });
   if (failures)
     await queueAlert(
@@ -148,7 +155,7 @@ export async function deliverReport(
       "REPORTER",
       dateKey,
       `reporter-recovered:${dateKey}`,
-      `RECOVERED: گزارش ${snapshot.label} با موفقیت ارسال شد.`,
+      `RECOVERED: گزارش ${dateKey} با موفقیت ارسال شد.`,
     );
 }
 export async function sendGuestReminder(

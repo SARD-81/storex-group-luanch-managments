@@ -461,6 +461,8 @@ model AutomationConfig {
   calendarDirectory String @default("/StoreX-Automation/Calendar")
   reportRecipient String @default("")
   technicalConversation String @default("")
+  talkEnabled Boolean @default(false)
+  talkActivatedAt DateTime?
   reminder1 String @default("09:20")
   reminder2 String @default("09:25")
   deliveryTime String @default("09:30")
@@ -525,12 +527,41 @@ model ReportDelivery {
   revokedAt DateTime?
   sentAt DateTime?
   baleMessageId String?
+  deliveryKind ReportDeliveryKind @default(LEGACY_NEXTCLOUD)
+  baleChatId String?
+  sendAttemptedAt DateTime?
+  sentTimeSource String?
+  deleteDueAt DateTime?
+  deleteBeforeAt DateTime?
+  deletionStatus BaleDeletionStatus @default(NOT_APPLICABLE)
+  deletedAt DateTime?
+  deletionAttempts Int @default(0)
+  deletionNextRetryAt DateTime?
+  deletionErrorCode String?
+  deletionReceipt Json?
+  deletionOverdueAt DateTime?
   nextRetryAt DateTime?
   cleanupError String?
   snapshot Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([expiresAt, revokedAt])
+  @@index([deletionStatus, deleteDueAt])
+}
+
+enum ReportDeliveryKind {
+  LEGACY_NEXTCLOUD
+  BALE_DOCUMENT
+}
+
+enum BaleDeletionStatus {
+  NOT_APPLICABLE
+  SCHEDULED
+  RETRYING
+  UNCERTAIN
+  DELETED
+  MANUAL_ACTION_REQUIRED
+  WINDOW_EXPIRED
 }
 
 model AutomationAlert {
@@ -543,6 +574,10 @@ model AutomationAlert {
   remoteMessageId String?
   createdAt DateTime @default(now())
   sentAt DateTime?
+  attempt Int @default(0)
+  nextRetryAt DateTime?
+  errorCode String?
+  @@index([status, nextRetryAt])
 }
 
 model CalendarDataset {

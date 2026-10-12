@@ -28,6 +28,7 @@ import {
 import { generateReportPdf } from "@/lib/reporter/generate-pdf";
 import { synchronizeCalendar } from "./calendar";
 import { nextReportRetry, reporterSlots, tehranClock } from "./schedule";
+import { processBaleDeletions } from "./bale-deletion";
 const WORKER_LOCK = 641706;
 export async function withWorkerLock<T>(work: () => Promise<T>) {
   const connection = new Client({
@@ -90,7 +91,35 @@ async function executeJob(
       }
       if (job.jobType === "BALE_HEALTH") {
         await stage("GET_ME");
-        await (deps.bale ?? new BaleClient()).health();
+        const bale = deps.bale ?? new BaleClient();
+        await bale.health();
+        await bale.privateChat(config.reportRecipient);
+        return;
+      }
+      if (job.jobType.startsWith("REPORT_")) {
+        if (job.target <= clock.dateKey)
+          throw new AutomationError("REPORT_TARGET_NO_LONGER_FUTURE");
+        if (job.jobType === "REPORT_DELIVERY")
+          await deliverReport(
+            db,
+            config,
+            job.target,
+            stage,
+            now,
+            undefined,
+            deps.bale,
+            deps.pdf,
+          );
+        else
+          await sendGuestReminder(
+            db,
+            config,
+            job.target,
+            job.id,
+            stage,
+            now,
+            deps.bale,
+          );
         return;
       }
       if (
@@ -108,6 +137,10 @@ async function executeJob(
       }
       const cloud = deps.cloud ?? new NextcloudClient(config);
       switch (job.jobType) {
+        case "TALK_HEALTH":
+          await stage("TALK_ROOM_CHECK");
+          await cloud.talkHealth();
+          break;
         case "NEXTCLOUD_HEALTH":
           await stage("WEBDAV");
           await cloud.health();
@@ -153,34 +186,6 @@ async function executeJob(
           await stage("UPLOADING");
           await uploadArtifact(db, job.target, cloud);
           break;
-        case "REPORT_DELIVERY":
-          if (job.target <= clock.dateKey)
-            throw new AutomationError("REPORT_TARGET_NO_LONGER_FUTURE");
-          await deliverReport(
-            db,
-            config,
-            job.target,
-            stage,
-            now,
-            cloud,
-            deps.bale,
-            deps.pdf,
-          );
-          break;
-        case "REPORT_REMINDER_1":
-        case "REPORT_REMINDER_2":
-          if (job.target <= clock.dateKey)
-            throw new AutomationError("REPORT_TARGET_NO_LONGER_FUTURE");
-          await sendGuestReminder(
-            db,
-            config,
-            job.target,
-            job.id,
-            stage,
-            now,
-            deps.bale,
-          );
-          break;
         default:
           throw new AutomationError("UNSUPPORTED_JOB_TYPE");
       }
@@ -191,6 +196,23 @@ async function executeJob(
   const updated = await db.automationJobRun.findUniqueOrThrow({
     where: { id: job.id },
   });
+  if (["BALE_HEALTH", "TALK_HEALTH", "TALK_TEST"].includes(job.jobType)) {
+    const fresh = await getAutomationConfig(db);
+    const key = job.jobType === "BALE_HEALTH" ? "bale" : "talk";
+    await db.automationConfig.update({
+      where: { id: config.id },
+      data: {
+        health: {
+          ...((fresh.health as object) ?? {}),
+          [key]: {
+            state: succeeded ? "READY" : "ERROR",
+            checkedAt: now.toISOString(),
+            errorCode: updated.errorCode,
+          },
+        },
+      },
+    });
+  }
   if (succeeded) {
     if (job.attempt > 0 && job.jobType.startsWith("CALENDAR"))
       await queueAlert(
@@ -243,7 +265,9 @@ async function executeJob(
               : updated.status,
           stage: updated.stage === "DELIVERING" ? "DELIVERING" : updated.stage,
           nextRetryAt:
-            updated.status === "MANUAL_ACTION_REQUIRED" ? null : retry,
+            updated.status === "MANUAL_ACTION_REQUIRED"
+              ? null
+              : updated.nextRetryAt,
         },
       });
     } else if (job.jobType.startsWith("CALENDAR")) {
@@ -283,6 +307,20 @@ export async function workerTick(
   deps: WorkerDependencies = {},
 ) {
   let config = await getAutomationConfig(db);
+  await processBaleDeletions(db, now, deps.bale);
+  const previousTick = (config.health as { workerLastTick?: string } | null)
+    ?.workerLastTick;
+  if (
+    previousTick &&
+    now.getTime() - new Date(previousTick).getTime() > 5 * 60000
+  )
+    await queueAlert(
+      db,
+      "WORKER",
+      "runtime",
+      `worker-gap:${previousTick}`,
+      "وقفهٔ بیش از پنج دقیقه در worker مشاهده شد؛ صف حذف و کارهای معوق بازیابی می‌شوند.",
+    );
   const clock = tehranClock(now),
     jalali = getJalaliPartsFromUtcDate(new Date(clock.dateKey + "T00:00:00Z"));
   const attendance = await recurringJob(
@@ -295,12 +333,6 @@ export async function workerTick(
   await executeJob(db, config, attendance, now, deps);
   const credentials = credentialStatus();
   if (credentials.nextcloud && config.nextcloudBaseUrl) {
-    await ensureJob(
-      db,
-      "PUBLIC_CAPABILITY",
-      `public-capability:${clock.dateKey}`,
-      clock.dateKey,
-    );
     await recurringJob(
       db,
       "SHARE_CLEANUP",
@@ -372,6 +404,7 @@ export async function workerTick(
   const jobs = await db.automationJobRun.findMany({
     where: {
       status: { in: ["PENDING", "RUNNING", "RETRYING", "BLOCKED"] },
+      jobType: { not: "BALE_MESSAGE_DELETE" },
       OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
     },
     orderBy: { createdAt: "asc" },
@@ -401,6 +434,29 @@ export async function workerTick(
         continue;
       }
       if (
+        job.jobType === "REPORT_DELIVERY" &&
+        clock.time > config.finalRetry &&
+        job.stage !== "DELIVERING"
+      ) {
+        await db.automationJobRun.update({
+          where: { id: job.id },
+          data: {
+            status: "FAILED",
+            errorCode: "REPORT_RETRY_WINDOW_CLOSED",
+            nextRetryAt: null,
+            finishedAt: now,
+          },
+        });
+        await queueAlert(
+          db,
+          "REPORTER",
+          job.target,
+          `reporter-final:${job.target}`,
+          `پنجرهٔ تلاش خودکار گزارش ${job.target} بسته شد؛ اقدام مسئول لازم است.`,
+        );
+        continue;
+      }
+      if (
         job.jobType.startsWith("REPORT_REMINDER") &&
         clock.time >= config.deliveryTime
       ) {
@@ -425,18 +481,25 @@ export async function workerTick(
     config = await getAutomationConfig(db);
   }
   if (
+    config.talkEnabled &&
     credentials.nextcloud &&
     config.technicalConversation &&
     config.nextcloudBaseUrl
   ) {
     try {
-      await flushAlerts(db, deps.cloud ?? new NextcloudClient(config));
+      await flushAlerts(
+        db,
+        deps.cloud ?? new NextcloudClient(config),
+        now,
+        config.talkActivatedAt ?? now,
+      );
     } catch (e) {
       console.error(
         JSON.stringify({ jobType: "TALK_ALERT_FLUSH", ...cleanError(e) }),
       );
     }
   }
+  config = await getAutomationConfig(db);
   const health = {
     ...(config.health &&
     typeof config.health === "object" &&
@@ -451,4 +514,30 @@ export async function workerTick(
     data: { health: health as Prisma.InputJsonValue },
   });
   return { date: clock.dateKey, time: clock.time };
+}
+
+/** Safe rollback mode: retain this release's worker while rolling back the web UI. */
+export async function workerCleanupTick(
+  db: PrismaClient,
+  now = new Date(),
+  deps: WorkerDependencies = {},
+) {
+  const config = await getAutomationConfig(db);
+  await processBaleDeletions(db, now, deps.bale);
+  if (credentialStatus().nextcloud && config.nextcloudBaseUrl)
+    await revokeExpiredShares(
+      db,
+      deps.cloud ?? new NextcloudClient(config),
+      now,
+    );
+  await db.automationConfig.update({
+    where: { id: config.id },
+    data: {
+      health: {
+        ...((config.health as object) ?? {}),
+        workerLastCleanupTick: now.toISOString(),
+      },
+    },
+  });
+  return { cleanupOnly: true };
 }

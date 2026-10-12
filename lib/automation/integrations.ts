@@ -202,15 +202,25 @@ export class NextcloudClient {
     )
       throw new AutomationError("PUBLIC_PDF_VERIFICATION_FAILED");
   }
-  async talk(message: string, referenceId: string) {
+  async talkHealth() {
     if (!this.config.technicalConversation)
       throw new AutomationError("TALK_NOT_CONFIGURED");
     const room = await this.ocs(
       "/ocs/v2.php/apps/spreed/api/v4/room/" +
         encodeURIComponent(this.config.technicalConversation),
     );
-    if (![2, 3].includes(Number(room.type)))
+    if (Number(room.type) !== 2)
       throw new AutomationError("TALK_ROOM_NOT_GROUP");
+    if (
+      ![1, 2, 3].includes(Number(room.participantType)) ||
+      Number(room.readOnly) !== 0 ||
+      (room.permissions !== undefined && (Number(room.permissions) & 128) === 0)
+    )
+      throw new AutomationError("TALK_SEND_PERMISSION_MISSING");
+    return true;
+  }
+  async talk(message: string, referenceId: string) {
+    await this.talkHealth();
     const result = await this.ocs(
       "/ocs/v2.php/apps/spreed/api/v1/chat/" +
         encodeURIComponent(this.config.technicalConversation),
@@ -234,35 +244,69 @@ export class NextcloudClient {
     return true;
   }
 }
+export const BALE_DOCUMENT_MAX_BYTES = 50_000_000;
+export function validateBalePdf(input: {
+  bytes: Buffer;
+  mimeType: string;
+  filename: string;
+  sha256: string;
+}) {
+  if (input.bytes.length > BALE_DOCUMENT_MAX_BYTES)
+    throw new AutomationError("BALE_PDF_TOO_LARGE");
+  if (
+    input.mimeType !== "application/pdf" ||
+    !/^[a-zA-Z0-9_-]+\.pdf$/.test(input.filename) ||
+    input.bytes.length < 40 ||
+    !/^%PDF-\d\.\d/.test(input.bytes.subarray(0, 8).toString()) ||
+    !input.bytes.subarray(-1024).toString().trimEnd().endsWith("%%EOF")
+  )
+    throw new AutomationError("BALE_INVALID_PDF");
+  if (createHash("sha256").update(input.bytes).digest("hex") !== input.sha256)
+    throw new AutomationError("ARTIFACT_CHECKSUM_MISMATCH");
+}
+export type BaleDocumentReceipt = {
+  messageId: string;
+  chatId: string;
+  receivedAt: Date;
+  apiSentAt: Date | null;
+};
 export class BaleClient {
   private transport: Fetcher;
-  constructor(transport?: Fetcher) {
+  constructor(
+    transport?: Fetcher,
+    private clock: () => Date = () => new Date(),
+  ) {
     this.transport = transport ?? ((u, i) => safeFetch(u, i, ["tapi.bale.ai"]));
   }
   async call(
-    method: "getMe" | "getChat" | "sendMessage",
-    payload: Record<string, unknown> = {},
+    method:
+      "getMe" | "getChat" | "sendMessage" | "sendDocument" | "deleteMessage",
+    payload: Record<string, unknown> | FormData = {},
   ) {
     const token = process.env.BALE_BOT_TOKEN;
     if (!token) throw new AutomationError("BALE_NOT_CONFIGURED");
+    const mutation = ["sendMessage", "sendDocument", "deleteMessage"].includes(
+      method,
+    );
     let response: Response;
     try {
       response = await this.transport(
         `https://tapi.bale.ai/bot${token}/${method}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          ...(payload instanceof FormData
+            ? { body: payload }
+            : {
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              }),
         },
       );
     } catch (e) {
-      if (method !== "sendMessage" && e instanceof AutomationError)
-        throw new AutomationError(e.code, e.httpStatus, false);
-      if (e instanceof AutomationError) throw e;
       throw new AutomationError(
-        "BALE_REQUEST_FAILED",
-        null,
-        method === "sendMessage",
+        e instanceof AutomationError ? e.code : "BALE_REQUEST_FAILED",
+        e instanceof AutomationError ? e.httpStatus : null,
+        mutation && (!(e instanceof AutomationError) || e.uncertain),
       );
     }
     let data;
@@ -272,33 +316,131 @@ export class BaleClient {
       throw new AutomationError(
         "BALE_INVALID_RESPONSE",
         response.status,
-        method === "sendMessage",
+        mutation,
       );
     }
-    if (!data.ok)
+    if (data.ok !== true) {
+      const status = Number(data.error_code) || response.status;
+      const description =
+        typeof data.description === "string"
+          ? data.description.toLowerCase()
+          : "";
+      const code =
+        status === 429
+          ? "BALE_RATE_LIMITED"
+          : status === 401
+            ? "BALE_AUTH_FAILED"
+            : status === 403
+              ? "BALE_FORBIDDEN"
+              : method === "deleteMessage" &&
+                  (status === 404 ||
+                    /message.*not found|message.*not exist/.test(description))
+                ? "BALE_MESSAGE_NOT_FOUND"
+                : method === "deleteMessage"
+                  ? "BALE_DELETE_REJECTED"
+                  : "BALE_REJECTED";
+      const retry = Number(data.parameters?.retry_after);
       throw new AutomationError(
-        "BALE_REJECTED",
-        Number(data.error_code) || response.status,
+        code,
+        status,
+        data.ok !== false && mutation,
+        status === 429 && Number.isFinite(retry) && retry > 0
+          ? Math.min(Math.ceil(retry), 86400)
+          : null,
       );
+    }
     if (!response.ok)
-      throw new AutomationError(
-        "BALE_HTTP_ERROR",
-        response.status,
-        method === "sendMessage",
-      );
+      throw new AutomationError("BALE_HTTP_ERROR", response.status, mutation);
     return data.result;
   }
-  async send(recipient: string, text: string) {
+  async privateChat(recipient: string) {
+    if (
+      !/^[1-9]\d{0,15}$/.test(recipient) ||
+      !Number.isSafeInteger(Number(recipient))
+    )
+      throw new AutomationError("BALE_RECIPIENT_INVALID");
     const chat = await this.call("getChat", { chat_id: recipient });
-    if (chat.type !== "private" || String(chat.id) !== recipient)
+    if (chat?.type !== "private" || String(chat.id) !== recipient)
       throw new AutomationError("BALE_RECIPIENT_NOT_PRIVATE");
+    return true;
+  }
+  async send(recipient: string, text: string) {
+    await this.privateChat(recipient);
     const r = await this.call("sendMessage", { chat_id: recipient, text });
-    if (!r.message_id)
+    if (!/^[1-9]\d{0,15}$/.test(String(r?.message_id)))
       throw new AutomationError("BALE_MISSING_RECEIPT", null, true);
     return String(r.message_id);
   }
+  async sendDocument(
+    recipient: string,
+    input: {
+      bytes: Buffer;
+      mimeType: string;
+      filename: string;
+      sha256: string;
+      caption: string;
+    },
+  ): Promise<BaleDocumentReceipt> {
+    validateBalePdf(input);
+    if (input.caption.length > 4096)
+      throw new AutomationError("BALE_CAPTION_TOO_LONG");
+    await this.health();
+    await this.privateChat(recipient);
+    const body = new FormData();
+    body.set("chat_id", recipient);
+    body.set("caption", input.caption);
+    body.set(
+      "document",
+      new Blob([new Uint8Array(input.bytes)], { type: input.mimeType }),
+      input.filename,
+    );
+    const r = await this.call("sendDocument", body),
+      receivedAt = this.clock();
+    if (
+      !/^[1-9]\d{0,15}$/.test(String(r?.message_id)) ||
+      !Number.isSafeInteger(Number(r?.message_id)) ||
+      r?.chat?.type !== "private" ||
+      String(r.chat.id) !== recipient
+    )
+      throw new AutomationError("BALE_DOCUMENT_RECEIPT_INVALID", null, true);
+    const date = Number(r.date);
+    const apiSentAt =
+      Number.isSafeInteger(date) &&
+      date > 0 &&
+      date * 1000 <= receivedAt.getTime() + 60000
+        ? new Date(date * 1000)
+        : null;
+    return {
+      messageId: String(r.message_id),
+      chatId: recipient,
+      receivedAt,
+      apiSentAt,
+    };
+  }
+  async deleteMessage(chatId: string, messageId: string) {
+    if (
+      !/^[1-9]\d{0,15}$/.test(chatId) ||
+      !/^[1-9]\d{0,15}$/.test(messageId) ||
+      !Number.isSafeInteger(Number(messageId)) ||
+      !Number.isSafeInteger(Number(chatId))
+    )
+      throw new AutomationError("BALE_DELETE_IDENTITY_INVALID");
+    await this.health();
+    const result = await this.call("deleteMessage", {
+      chat_id: chatId,
+      message_id: Number(messageId),
+    });
+    if (result !== true)
+      throw new AutomationError("BALE_DELETE_UNCONFIRMED", null, true);
+    return true;
+  }
   async health() {
-    await this.call("getMe");
+    const me = await this.call("getMe");
+    if (
+      me?.is_bot !== true ||
+      String(me.username).toLowerCase() !== "storex_lunch_notify_bot"
+    )
+      throw new AutomationError("BALE_BOT_IDENTITY_MISMATCH");
     return true;
   }
 }

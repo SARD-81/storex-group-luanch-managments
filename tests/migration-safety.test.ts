@@ -28,6 +28,11 @@ test(
           .filter((d) => d !== "migration_lock.toml")
           .sort();
       for (const d of dirs) {
+        if (d === "20261012070000_bale_document_delivery") {
+          await db.query(
+            `INSERT INTO "ReportDelivery" ("id","reportDateKey","status","stage","shareId","publicUrl","sentAt","expiresAt","updatedAt") VALUES ('historical-report','2026-01-02','SUCCESS','DELIVERED','legacy-share','https://cloud.example.test/s/legacy','2026-01-01','2026-01-02','2026-01-01')`,
+          );
+        }
         if (d === "20261006060000_attendance_provenance") {
           await db.query(
             `INSERT INTO "User" ("id","username","name","updatedAt") VALUES ('fixture','migration-fixture','test','2025-01-01')`,
@@ -63,6 +68,16 @@ test(
           `SELECT "id","source"::text,"createdAt"::text AS "createdAt","updatedAt"::text AS "updatedAt" FROM "MealAttendance" ORDER BY "id"`,
         )
       ).rows;
+      const historical = (
+        await db.query(
+          `SELECT "deliveryKind"::text,"deletionStatus"::text,"shareId","publicUrl","sentAt"::text FROM "ReportDelivery" WHERE "id"='historical-report'`,
+        )
+      ).rows[0];
+      assert.equal(historical.deliveryKind, "LEGACY_NEXTCLOUD");
+      assert.equal(historical.deletionStatus, "NOT_APPLICABLE");
+      assert.equal(historical.shareId, "legacy-share");
+      assert.equal(historical.publicUrl, "https://cloud.example.test/s/legacy");
+      assert.equal(historical.sentAt.slice(0, 10), "2026-01-01");
       assert.deepEqual(
         rows.map((r) => [r.id, r.source]),
         [

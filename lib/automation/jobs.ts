@@ -3,9 +3,17 @@ import type {
   AutomationJobRun,
   Prisma,
   PrismaClient,
+  AutomationArtifact,
 } from "@/app/generated/prisma/client";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  realpath,
+  stat,
+  rename,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { AutomationError } from "./http";
 import { NextcloudClient } from "./integrations";
@@ -91,7 +99,16 @@ export async function runJob(
         finishedAt: now,
         nextRetryAt: manual
           ? null
-          : (retryAt ?? new Date(now.getTime() + 86400000)),
+          : new Date(
+              Math.max(
+                (retryAt ?? new Date(now.getTime() + 86400000)).getTime(),
+                now.getTime() +
+                  (error instanceof AutomationError
+                    ? (error.retryAfterSeconds ?? 0)
+                    : 0) *
+                    1000,
+              ),
+            ),
         errorCode: safe.code,
         errorMessage: safe.httpStatus
           ? `${safe.code} (HTTP ${safe.httpStatus})`
@@ -123,20 +140,48 @@ export async function queueAlert(
     update: {},
   });
 }
-export async function flushAlerts(db: PrismaClient, cloud: NextcloudClient) {
+export async function flushAlerts(
+  db: PrismaClient,
+  cloud: NextcloudClient,
+  now = new Date(),
+  activatedAt = cloud.config.talkActivatedAt ?? new Date(0),
+) {
+  if (!cloud.config.talkEnabled) return;
+  // Preserve old alerts internally; activation never releases an unbounded backlog.
+  const cutoff = new Date(
+    Math.max(activatedAt.getTime(), now.getTime() - 86400000),
+  );
+  await db.automationAlert.updateMany({
+    where: {
+      status: { in: ["PENDING", "RETRYING"] },
+      createdAt: { lt: cutoff },
+    },
+    data: {
+      status: "SKIPPED",
+      errorCode: "TALK_BACKLOG_RETAINED_INTERNAL",
+      nextRetryAt: null,
+    },
+  });
   await db.automationAlert.updateMany({
     where: { status: "RUNNING" },
-    data: { status: "MANUAL_ACTION_REQUIRED" },
+    data: {
+      status: "MANUAL_ACTION_REQUIRED",
+      errorCode: "TALK_RECEIPT_UNCERTAIN",
+      nextRetryAt: null,
+    },
   });
   const alerts = await db.automationAlert.findMany({
-    where: { status: { in: ["PENDING", "RETRYING"] } },
+    where: {
+      status: { in: ["PENDING", "RETRYING"] },
+      OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
+    },
     orderBy: { createdAt: "asc" },
-    take: 10,
+    take: 3,
   });
   for (const a of alerts) {
     const claimed = await db.automationAlert.updateMany({
       where: { id: a.id, status: { in: ["PENDING", "RETRYING"] } },
-      data: { status: "RUNNING" },
+      data: { status: "RUNNING", attempt: { increment: 1 } },
     });
     if (!claimed.count) continue;
     let id: string;
@@ -152,7 +197,21 @@ export async function flushAlerts(db: PrismaClient, cloud: NextcloudClient) {
           status:
             !(e instanceof AutomationError) || e.uncertain
               ? "MANUAL_ACTION_REQUIRED"
-              : "RETRYING",
+              : a.attempt >= 9
+                ? "MANUAL_ACTION_REQUIRED"
+                : "RETRYING",
+          errorCode: cleanError(e).code,
+          nextRetryAt:
+            !(e instanceof AutomationError) || e.uncertain || a.attempt >= 9
+              ? null
+              : new Date(
+                  now.getTime() +
+                    Math.max(
+                      e.retryAfterSeconds ?? 0,
+                      Math.min(60 * 2 ** a.attempt, 3600),
+                    ) *
+                      1000,
+                ),
         },
       });
       continue;
@@ -160,7 +219,13 @@ export async function flushAlerts(db: PrismaClient, cloud: NextcloudClient) {
     // A failed receipt write leaves RUNNING intent; the next dispatcher holds it.
     await db.automationAlert.update({
       where: { id: a.id },
-      data: { status: "SUCCESS", remoteMessageId: id, sentAt: new Date() },
+      data: {
+        status: "SUCCESS",
+        remoteMessageId: id,
+        sentAt: now,
+        nextRetryAt: null,
+        errorCode: null,
+      },
     });
   }
 }
@@ -172,7 +237,7 @@ export async function storeArtifact(
     target: string;
     extension: string;
     bytes: Buffer;
-    nextcloudPath: string;
+    nextcloudPath: string | null;
   },
 ) {
   const sha256 = createHash("sha256").update(input.bytes).digest("hex");
@@ -207,6 +272,23 @@ export async function storeArtifact(
     },
     update: {},
   });
+}
+export async function readPrivateArtifact(
+  artifact: Pick<AutomationArtifact, "spoolPath" | "sha256">,
+) {
+  const root = await realpath(
+    path.resolve(process.env.AUTOMATION_SPOOL_DIR ?? ".automation-spool"),
+  );
+  const file = await realpath(artifact.spoolPath);
+  if (!file.startsWith(root + path.sep))
+    throw new AutomationError("ARTIFACT_PATH_INVALID");
+  const info = await stat(file);
+  if (!info.isFile() || info.size > 50_000_000)
+    throw new AutomationError("BALE_PDF_TOO_LARGE");
+  const bytes = await readFile(file);
+  if (createHash("sha256").update(bytes).digest("hex") !== artifact.sha256)
+    throw new AutomationError("ARTIFACT_CHECKSUM_MISMATCH");
+  return bytes;
 }
 export async function uploadArtifact(
   db: PrismaClient,

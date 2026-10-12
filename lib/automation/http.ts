@@ -22,6 +22,7 @@ export class AutomationError extends Error {
     public code: string,
     public httpStatus: number | null = null,
     public uncertain = false,
+    public retryAfterSeconds: number | null = null,
   ) {
     super(code);
   }

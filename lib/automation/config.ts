@@ -15,6 +15,7 @@ export const automationConfigSchema = z
   .object({
     reporterEnabled: z.boolean(),
     calendarEnabled: z.boolean(),
+    talkEnabled: z.boolean().default(false),
     nextcloudBaseUrl: z.string().max(500),
     reportsDirectory: directory,
     calendarDirectory: directory,
@@ -83,6 +84,18 @@ export const automationConfigSchema = z
         });
       }
     }
+    if (v.reporterEnabled && !/^[1-9]\d{0,15}$/.test(v.reportRecipient))
+      ctx.addIssue({
+        code: "custom",
+        path: ["reportRecipient"],
+        message: "شناسهٔ خصوصی معتبر بله لازم است.",
+      });
+    if (v.talkEnabled && (!v.nextcloudBaseUrl || !v.technicalConversation))
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "نشانی Nextcloud و توکن گروه خصوصی برای فعال‌سازی Talk لازم است.",
+      });
   });
 export function getAutomationConfig(db: PrismaClient) {
   return db.automationConfig.upsert({

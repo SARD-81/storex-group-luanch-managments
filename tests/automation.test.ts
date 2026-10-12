@@ -49,6 +49,8 @@ function config(): AutomationConfig {
     id: "test-automation",
     reporterEnabled: true,
     calendarEnabled: false,
+    talkEnabled: true,
+    talkActivatedAt: null,
     nextcloudBaseUrl: "https://cloud.example.test",
     reportsDirectory: "/Reports",
     calendarDirectory: "/Calendar",
@@ -131,7 +133,12 @@ class CloudFake {
         capabilities: { files_sharing: { public: { enabled: this.enabled } } },
       });
     if (p.includes("/spreed/api/v4/room/"))
-      return ocs({ type: this.group ? 2 : 1 });
+      return ocs({
+        type: this.group ? 2 : 1,
+        participantType: 3,
+        readOnly: 0,
+        permissions: 128,
+      });
     if (p.includes("/spreed/api/v1/chat/")) {
       this.talkMessages.push(JSON.parse(String(init.body)).message);
       return ocs({ id: this.talkMessages.length });
@@ -178,18 +185,30 @@ class CloudFake {
 }
 class BaleFake {
   messages: string[] = [];
+  deleted: string[] = [];
+  clock = now;
   failures = 0;
   ambiguous = false;
   fetch = async (input: string, init: RequestInit = {}) => {
     assert.ok(input.startsWith("https://tapi.bale.ai/bot"));
     if (input.endsWith("/getMe"))
-      return Response.json({ ok: true, result: { id: 1 } });
+      return Response.json({
+        ok: true,
+        result: { id: 1, is_bot: true, username: "storex_lunch_notify_bot" },
+      });
     if (input.endsWith("/getChat"))
       return Response.json({
         ok: true,
         result: { id: 123456, type: "private" },
       });
-    const p = JSON.parse(String(init.body));
+    if (input.endsWith("/deleteMessage")) {
+      this.deleted.push(JSON.parse(String(init.body)).message_id);
+      return Response.json({ ok: true, result: true });
+    }
+    const p =
+      init.body instanceof FormData
+        ? { chat_id: init.body.get("chat_id"), text: init.body.get("caption") }
+        : JSON.parse(String(init.body));
     assert.equal(p.chat_id, "123456");
     if (this.failures-- > 0)
       return Response.json({
@@ -202,7 +221,11 @@ class BaleFake {
       throw new AutomationError("REMOTE_UNAVAILABLE", null, true);
     return Response.json({
       ok: true,
-      result: { message_id: this.messages.length },
+      result: {
+        message_id: this.messages.length,
+        chat: { id: 123456, type: "private" },
+        date: this.clock.getTime() / 1000,
+      },
     });
   };
 }
@@ -238,7 +261,7 @@ async function fixture(
     remote = new CloudFake(),
     bot = new BaleFake(),
     cloud = new NextcloudClient(c, remote.fetch),
-    bale = new BaleClient(bot.fetch);
+    bale = new BaleClient(bot.fetch, () => bot.clock);
   await db.reportDelivery.deleteMany();
   await db.automationArtifact.deleteMany();
   await db.automationShareLease.deleteMany();
@@ -320,7 +343,7 @@ test(
             bale,
             async () => probePdf(),
           ),
-        /simulated receipt storage failure/,
+        /BALE_RECEIPT_PERSIST_FAILED/,
       );
       assert.equal(bot.messages.length, 1);
       assert.equal(
@@ -458,7 +481,7 @@ test("configuration, network and PDF guards fail closed", async () => {
   assert.throws(() => verifyPdf(Buffer.from("%PDF-")), /INVALID_OFFICIAL_PDF/);
 });
 test(
-  "report resumes existing PDF/upload/share after safe Bale failure, then exact expiry revokes only share",
+  "direct report reuses a private PDF after safe rejection and never creates a share",
   dbTest,
   () =>
     fixture(async (db, c, cloud, remote, bale, bot) => {
@@ -485,21 +508,14 @@ test(
       const first = await db.reportDelivery.findUniqueOrThrow({
         where: { reportDateKey: "2026-10-10" },
       });
-      assert.equal(first.stage, "PUBLIC_READY");
-      assert.equal(
-        first.expiresAt!.getTime() - first.shareCreatedAt!.getTime(),
-        86400000,
-      );
-      const writes = remote.writes.filter(
-          (p) => !p.includes(".capability"),
-        ).length,
-        shares = remote.created;
+      assert.equal(first.stage, "GENERATED");
+      assert.equal(first.shareId, null);
       await deliverReport(
         db,
         c,
         "2026-10-10",
         async () => {},
-        new Date(now.getTime() + 600000),
+        now,
         cloud,
         bale,
         pdf,
@@ -515,40 +531,28 @@ test(
         pdf,
       );
       assert.equal(generated, 1);
-      assert.equal(
-        remote.writes.filter((p) => !p.includes(".capability")).length,
-        writes,
-      );
-      assert.equal(remote.created, shares);
       assert.equal(bot.messages.length, 1);
-      await revokeExpiredShares(
-        db,
-        cloud,
-        new Date(first.expiresAt!.getTime() - 1),
-      );
-      assert.ok(remote.shares.has(first.shareId!));
-      remote.failRevoke = true;
-      await assert.rejects(
-        () => revokeExpiredShares(db, cloud, first.expiresAt!),
-        /NEXTCLOUD_HTTP_ERROR/,
+      assert.equal(remote.created, 0);
+      assert.equal(remote.writes.length, 0);
+      const final = await db.reportDelivery.findUniqueOrThrow({
+        where: { id: first.id },
+      });
+      assert.equal(final.deletionStatus, "SCHEDULED");
+      assert.equal(
+        final.deleteDueAt!.getTime() - final.sentAt!.getTime(),
+        86400000,
       );
       assert.equal(
-        (await db.reportDelivery.findUniqueOrThrow({ where: { id: first.id } }))
-          .revokedAt,
+        (
+          await db.automationArtifact.findUniqueOrThrow({
+            where: { id: final.artifactId! },
+          })
+        ).nextcloudPath,
         null,
-      );
-      remote.failRevoke = false;
-      await revokeExpiredShares(db, cloud, first.expiresAt!);
-      await revokeExpiredShares(db, cloud, first.expiresAt!);
-      assert.equal(
-        remote.revoked.filter((id) => id === first.shareId).length,
-        1,
-      );
-      assert.ok(
-        [...remote.files.keys()].some((p) => p.includes("next-workday")),
       );
     }),
 );
+
 test(
   "ambiguous Bale send is held for manual resolution and is never resent automatically",
   dbTest,
@@ -618,31 +622,28 @@ test(
     }),
 );
 test(
-  "public disabled/auth failures remain distinct; disabled mode does not generate a report",
+  "public sharing errors remain distinct but cannot block direct document delivery",
   dbTest,
   () =>
     fixture(async (db, c, cloud, remote, bale) => {
       remote.enabled = false;
       assert.equal(await checkPublicCapability(db, c, cloud, now), "DISABLED");
       let generated = false;
-      await assert.rejects(
-        () =>
-          deliverReport(
-            db,
-            c,
-            "2026-10-10",
-            async () => {},
-            now,
-            cloud,
-            bale,
-            async () => {
-              generated = true;
-              return probePdf();
-            },
-          ),
-        /PUBLIC_SHARING_DISABLED/,
+      await deliverReport(
+        db,
+        c,
+        "2026-10-10",
+        async () => {},
+        now,
+        cloud,
+        bale,
+        async () => {
+          generated = true;
+          return probePdf();
+        },
       );
-      assert.equal(generated, false);
+      assert.equal(generated, true);
+      assert.equal(remote.created, 0);
       remote.auth = true;
       assert.equal(
         await checkPublicCapability(db, c, cloud, now),
@@ -650,6 +651,7 @@ test(
       );
     }),
 );
+
 test(
   "job identities survive retries; raw remote errors are not persisted; alerts are deduplicated and group-only",
   dbTest,
@@ -730,7 +732,11 @@ test(
       remote.clock = new Date("2026-10-06T05:50:00Z");
       await workerTick(db, remote.clock, deps);
       assert.ok(bot.messages[0].includes("صبحانه: 1"));
-      assert.ok(bot.messages[0].includes("https://storex.example.test/reporter/next-day"));
+      assert.ok(
+        bot.messages[0].includes(
+          "https://storex.example.test/reporter/next-day",
+        ),
+      );
       await db.guestMealOrder.updateMany({
         where: { title: "automation-test" },
         data: { count: 2 },
@@ -776,4 +782,37 @@ test(
       true,
     );
   },
+);
+
+test(
+  "Talk outage does not block the independent worker PDF delivery",
+  dbTest,
+  () =>
+    fixture(async (db, c, cloud, remote, bale, bot) => {
+      await db.automationConfig.create({
+        data: { ...c, id: "singleton", health: undefined },
+      });
+      remote.auth = true;
+      await queueAlert(
+        db,
+        "TEST",
+        "fixture",
+        "talk-outage",
+        "synthetic technical alert",
+      );
+      await workerTick(db, now, { cloud, bale, pdf: async () => probePdf() });
+      assert.equal(bot.messages.length, 1);
+      assert.equal(
+        (await db.reportDelivery.findFirstOrThrow()).status,
+        "SUCCESS",
+      );
+      assert.equal(
+        (
+          await db.automationAlert.findUniqueOrThrow({
+            where: { alertKey: "talk-outage" },
+          })
+        ).status,
+        "RETRYING",
+      );
+    }),
 );
