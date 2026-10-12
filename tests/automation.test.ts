@@ -211,7 +211,7 @@ class BaleFake {
       const bytes = Buffer.from(init.body);
       const headers = new Headers(init.headers);
       const ct = headers.get("Content-Type")!;
-      assert.match(ct, /^multipart\\/form-data; boundary=----storex-[a-f0-9]{32}$/);
+      assert.match(ct, /^multipart\/form-data; boundary=----storex-[a-f0-9]{32}$/);
       assert.equal(headers.get("Content-Length"), String(bytes.byteLength));
       const raw = bytes.toString("utf8");
       const chat = raw.match(/name="chat_id"\\r\\n\\r\\n([0-9]+)/);
