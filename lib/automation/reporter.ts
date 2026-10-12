@@ -83,7 +83,7 @@ export async function deliverReport(
     generatedAt: string;
   };
   const t = snapshot.totals;
-  const caption = `گزارش روز کاری بعد: ${snapshot.label}\nصبحانه: پرسنل ${t.breakfastEmployees}، مهمان ${t.breakfastGuests}، جمع ${t.breakfastAll}\nناهار: پرسنل ${t.lunchEmployees}، مهمان ${t.lunchGuests}، جمع ${t.lunchAll}\nتولید: ${formatPersianDateTime(new Date(snapshot.generatedAt))}\nحذف برنامه‌ریزی‌شدهٔ پیام: ۲۴ ساعت پس از ارسال؛ نسخه‌های دانلودشده حذف نمی‌شوند.`;
+  const caption = `گزارش روز کاری بعد: ${snapshot.label}\nصبحانه: پرسنل ${t.breakfastEmployees}، مهمان ${t.breakfastGuests}، جمع ${t.breakfastAll}\nناهار: پرسنل ${t.lunchEmployees}، مهمان ${t.lunchGuests}، جمع ${t.lunchAll}\nتولید: ${formatPersianDateTime(new Date(snapshot.generatedAt))}\nپیام گزارش PDF بدون محدودیت زمانی از سمت سامانه باقی می‌ماند.`;
   const input = {
     bytes,
     mimeType: "application/pdf",
@@ -134,12 +134,9 @@ export async function deliverReport(
         baleMessageId: receipt.messageId,
         sentAt,
         sentTimeSource: apiTime ? "BALE_MESSAGE_DATE" : "API_RECEIPT_TIME",
-        deleteDueAt: new Date(sentAt.getTime() + 86400000),
-        // Conservative deadline when the API omits date: never extend the real window by network latency.
-        deleteBeforeAt: new Date(
-          Math.min(sentAt.getTime(), now.getTime()) + 2 * 86400000,
-        ),
-        deletionStatus: "SCHEDULED",
+        deleteDueAt: null,
+        deleteBeforeAt: null,
+        deletionStatus: "NOT_APPLICABLE",
         nextRetryAt: null,
       },
     });
