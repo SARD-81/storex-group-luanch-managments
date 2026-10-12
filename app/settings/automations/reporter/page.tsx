@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BaleRecipientDiscovery } from "@/components/automations/bale-recipient-discovery";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getAutomationConfig, credentialStatus } from "@/lib/automation/config";
@@ -141,6 +142,7 @@ export default async function Page({
           </Link>
         </div>
       </section>
+      <BaleRecipientDiscovery currentRecipient={c.reportRecipient} reporterEnabled={c.reporterEnabled} />
       <section className="dashboard-glass-card">
         <h2 className="mb-3 text-lg font-bold">تاریخچه تحویل PDF</h2>
         <p>
