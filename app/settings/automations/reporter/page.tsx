@@ -13,7 +13,6 @@ import {
   queueAutomationJobAction,
   resolveReportDeliveryAction,
   updateAutomationConfigAction,
-  retryBaleDeletionAction,
 } from "@/actions/automations";
 export const dynamic = "force-dynamic";
 export default async function Page({
@@ -143,11 +142,9 @@ export default async function Page({
         </div>
       </section>
       <section className="dashboard-glass-card">
-        <h2 className="mb-3 text-lg font-bold">تحویل‌ها و حذف پیام PDF</h2>
+        <h2 className="mb-3 text-lg font-bold">تاریخچه تحویل PDF</h2>
         <p>
-          حذف در اولین اجرای worker در یا پس از ۲۴ ساعت تلاش می‌شود. قطعی
-          می‌تواند آن را عقب بیندازد؛ فرصت API کمتر از ۴۸ ساعت است. کپی
-          دانلودشدهٔ گیرنده حذف نمی‌شود.
+          پیام‌های PDF در بله به‌صورت خودکار حذف نمی‌شوند. وضعیت حذف مربوط به سوابق قدیمی صرفاً برای ثبت تاریخچه باقی مانده است.
         </p>
         {deliveries.map((d) => (
           <article key={d.id} className="border-t border-border py-4">
@@ -170,35 +167,11 @@ export default async function Page({
                   روش: PDF مستقیم — چت مقصد:{" "}
                   <span dir="ltr">{d.baleChatId ?? "—"}</span>
                 </p>
-                <p>
-                  حذف برنامه‌ریزی‌شده:{" "}
-                  {d.deleteDueAt
-                    ? formatPersianDateTime(d.deleteDueAt)
-                    : "رسید ارسال هنوز تأیید نشده"}{" "}
-                  — وضعیت: {STATUS_LABELS[d.deletionStatus]}
-                </p>
-                <p>
-                  حذف موفق:{" "}
-                  {d.deletedAt
-                    ? formatPersianDateTime(d.deletedAt)
-                    : "تأیید نشده"}{" "}
-                  — تلاش‌ها: {d.deletionAttempts} — خطا:{" "}
-                  {d.deletionErrorCode ?? "—"}
-                </p>
-                <p>
-                  تلاش بعدی:{" "}
-                  {d.deletionNextRetryAt
-                    ? formatPersianDateTime(d.deletionNextRetryAt)
-                    : "—"}
-                </p>
-                {d.deleteDueAt &&
-                d.deleteDueAt <= new Date() &&
-                d.deletionStatus !== "DELETED" ? (
-                  <p role="alert" className="text-rose-500">
-                    حذف پیام از موعد گذشته و هنوز تأیید نشده است؛ پنجرهٔ API را
-                    بررسی کنید.
-                  </p>
-                ) : null}
+                {d.deletionStatus !== "NOT_APPLICABLE" ? (
+                  <p>سابقه حذف قدیمی: {STATUS_LABELS[d.deletionStatus]} (دیگر به‌صورت خودکار اجرا نمی‌شود)</p>
+                ) : (
+                  <p>بدون انقضای خودکار پیام</p>
+                )}
                 {d.artifactId ? (
                   <Link
                     className="underline"
@@ -206,22 +179,6 @@ export default async function Page({
                   >
                     دریافت PDF خصوصی ثبت‌شده
                   </Link>
-                ) : null}
-                {["UNCERTAIN", "RETRYING", "MANUAL_ACTION_REQUIRED"].includes(
-                  d.deletionStatus,
-                ) &&
-                d.deleteBeforeAt &&
-                d.deleteBeforeAt > new Date() ? (
-                  <form action={retryBaleDeletionAction} className="mt-2">
-                    <input type="hidden" name="deliveryId" value={d.id} />
-                    <label>
-                      <input type="checkbox" name="confirmRetry" required />{" "}
-                      بررسی کردم؛ حذف همین پیام دوباره تلاش شود
-                    </label>
-                    <button className="dashboard-action-button">
-                      ثبت درخواست حذف
-                    </button>
-                  </form>
                 ) : null}
               </div>
             ) : (
