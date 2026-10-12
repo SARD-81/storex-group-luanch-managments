@@ -2,6 +2,17 @@
 
 The owner removed the 24-hour retention requirement. New direct Bale PDF reports and opt-in synthetic test documents remain in the private chat without an application-enforced expiry. The worker does not invoke Bale deleteMessage, including for previously queued deletion records. Existing deletion metadata is retained as historical evidence, never interpreted as a new deletion requirement. The previous deletion instructions below are obsolete and preserved only for migration history. Do not enable manual retry/deletion on the basis of those instructions. Nextcloud legacy share cleanup is independent and remains supported. Successful deliveries remain idempotent. To live-test, pause Reporter, configure the authorized recipient private chat, run `node --import tsx scripts/check-bale-document-live.ts --check` and then, with recipient consent, `node --import tsx scripts/check-bale-document-live.ts --send-document-once`; confirm the PDF arrives and verify it remains available after 24 hours. No deletion is expected.
 
+## Finding a Bale report recipient in the admin UI
+
+The Reporter settings page (`/settings/automations/reporter`) contains a **read-only recent private sender lookup**. It is implemented in server-side TypeScript, not by executing user-provided Python, shell commands or token-bearing URLs. The existing `BALE_BOT_TOKEN` remains server-only. Only a logged-in ADMIN can invoke it.
+
+1. Keep Reporter disabled, leave the previous recipient intact and save. Ask the intended new recipient to open the official StoreX bot and send a private `/start` message immediately before discovery.
+2. Click **شناسایی آخرین فرستنده خصوصی**. The server checks `getMe`, rejects an active webhook using `getWebhookInfo`, then reads at most 100 unacknowledged updates via `getUpdates({limit:100,timeout:0})` **without offset**. No messages are acknowledged, discarded, deleted or stored. Only a recent (<=10 minutes), human-sent private message with matching sender/chat ID is eligible. In a full 100-update batch discovery refuses to claim which message is actually newest.
+3. Confirm the displayed chat ID out of band with the intended recipient; merely being the last person who sent a message does not authorize report access. Check the confirmation box and click **تأیید و ثبت به‌عنوان گیرنده گزارش**.
+4. The server obtains the same Worker lock used for delivery, refuses ongoing/ambiguous/queued reports, re-reads latest message to block a switched candidate, verifies `getChat` is private, compares the previous configuration to prevent concurrent changes, saves only `reportRecipient`, resets its Bale health state and adds an `AUTOMATION_CONFIG_CHANGED` audit record. Reporter remains paused. Re-run **BALE_HEALTH** (with one safe Worker tick) and the opt-in PDF probe before enabling automation.
+
+**Limitations:** If an external listener has consumed updates, the queue is empty, the newest private message is older than ten minutes, the unread queue has 100+ updates or the bot uses a webhook, lookup does not produce a new recipient. Do not delete production webhooks, set a negative offset or discard pending updates to force this tool to work. The manual numeric-recipient input remains available for administrators. Never paste a bot token into the web form.
+
 # Attendance, Reporter and Calendar operations
 
 Status: **draft / not approved for production deployment**. Read `verification-report.md` before merging or deploying this branch.
