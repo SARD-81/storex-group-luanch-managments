@@ -19,9 +19,9 @@ export const dynamic = "force-dynamic";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; saved?: string; discovery?: string; discoveryError?: string }>;
 }) {
-  await requireAdmin();
+  const actor = await requireAdmin();
   const params = await searchParams;
   const [c, jobs, deliveries] = await Promise.all([
     getAutomationConfig(prisma),
@@ -142,7 +142,14 @@ export default async function Page({
           </Link>
         </div>
       </section>
-      <BaleRecipientDiscovery currentRecipient={c.reportRecipient} reporterEnabled={c.reporterEnabled} />
+      <BaleRecipientDiscovery
+        currentRecipient={c.reportRecipient}
+        reporterEnabled={c.reporterEnabled}
+        health={c.health}
+        actorId={actor.id}
+        discovery={params.discovery}
+        discoveryError={params.discoveryError}
+      />
       <section className="dashboard-glass-card">
         <h2 className="mb-3 text-lg font-bold">تاریخچه تحویل PDF</h2>
         <p>
