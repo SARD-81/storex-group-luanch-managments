@@ -214,8 +214,8 @@ class BaleFake {
       assert.match(ct, /^multipart\/form-data; boundary=----storex-[a-f0-9]{32}$/);
       assert.equal(headers.get("Content-Length"), String(bytes.byteLength));
       const raw = bytes.toString("utf8");
-      const chat = raw.match(/name="chat_id"\\r\\n\\r\\n([0-9]+)/);
-      const caption = raw.match(/name="caption"\\r\\n\\r\\n([\\s\\S]*?)\\r\\n--/);
+      const chat = raw.match(/name="chat_id"\r\n\r\n([0-9]+)/);
+      const caption = raw.match(/name="caption"\r\n\r\n([\s\S]*?)\r\n--/);
       assert.ok(raw.includes('name="document"; filename="next-workday-'));
       p = { chat_id: chat?.[1] ?? "", text: caption?.[1] ?? "" };
     } else {
