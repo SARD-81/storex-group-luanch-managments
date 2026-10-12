@@ -1,4 +1,4 @@
-/** Opt-in synthetic document probe. Never invoked by CI. Worker later deletes it. */
+/** Opt-in synthetic document probe. Never invoked by CI. No automatic message deletion. */
 import "dotenv/config";
 import { randomUUID, createHash } from "node:crypto";
 import { prisma } from "../lib/prisma";
@@ -68,7 +68,7 @@ async function main() {
       sha256,
       mimeType: "application/pdf",
       filename: `storex-test-${marker}.pdf`,
-      caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان؛ کد ${marker}. حذف خودکار پیام پس از ۲۴ ساعت تلاش می‌شود.`,
+      caption: `آزمون PDF مصنوعی StoreX؛ فاقد اطلاعات کارکنان؛ کد ${marker}. پیام آزمایشی به‌صورت خودکار حذف نمی‌شود.`,
     });
     const sentAt = receipt.apiSentAt ?? receipt.receivedAt;
     await prisma.reportDelivery.update({
@@ -81,11 +81,9 @@ async function main() {
         sentTimeSource: receipt.apiSentAt
           ? "BALE_MESSAGE_DATE"
           : "API_RECEIPT_TIME",
-        deleteDueAt: new Date(sentAt.getTime() + 86400000),
-        deleteBeforeAt: new Date(
-          Math.min(sentAt.getTime(), attemptedAt.getTime()) + 172800000,
-        ),
-        deletionStatus: "SCHEDULED",
+        deleteDueAt: null,
+        deleteBeforeAt: null,
+        deletionStatus: "NOT_APPLICABLE",
       },
     });
     console.log(
@@ -94,8 +92,8 @@ async function main() {
         probeId: d.id,
         messageId: receipt.messageId,
         marker,
-        deleteDueAt: new Date(sentAt.getTime() + 86400000).toISOString(),
-        manualReceptionAndDeletionConfirmationRequired: true,
+        manualReceptionConfirmationRequired: true,
+        automaticDeletion: false,
       }),
     );
   });
