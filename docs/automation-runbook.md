@@ -59,6 +59,14 @@ Troubleshooting order:
 
 Never paste `BALE_BOT_TOKEN`, the raw `.env`, or a token-bearing URL into bug reports or screenshots.
 
+## Recovering a pre-fix safe Bale rejection (FAILED / DELIVERING)
+
+Older worker releases mistakenly copied the job's last `DELIVERING` stage back into the `ReportDelivery` record after `deliverReport` had correctly classified a definitive HTTP 400 as `GENERATED`. This leaves e.g. `ReportDelivery.status=FAILED,stage=DELIVERING,baleMessageId=NULL` and a `REPORT_DELIVERY` job with `status=FAILED,errorCode=BALE_REJECTED`. The corrected worker preserves the actual delivery stage on future attempts, but does **not** silently migrate or automatically retry these legacy records.
+
+For an isolated *local/test* record, with Reporter paused: (1) confirm the stored `errorCode` indicates a definite API rejection and no report reached the intended private Bale chat; do not mistake a successful unrelated `live-probe:` message for a real report receipt. (2) On `/settings/automations/reporter`, locate that exact date, select **بررسی کردم؛ پیام ارسال نشده است**, and record a meaningful audit note. This existing locked `resolveReportDeliveryAction` resets the delivery to `RETRYING / GENERATED` and the same-date job to `PENDING`, retaining its already-generated PDF; it does not generate a new snapshot. (3) Review queued jobs and the recipient *before* starting any worker. The next worker tick may send the report immediately because an administrator-requested job is eligible even when `reporterEnabled=false`. (4) Run exactly one controlled worker tick only after intentional authorization, confirm its actual Bale receipt, then inspect `ReportDelivery` for `SUCCESS / DELIVERED`, receipt ID, `NOT_APPLICABLE`, and both deletion deadlines null. Another tick must not resend.
+
+This workflow is inappropriate for an ambiguous network timeout or a lost successful-send receipt; those always require external receipt investigation before resetting to NOT_SENT. The old PDF snapshot contains the totals as of the first render and is intentionally reused (not regenerated), even if attendance is edited afterward. Never run `prisma db seed` or bulk-delete delivery rows in order to recover a pending report.
+
 # Attendance, Reporter and Calendar operations
 
 Status: **draft / not approved for production deployment**. Read `verification-report.md` before merging or deploying this branch.
