@@ -1,3 +1,7 @@
+## Latest owner policy override — unlimited Bale message retention (2026-10-12)
+
+The 24-hour Bale-message deletion requirement is cancelled. Current code does not schedule deletion for new deliveries or synthetic probe documents and no longer runs the Bale deletion processor in either normal or cleanup-only worker mode. Historic delivery/deletion records are preserved; previous queued deletion records are not executed. The following old deletion-specific acceptance items remain only as historical notes, not release gates. Live acceptance still requires an authorized recipient, a synthetic sendDocument test, receipt confirmation, worker restart/idempotency checks and operational monitoring. CI is not equivalent to a real Bale send. The new branch CI run must be checked after these commits.
+
 # Current direct Bale PDF delivery verification — 2026-10-12
 
 The new contract supersedes Nextcloud public-link delivery for **new** reports.
