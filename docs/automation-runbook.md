@@ -28,9 +28,13 @@ Do not invoke `automation:tick` or enqueue another real `REPORT_DELIVERY` while 
 ```bash
 node --import tsx scripts/diagnose-bale-document-upload.ts --check
 node --import tsx scripts/diagnose-bale-document-upload.ts --send-once
+# After the caption-free variant succeeds, optional differential check:
+node --import tsx scripts/diagnose-bale-document-upload.ts --send-with-caption-once
 ```
 
 The `--check` mode uses Playwright to create a regular A5 Chromium PDF containing only English diagnostic text; it performs bot/private-chat checks and prints the size, without sending a message. The `--send-once` mode sends that PDF **once** without a caption using a manually framed `multipart/form-data` body and an explicit `Content-Length` via pinned, allowlisted HTTPS. This intentionally differs from the production `Blob`/`FormData` uploader and tiny 620-byte `probePdf`; it is a *diagnostic*, not an unverified replacement for production. It never writes report delivery records or runs scheduled reports.
+
+The `--send-with-caption-once` mode keeps the same Playwright PDF and known-length upload framing, adding only a short Persian caption. It sends exactly one separately opted-in synthetic PDF and cannot dispatch a real report. A successful send and actual receipt would validate keeping the business-report caption when promoting this upload format to the normal Bale client. If it fails, do not silently drop the report caption in production: review which transport contract to retain with the report owner.
 
 If this variant succeeds and the document appears in Bale, the issue is likely specific to the standard uploader or original tiny test file. Examine these independently before changing the production send path. If it also returns HTTP 400, record only the output's categorical `code`, `httpStatus` and `providerDescriptionGeneric`; never print or submit raw API descriptions, tokens, or the .env file. A success receipt must be checked against the actual private chat. If the response is lost or the result becomes uncertain, inspect the chat before any repeat, to avoid duplicate test documents.
 
