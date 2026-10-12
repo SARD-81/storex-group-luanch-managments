@@ -6,22 +6,13 @@ import { Prisma } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { BaleClient } from "@/lib/automation/integrations";
-import { discoverLatestBaleSender } from "@/lib/automation/bale-recipient-discovery";
+import { discoverLatestBaleSender, pendingBaleCandidate } from "@/lib/automation/bale-recipient-discovery";
 import { AutomationError } from "@/lib/automation/http";
 import { getAutomationConfig } from "@/lib/automation/config";
 import { withWorkerLock } from "@/lib/automation/worker";
 import { attendanceAudit, attendanceTransaction } from "@/lib/attendance/reconciliation";
 
 const PAGE = "/settings/automations/reporter";
-const TEN_MINUTES = 600000;
-export type PendingBaleCandidate = {
-  chatId: string;
-  updateId: number;
-  messageDate: number;
-  actorId: string;
-  discoveredAt: number;
-};
-
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -32,33 +23,6 @@ function errorCode(e: unknown): string {
 }
 function fail(code: string): never {
   redirect(`${PAGE}?discoveryError=${encodeURIComponent(code)}`);
-}
-
-export function pendingBaleCandidate(
-  health: unknown,
-  actorId: string,
-  now = Date.now(),
-): PendingBaleCandidate | null {
-  const entry = object(object(health).baleRecipientCandidate);
-  if (
-    entry.actorId !== actorId ||
-    typeof entry.chatId !== "string" ||
-    !/^[1-9]\d{0,15}$/.test(entry.chatId) ||
-    !Number.isSafeInteger(Number(entry.chatId)) ||
-    !Number.isSafeInteger(entry.updateId) ||
-    Number(entry.updateId) < 0 ||
-    !Number.isSafeInteger(entry.messageDate) ||
-    !Number.isSafeInteger(entry.discoveredAt) ||
-    Number(entry.discoveredAt) > now ||
-    now - Number(entry.discoveredAt) > TEN_MINUTES
-  ) return null;
-  return {
-    chatId: entry.chatId,
-    updateId: Number(entry.updateId),
-    messageDate: Number(entry.messageDate),
-    actorId,
-    discoveredAt: Number(entry.discoveredAt),
-  };
 }
 
 /** Progressive-enhancement Server Action: works without client-side hydration. */
